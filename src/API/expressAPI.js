@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const link = `${process.env.REACT_APP_EXPRESS_API_LINK}/api/ambarsariya/admin`;
+const admin_link = `${process.env.REACT_APP_EXPRESS_API_LINK}/admin/api`;
 
 export const post_travel_time = async (data) => {
     try{
-        const response = await axios.post(`${link}/travel-time`, data);
+        const response = await axios.post(`${admin_link}/travel-time`, data);
         return response.data;
     }catch(e){
         throw e;
@@ -13,7 +13,7 @@ export const post_travel_time = async (data) => {
 
 export const get_travel_time = async (data) => {
     try{
-        const response = await axios.get(`${link}/travel-time/${data.mode}/${data.travel_type}`);
+        const response = await axios.get(`${admin_link}/travel-time/${data.mode}/${data.travel_type}`);
         return response.data;
     }catch(e){
         throw e;

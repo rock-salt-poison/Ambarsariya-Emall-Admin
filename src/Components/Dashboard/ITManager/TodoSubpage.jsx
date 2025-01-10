@@ -16,7 +16,7 @@ function TodoSubpage() {
 
   const tabsData = [
     { id: 1, name: 'API', content: <Form page={formatPageName(page)} fieldsData={fieldsData} /> },
-    { id: 2, name: 'CRUD', content: <CRUD page={formatPageName(page)} fieldsData={crudFieldsData} /> },
+    { id: 2, name: 'CRUD', content: page==="travel-time" ? <CRUD page={formatPageName(page)} fieldsData={crudFieldsData} /> :''},
   ];
 
   return (
