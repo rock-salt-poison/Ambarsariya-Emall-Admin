@@ -1,0 +1,42 @@
+//images
+
+$hall-gate-bg : '../Utils/images/hall-gate-bg.webp';
+
+
+//colors
+$white : #ffffff;
+$black : #000000;
+
+$light-gray : #f5f5f5; 
+$light-gray-2 : #f2f2f2; 
+$light-gray-3 : #E1e1e1; 
+$light-gray-4 : #EBEBEB; 
+$light-gray-5 : #EDEBEB; 
+$gray : #808080;
+$dark-gray : #555555;
+
+$light-blue : #E9EDF6;
+$light-blue-2 : #B4D3F4;
+$blue : #375473;
+$blue-2 : #6283A7;
+$dark-blue : #303F59;
+$dark-blue-3 : #1A3E66;
+
+$green : #018D91;
+$success : #218358;
+$error : #CD1018;
+$light-blue-link : #ADD3FF;
+$blue-link : #3170DC;
+
+
+
+//fonts
+
+$fontProxima : '../Utils/fonts/ProximaNovaFont.otf';
+
+@font-face {
+    font-family: 'Proxima';
+    src: url(#{$fontProxima}) format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}

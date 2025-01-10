@@ -1,0 +1,517 @@
+@use "variables" as *;
+
+* {
+  box-sizing: border-box;
+  font-family: "Proxima", sans-serif !important;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+}
+
+@mixin text($size: 16px, $color: $black, $weight: 400) {
+  font-size: $size !important;
+  color: $color;
+  font-weight: $weight !important;
+}
+
+@mixin button(
+  $bgColor: $blue,
+  $color: $white,
+  $weight: 500,
+  $padding: 3px 15px,
+  $margin: 0px,
+  $fontSize: 16px
+) {
+  background-color: $bgColor !important;
+  color: $color !important;
+  font-weight: $weight !important;
+  padding: $padding !important;
+  margin: $margin !important;
+  text-transform: capitalize !important;
+  font-size: $fontSize !important;
+}
+
+@mixin flex(
+  $direction: row,
+  $justify: flex-start,
+  $align: stretch,
+  $wrap: nowrap,
+  $placeItems: null,
+  $alignSelf: null
+) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  flex-wrap: $wrap;
+
+  // Apply place-items if provided
+  @if $placeItems !=null {
+    place-items: $placeItems;
+  }
+
+  @if $alignSelf !=null {
+    align-self: $alignSelf;
+  }
+}
+
+@mixin grid(
+  $columns: 1fr,
+  // Grid template columns
+  $rows: auto,
+  // Grid template rows
+  $gap: 0,
+  // Grid gap
+  $placeItems: null // Place items shortcut
+) {
+  display: grid;
+  grid-template-columns: $columns;
+  grid-template-rows: $rows;
+  gap: $gap;
+
+  @if $placeItems !=null {
+    place-items: $placeItems;
+  }
+}
+
+a{
+    text-decoration: none;
+    color: $black;
+}
+
+.heading.light {
+  @include text(22px, $white, 600);
+}
+
+.heading.dark {
+  @include text(22px, $dark-blue, 600);
+}
+
+.link {
+  @include text(15px, $light-blue-link, 500);
+  text-decoration: none;
+}
+
+.heading-2 {
+  @include text(18px, $black, 600);
+  text-transform: capitalize;
+}
+
+.btn_submit {
+    @include button();
+    width: max-content;
+}
+
+.MuiAlert-message{
+    padding: 0px !important;
+    align-self: center !important;
+
+}
+
+.MuiSnackbarContent-message{
+   @include text(16px, $white, 400);
+}
+
+.login_wrapper {
+  min-height: 100vh;
+  @include flex();
+
+  .row {
+    align-self: stretch;
+    background: linear-gradient(270deg, #1a3e66 50%, #172e51 50%);
+    flex: 1;
+    @include flex();
+    padding: 45px;
+
+    .col {
+      flex: 1;
+      align-self: stretch;
+      background: linear-gradient(#0f1326, #0c2145);
+      @include flex(column, center, center);
+      gap: 30px;
+      padding: 30px 15px;
+
+      &.bg_img {
+        background: url("#{$hall-gate-bg}") center no-repeat;
+        background-size: cover;
+      }
+
+      .container {
+        @include flex(column, center, center);
+        gap: 20px;
+      }
+
+      .header {
+        @include flex(column, center, center);
+
+        .description {
+          @include text(15px, $white);
+          text-align: center;
+        }
+      }
+
+      .body {
+        @include flex(column, center, center);
+        gap: 20px;
+        align-self: stretch;
+
+        form {
+          @include flex(column, center, center);
+          gap: 20px;
+          align-self: stretch;
+
+          .MuiFormControl-root {
+            .MuiFormLabel-root {
+              color: $white;
+              width: max-content;
+
+              &.Mui-focused {
+                width: max-content;
+                color: $white;
+              }
+            }
+
+            .MuiInputBase-root {
+              svg {
+                fill: $white;
+              }
+
+              .MuiOutlinedInput-notchedOutline {
+                border-color: $white;
+              }
+
+              .MuiInputBase-input {
+                @include text(16px, $white, 400);
+              }
+
+              &.Mui-focused {
+                .MuiOutlinedInput-notchedOutline {
+                  border-color: $white;
+                }
+              }
+
+              &:hover {
+                .MuiOutlinedInput-notchedOutline {
+                  border-color: $white;
+                }
+              }
+            }
+          }
+
+          .btn_submit {
+            @include button($dark-blue-3, $padding: 5px 15px);
+          }
+        }
+      }
+    }
+
+    @media screen and (max-width: 992px) {
+      flex-direction: column;
+      padding: 20px;
+      background: linear-gradient(#1a3e66 35%, #172e51 35%);
+
+      .col {
+        .heading.light {
+          font-size: 20px;
+          text-align: center;
+        }
+      }
+    }
+  }
+}
+
+.breadcrumb{
+  @include flex(row, flex-end, center);
+  gap: 8px;
+
+  .link{
+    color: $blue-link;
+  }
+
+  .page_name{
+    text-transform: capitalize;
+  }
+}
+
+.label{
+    @include text(15px, $black, 600);
+}
+
+.dashboard_wrapper {
+  @include flex();
+  // background-color: $light-gray;
+  background-color: #e0e2e6;
+  min-height: 100vh;
+
+  .MuiDrawer-root {
+    .MuiPaper-root {
+      background-color: $dark-blue;
+      position: static;
+
+      .iconButton {
+        gap: 12px;
+
+        .logo {
+          width: 39px;
+        }
+      }
+
+      .MuiDivider-root {
+        border-color: $blue;
+      }
+
+      .MuiList-root {
+        padding: 20px 0px;
+        @include flex(column, center, center);
+        gap: 5px;
+
+        .MuiListItem-root {
+          .item {
+            @include flex();
+            gap: 10px;
+            align-items: center;
+            padding: 6px 20px;
+
+            &.active {
+              background-color: $blue;
+
+              .MuiListItemIcon-root {
+                svg {
+                  fill: $light-blue-2;
+                }
+              }
+            }
+
+            .MuiListItemIcon-root {
+              margin: 0px;
+
+              svg {
+                fill: $green;
+              }
+            }
+
+            .MuiListItemText-root {
+              span {
+                @include text(16px, $light-blue-2, 400);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .main {
+    @include flex(column);
+    flex: 1;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+
+    .header {
+      @include flex(row, space-between, center);
+      background-color: $white;
+      padding: 15px 20px;
+      border-bottom: 1px solid $light-gray-5;
+    }
+
+    .body {
+      @include flex(column);
+      flex: 1;
+      padding: 15px 20px;
+      gap: 15px;
+
+      .cta-button {
+        @include flex($justify: flex-end);
+      }
+
+      .content {
+        @include flex(column);
+        background-color: $white;
+        border-radius: 8px;
+
+        .header {
+          border-top-left-radius: 8px;
+          border-top-right-radius: 8px;
+        }
+
+        .col {
+          overflow-x: auto;
+          padding: 0 15px 15px;
+
+          table {
+            thead {
+              tr {
+                th {
+                  @include text(16px, $black, 600);
+                  white-space: nowrap;
+                  padding: 12px;
+                }
+              }
+            }
+
+            tbody {
+              tr {
+                td {
+                  @include text(16px);
+                  padding: 12px;
+                }
+
+                &:last-child {
+                  td {
+                    border-bottom: 0px;
+                  }
+                }
+              }
+            }
+          }
+
+          &.grid{
+            padding: 15px;
+            @include grid(1fr 1fr 1fr 1fr,$gap:20px);
+            
+            .card{
+                @include flex(column,center,center);
+                gap: 5px;
+                padding: 20px;
+                background-color: $light-gray-3;
+
+                .title{
+                  @include text(18px, $black, 400);
+                  text-align: center;
+                  line-height: 24px;
+                }
+
+                .desc{
+                  @include text(16px, $gray);
+                }
+                
+            }
+          }
+        }
+
+        .body{
+          .form2{
+            @include flex(row, $wrap:wrap);
+            gap: 15px;
+
+            .label_group{
+              @include flex(row,space-between, center, wrap);
+              gap: 15px;
+              width: 100%;
+
+              .btn-link{
+                color: $blue-link;
+                @include text(16px, $blue-link, 600);
+              }
+            }
+
+            .flex-auto{
+              flex: auto;
+              width: auto;
+            }
+
+            .form-group{
+              @include flex($wrap:wrap);
+              gap: 15px;
+              width: 100%;
+
+              .MuiFormControl-root{
+                flex: 1;
+              }
+            }
+
+            .btn_submit{
+              width: max-content;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.tabs_container{
+  .MuiTabs-root{
+    .MuiTabs-flexContainer{
+      justify-content: center;
+      gap: 2px;
+
+      .MuiTab-root{
+          background-color: $light-gray;
+          @include text(16px, $black, 600);
+          padding: 6px 25px ;
+
+        &.Mui-selected{
+          background-color: $blue;
+          @include text(16px, $white, 600);
+        }
+      }
+    }
+    .MuiTabs-indicator{
+      height: 0px;
+    }
+  }
+}
+
+.tab_panel {
+  .tabs-2{
+    @include flex();
+    background-color: $light-gray-2;
+
+    .tab_panel{
+      flex: 1;
+      background-color: $white;
+    }
+  }
+}
+
+.MuiDialog-root {
+  &.create {
+    .MuiDialog-container {
+      .MuiPaper-root {
+        min-width: 45%;
+        padding: 0px;
+      }
+
+      .MuiDialogContent-root {
+        padding: 0px;
+        overflow-y: hidden;
+        @include flex(column);
+
+        .header {
+          @include flex(row, space-between, center);
+          padding: 15px;
+          border-bottom: 1px solid $light-gray-5;
+        }
+
+        .body {
+          padding: 10px 10px 10px 15px;
+          height: 100%;
+          overflow-y: hidden;
+          @include flex(column, $alignSelf: stretch);
+
+          form {
+            @include flex(column);
+            gap: 15px;
+            height: 100%;
+            overflow-y: auto;
+            padding: 10px 10px 10px 0px;
+
+            &::-webkit-scrollbar-thumb {
+              background: $light-blue-2;
+              border-radius: 10px;
+            }
+
+            &::-webkit-scrollbar {
+              width: 8px;
+              background-color: $light-blue;
+            }
+          }
+        }
+      }
+    }
+  }
+}
