@@ -16,6 +16,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { TimePicker } from '@mui/x-date-pickers';
+import Autocomplete from '@mui/material/Autocomplete';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export default function FormFields({
   label,
@@ -25,21 +27,38 @@ export default function FormFields({
   onChange,
   placeholder,
   error,
-  width=true,
+  width = true,
   helperText,
-  type,  // Default is 'text', can be 'password' or 'select'
-  options = [],  // For Select field options
+  type, // Can be 'text', 'password', 'select', 'date', 'time', or 'autocomplete'
+  options = [], // For select/autocomplete field options
   handleBtnClick,
-  optionalCname
+  optionalCname,
 }) {
   const [showPassword, setShowPassword] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event) => event.preventDefault();
+
+  const handleOpenAutocomplete = () => {
+    setOpen(true);
+    if (!options.length) {
+      setLoading(true);
+      // Simulate async data loading
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+    }
+  };
+
+  const handleCloseAutocomplete = () => {
+    setOpen(false);
+  };
+
   const [timeValue, setTimeValue] = React.useState(
     value ? dayjs(value, 'HH:mm:ss') : null
   );
-
 
   React.useEffect(() => {
     if (value) {
@@ -72,14 +91,15 @@ export default function FormFields({
         </FormControl>
       ) : type === 'password' ? (
         <FormControl variant="outlined" fullWidth size="small">
-          <InputLabel htmlFor="outlined-adornment-password" size="small">{label}</InputLabel>
+          <InputLabel htmlFor="outlined-adornment-password" size="small">
+            {label}
+          </InputLabel>
           <OutlinedInput
             id="outlined-adornment-password"
             type={showPassword ? 'text' : 'password'}
             value={value}
             name={name}
             onChange={onChange}
-            
             endAdornment={
               <InputAdornment position="end">
                 <IconButton
@@ -88,7 +108,7 @@ export default function FormFields({
                   onMouseDown={handleMouseDownPassword}
                   edge="end"
                 >
-                  {showPassword ? <VisibilityOff fontSize='small'/> : <Visibility fontSize='small'/>}
+                  {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                 </IconButton>
               </InputAdornment>
             }
@@ -97,8 +117,7 @@ export default function FormFields({
             size="small"
           />
         </FormControl>
-      ) 
-      : type === 'date' ? (
+      ) : type === 'date' ? (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
             label={label}
@@ -141,8 +160,38 @@ export default function FormFields({
             }}
           />
         </LocalizationProvider>
-      ) 
-      : type ? (
+      ) : type === 'autocomplete' ? (
+        <Autocomplete
+          sx={{ minWidth: '280px' }}
+          open={open}
+          onOpen={handleOpenAutocomplete}
+          onClose={handleCloseAutocomplete}
+          options={options}
+          isOptionEqualToValue={(option, value) => option === value}
+          getOptionLabel={(option) => option}
+          loading={loading}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={label}
+              size='small'
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          value={value}
+          onChange={(event, newValue) => {
+            onChange({ target: { name, value: newValue } });
+          }}
+        />
+      ) : type ? (
         <TextField
           label={label}
           name={name}
@@ -157,10 +206,10 @@ export default function FormFields({
           size="small"
           className={optionalCname}
         />
-      ): (
+      ) : (
         <Box className="label_group">
-          <Typography className='label'>{label}</Typography>
-          {btn && <Link className='btn-link' onClick={handleBtnClick}>{btn}</Link>}
+          <Typography className="label">{label}</Typography>
+          {btn && <Link className="btn-link" onClick={handleBtnClick}>{btn}</Link>}
         </Box>
       )}
     </>

@@ -8,7 +8,7 @@ function ToDo() {
     const data = [
         {id:1, title:'Travel Time', desc:'Home Page', to:`/todo/travel-time`},
         {id:2, title:'AQI API', desc:'Home Page', to:`/todo/aqi-api`},
-        {id:3, title:'Clock Page', desc:'Home Page', to:`/todo/clock-page`},
+        {id:3, title:'Clock Page', desc:'Home Page', to:`/todo/clock`},
         {id:4, title:'City Events Notice', desc:'Home Page', to:`/todo/city-events`},
         {id:5, title:'District Administration Notice', desc:'Home Page', to:`/todo/district-administration`},
         {id:6, title:'Ambarsariya Mall Events Notice', desc:'Home Page', to:`/todo/ambarsariya-mall-events`},
