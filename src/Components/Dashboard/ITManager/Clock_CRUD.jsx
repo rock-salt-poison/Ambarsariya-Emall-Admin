@@ -3,8 +3,13 @@ import { Box, Button } from "@mui/material";
 import FormFields from "../../Form/FormFields";
 import CustomSnackbar from "../../CustomSnackbar";
 import axios from "axios";
+import symbol from "../../../API/currencySymbol.json";
+import { get_countries, post_countries } from "../../../API/expressAPI";
 
 function Clock_CRUD() {
+  const open_weather_api_key = process.env.REACT_APP_OPENWEATHERMAP_API_KEY;
+  const country_api_key = process.env.REACT_APP_COUNTRY_API_KEY;
+
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
@@ -14,47 +19,202 @@ function Clock_CRUD() {
     severity: "success",
   });
 
-  const [countryNames, setCountryNames] =useState([]);
+  const [countryNames, setCountryNames] = useState([]);
 
   const initialFormData = {
     country_name_1: "",
+    country_code_1: "",
     capital_1: "",
+    time_1: "",
     currency_1: "",
     country_name_2: "",
+    country_code_2: "",
     capital_2: "",
+    time_2: "",
     currency_2: "",
     country_name_3: "",
+    country_code_3: "",
     capital_3: "",
+    time_3: "",
     currency_3: "",
     country_name_4: "",
+    country_code_4: "",
     capital_4: "",
+    time_4: "",
     currency_4: "",
     country_name_5: "",
+    country_code_5: "",
     capital_5: "",
+    time_5: "",
     currency_5: "",
     country_name_6: "",
+    country_code_6: "",
     capital_6: "",
+    time_6: "",
     currency_6: "",
+    currency_code_1: "",
+    currency_code_2: "",
+    currency_code_3: "",
+    currency_code_4: "",
+    currency_code_5: "",
+    currency_code_6: "",
   };
 
-  const fetchCountryNames =  async () => {
+  const fetchCountryNames = async () => {
     try {
-        const res = await axios.get('https://flagcdn.com/en/codes.json');
-        if (res) {
-            const resp = Object.values(res.data);
-            setCountryNames(resp);
-    }
+      const res = await axios.get("https://flagcdn.com/en/codes.json");
+      if (res) {
+        const resp = Object.values(res.data);
+        setCountryNames(resp);
+      }
     } catch (error) {
-        console.error("Error fetching data:", error);
+      console.error("Error fetching data:", error);
     }
-  }
+  };
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+
+    // Update formData state
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: value,
-    });
+    }));
+
+    // Check if the changed field is a country_name field
+    if (name.startsWith("country_name_")) {
+      const countryIndex = name.split("_")[2]; // Extract the index from the field name (e.g., "country_name_1" -> "1")
+      await fetchCountryDetails(value, countryIndex); // Fetch details based on the new country name
+    }
+  };
+
+  const fetchCapitalTime = async (city) => {
+    try {
+      // Check if the city is the United Kingdom (or London)
+      if (
+        city.toLowerCase() === "london" ||
+        city.toLowerCase() === "united kingdom"
+      ) {
+        return "+00:00"; // Return UK timezone directly
+      }
+
+      // Get the weather data from OpenWeatherMap API
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather`,
+        {
+          params: {
+            q: city,
+            appid: open_weather_api_key,
+          },
+        }
+      );
+
+      console.log("API Response:", response.data); // Log the response to check the data
+
+      if (response.data && response.data.timezone) {
+        const timezoneOffset = response.data.timezone; // The timezone offset in seconds
+        const timezoneHours = Math.floor(timezoneOffset / 3600); // Convert seconds to hours
+        const timezoneMinutes = Math.floor((timezoneOffset % 3600) / 60); // Get minutes
+        const timezone = ` ${timezoneHours >= 0 ? "+" : "-"}${Math.abs(
+          timezoneHours
+        )
+          .toString()
+          .padStart(2, "0")}:${Math.abs(timezoneMinutes)
+          .toString()
+          .padStart(2, "0")}`;
+
+        return timezone;
+      } else {
+        return "N/A"; // If no timezone is found, return "N/A"
+      }
+    } catch (error) {
+      console.error("Error fetching capital time from OpenWeatherMap:", error);
+      return "N/A"; // Return "N/A" in case of any error
+    }
+  };
+
+  const fetchCountryDetails = async (countryName, index) => {
+    try {
+      const response = await axios.get(
+        "https://api.api-ninjas.com/v1/country",
+        {
+          params: { name: countryName },
+          headers: { "X-Api-Key": country_api_key },
+        }
+      );
+
+      if (response.data && response.data.length > 0) {
+        const countryData = response.data[0];
+        const capitalTime = countryData.capital
+          ? await fetchCapitalTime(countryData.capital)
+          : "N/A";
+        const currency_code = countryData.currency.code;
+
+        const currency_symbol = currency_code
+          ? symbol.find((item) => item.abbreviation === currency_code)
+          : "";
+
+        setFormData((prevData) => ({
+          ...prevData,
+          [`country_code_${index}`]: countryData.iso2 || "",
+          [`capital_${index}`]: countryData.capital || "",
+          [`time_${index}`]: capitalTime ? capitalTime : "",
+          [`currency_code_${index}`]: `${currency_symbol?.symbol} ` || " ",
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching country details:", error);
+    }
+  };
+
+  const fetch_countries_from_database = async () => {
+    try {
+      const res = await get_countries();
+      if (res.message === "Valid") {
+        const data = res.data;
+        setFormData({
+          country_name_1: data ? data[0].country_name : "",
+          country_name_2: data ? data[1].country_name : "",
+          country_name_3: data ? data[2].country_name : "",
+          country_name_4: data ? data[3].country_name : "",
+          country_name_5: data ? data[4].country_name : "",
+          country_name_6: data ? data[5].country_name : "",
+          country_code_1: data ? data[0].country_code : "",
+          country_code_2: data ? data[1].country_code : "",
+          country_code_3: data ? data[2].country_code : "",
+          country_code_4: data ? data[3].country_code : "",
+          country_code_5: data ? data[4].country_code : "",
+          country_code_6: data ? data[5].country_code : "",
+          capital_1: data ? data[0].country_capital : "",
+          capital_2: data ? data[1].country_capital : "",
+          capital_3: data ? data[2].country_capital : "",
+          capital_4: data ? data[3].country_capital : "",
+          capital_5: data ? data[4].country_capital : "",
+          capital_6: data ? data[5].country_capital : "",
+          currency_1: data ? data[0].currency : "",
+          currency_2: data ? data[1].currency : "",
+          currency_3: data ? data[2].currency : "",
+          currency_4: data ? data[3].currency : "",
+          currency_5: data ? data[4].currency : "",
+          currency_6: data ? data[5].currency : "",
+          currency_code_1: data ? data[0].currency_code : "",
+          currency_code_2: data ? data[1].currency_code : "",
+          currency_code_3: data ? data[2].currency_code : "",
+          currency_code_4: data ? data[3].currency_code : "",
+          currency_code_5: data ? data[4].currency_code : "",
+          currency_code_6: data ? data[5].currency_code : "",
+          time_1: data ? data[0].capital_time : "",
+          time_2: data ? data[1].capital_time : "",
+          time_3: data ? data[2].capital_time : "",
+          time_4: data ? data[3].capital_time : "",
+          time_5: data ? data[4].capital_time : "",
+          time_6: data ? data[5].capital_time : "",
+        });
+      }
+      console.log(res);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -67,30 +227,32 @@ function Clock_CRUD() {
       }
     });
 
-    if (!formData["date"]) formErrors["date"] = "Date is required";
-    if (!formData["time_from"])
-      formErrors["time_from"] = "Time From is required";
-    if (!formData["time_to"]) formErrors["time_to"] = "Time To is required";
-
     setErrors(formErrors);
 
-    // try {
-    //     const resp = await post_travel_time(data);
-    //     setSnackbar({
-    //         open: true,
-    //         message: resp ? "Details stored successfully." : "Failed to store details.",
-    //         severity: resp ? "success" : "error",
-    //     });
-    // } catch {
-    //     setSnackbar({ open: true, message: "Failed to store details.", severity: "error" });
-    // }
-    // }
+    if (Object.keys(formErrors).length === 0) {
+      try {
+        const resp = await post_countries(formData);
+        setSnackbar({
+          open: true,
+          message: resp
+            ? "Details stored successfully."
+            : "Failed to store details.",
+          severity: resp ? "success" : "error",
+        });
+      } catch {
+        setSnackbar({
+          open: true,
+          message: "Failed to store details.",
+          severity: "error",
+        });
+      }
+    }
   };
-  console.log(formData);
 
   useEffect(() => {
     setFormData(initialFormData);
     fetchCountryNames();
+    fetch_countries_from_database();
   }, []);
 
   const fields = [
@@ -113,6 +275,12 @@ function Clock_CRUD() {
         },
         {
           id: 3,
+          label: "Capital Time",
+          name: "time_1",
+          type: "text",
+        },
+        {
+          id: 4,
           label: "Currency Equivalent to Rs. 100",
           name: "currency_1",
           type: "text",
@@ -138,6 +306,12 @@ function Clock_CRUD() {
         },
         {
           id: 3,
+          label: "Capital Time",
+          name: "time_2",
+          type: "text",
+        },
+        {
+          id: 4,
           label: "Currency Equivalent to Rs. 100",
           name: "currency_2",
           type: "text",
@@ -163,6 +337,12 @@ function Clock_CRUD() {
         },
         {
           id: 3,
+          label: "Capital Time",
+          name: "time_3",
+          type: "text",
+        },
+        {
+          id: 4,
           label: "Currency Equivalent to Rs. 100",
           name: "currency_3",
           type: "text",
@@ -188,6 +368,12 @@ function Clock_CRUD() {
         },
         {
           id: 3,
+          label: "Capital Time",
+          name: "time_4",
+          type: "text",
+        },
+        {
+          id: 4,
           label: "Currency Equivalent to Rs. 100",
           name: "currency_4",
           type: "text",
@@ -213,6 +399,12 @@ function Clock_CRUD() {
         },
         {
           id: 3,
+          label: "Capital Time",
+          name: "time_5",
+          type: "text",
+        },
+        {
+          id: 4,
           label: "Currency Equivalent to Rs. 100",
           name: "currency_5",
           type: "text",
@@ -238,6 +430,13 @@ function Clock_CRUD() {
         },
         {
           id: 3,
+          label: "Capital Time",
+          value: "&#8366;",
+          name: "time_6",
+          type: "text",
+        },
+        {
+          id: 4,
           label: "Currency Equivalent to Rs. 100",
           name: "currency_6",
           type: "text",
