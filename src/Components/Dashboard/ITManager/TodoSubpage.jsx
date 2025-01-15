@@ -7,13 +7,26 @@ import Tabs from '../DashboardContent/Tabs';
 import Form from '../DashboardContent/Form';
 import { fieldsData } from '../../../fieldsData';
 import { crudFieldsData } from '../../../crudFieldData';
+import { noticeFieldData } from '../../../noticeFieldData';
 import CRUD from '../DashboardContent/CRUD';
 import Clock_CRUD from './Clock_CRUD';
+import Notice from './Notice';
 
 function TodoSubpage() {
   const { page } = useParams();
   const formatPageName = (page) => page.replace(/-/g, '_');
-  const title = page.replace(/-/g, ' ');
+
+  const convert_case_to_capitalize = (title) => {
+    if (title) {
+      const title_array = title.split("-");
+      const resp = title_array.map(
+        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+      );
+      const heading = resp.join(" ");
+      return heading;
+    }
+  };
+
 
   const tabsData = [
     { id: 1, name: 'API', content: <Form page={formatPageName(page)} fieldsData={fieldsData} /> },
@@ -26,13 +39,15 @@ function TodoSubpage() {
     <Box className="body">
       <BreadCrumbs main_page="To Do" redirectTo="../todo" />
       <Box className="content">
-        <BoxHeader title={title} />
+        <BoxHeader title={convert_case_to_capitalize(page)} />
         <Box className="body">
         {page === "travel-time" ? (
           <Tabs data={tabsData} />
         ) : page === "aqi-api" ? (
           <Form page={formatPageName(page)} fieldsData={fieldsData} />
-        ): page === "clock" && <Clock_CRUD page="airline_arrival" />
+        ): page === "clock" ? (
+          <Clock_CRUD page="airline_arrival" />
+        ): (page === "district-administration" || page === "city-events" || page === "ambarsariya-mall-events" || page === "thought-of-the-day") && <Notice page={formatPageName(page)} title={convert_case_to_capitalize(page)} fieldsData={noticeFieldData}/>
         }
         </Box>
       </Box>

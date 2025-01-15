@@ -5,6 +5,7 @@ import Dashboard from "./Pages/Dashboard";
 import TodoSubpage from "./Components/Dashboard/ITManager/TodoSubpage";
 import AuthLayout from "./Pages/AuthLayout";
 import ToDo from "./Components/Dashboard/ITManager/ToDo";
+import 'rsuite/DateRangePicker/styles/index.css';
 
 function App() {
   return (

@@ -38,3 +38,26 @@ export const get_countries = async () => {
         throw e;
     }
 }
+
+export const post_notice = async (data) => {
+    try{
+        const response = await axios.post(`${admin_link}/notice`, data);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_notice = async (title) => {
+    try{
+        if(title){
+            const response = await  axios.get(`${admin_link}/notice/${title}`);
+            return response.data;
+        }else{
+            const response = await  axios.get(`${admin_link}/notices`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+}
