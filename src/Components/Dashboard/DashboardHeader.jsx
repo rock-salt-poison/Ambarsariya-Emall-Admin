@@ -5,7 +5,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 function DashboardHeader({user}) {
   return (
     <Box className="header">
-        <Typography className='heading dark'>{user} Dashboard</Typography>
+        <Typography className='heading dark'>{user} Dashboard...</Typography>
         <NotificationsIcon/>
     </Box>
   )
