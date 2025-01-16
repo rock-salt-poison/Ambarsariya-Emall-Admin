@@ -35,7 +35,8 @@ export default function FormFields({
   helperText,
   type, // Can be 'text', 'password', 'select', 'date', 'time', or 'autocomplete'
   options = [], // For select/autocomplete field options
-  handleBtnClick,
+  handleAddClick,
+  handleRemoveClick,
   optionalCname,
   required,
 }) {
@@ -289,8 +290,12 @@ export default function FormFields({
       ) : (
         <Box className="label_group">
           <Typography className="label">{label}</Typography>
-          {btn && (
-            <Link className="btn-link" onClick={handleBtnClick}>
+          {(btn==="Add" || btn==="add") ? (
+            <Link className="btn-link" onClick={handleAddClick}>
+              {btn}
+            </Link>
+          ): (btn==="Remove" || btn==="remove") && (
+            <Link className="btn-link remove" onClick={handleRemoveClick}>
               {btn}
             </Link>
           )}

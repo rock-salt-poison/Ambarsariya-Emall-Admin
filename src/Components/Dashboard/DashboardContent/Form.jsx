@@ -119,7 +119,7 @@ function Form({ page, fieldsData }) {
                         onChange={handleChange}
                         helperText={errors[field.name]}
                         btn={field.btn && field.btn}
-                        handleBtnClick={handleAddField}
+                        handleAddClick={handleAddField}
                         optionalCname={field.cName}
                     />
                     {field.fields && (

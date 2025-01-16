@@ -6,7 +6,7 @@ import CustomSnackbar from "../../CustomSnackbar";
 import { post_notice } from "../../../API/expressAPI";
 import { noticeFieldData } from "../../../noticeFieldData"; // Import your fields data
 
-function Notice({ page, fieldsData, title }) {
+function LEDBoard({ page, fieldsData, title }) {
   const [category, setCategory] = useState(fieldsData[0]); // Default category
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -55,6 +55,67 @@ function Notice({ page, fieldsData, title }) {
       }));
     }
   };
+
+  // Handle Add Button Click for LED_board_display
+  const handleAddField = () => {
+    const currentFields = noticeFieldData.LED_board_display;
+    const lastField = currentFields[currentFields.length - 1];
+    const newMessageNumber = currentFields.filter((field) => field.name?.startsWith("message_")).length + 1;
+
+    // Create new fields
+    const newFields = [
+      {
+        id: (lastField?.id || 0) + 1,
+        label: `Message ${newMessageNumber}`,
+        btn: "remove",
+      },
+      {
+        id: (lastField?.id || 0) + 2,
+        label: "Message",
+        name: `message_${newMessageNumber}`,
+        type: "text",
+      },
+    ];
+
+    // Add new fields to noticeFieldData
+    noticeFieldData.LED_board_display.push(...newFields);
+
+    // Reinitialize formData with the updated fields
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [`message_${newMessageNumber}`]: "",
+    }));
+  };
+
+  // Handle Remove Button Click for LED_board_display
+  const handleRemoveField = (labelValue) => {
+    // Find the index of the label field
+    const currentFields = noticeFieldData.LED_board_display;
+    const fieldIndex = currentFields.findIndex((field) => field.label === labelValue);
+  
+    if (fieldIndex !== -1) {
+      // Identify the label and the corresponding text field
+      const labelField = currentFields[fieldIndex];
+      const textField = currentFields[fieldIndex + 1]; // Text field follows the label field
+  
+      if (textField?.name) {
+        // Update noticeFieldData by removing the label and text field
+        noticeFieldData.LED_board_display = currentFields.filter(
+          (field, index) => index !== fieldIndex && index !== fieldIndex + 1
+        );
+  
+        // Remove the corresponding value from formData
+        setFormData((prevFormData) => {
+          const updatedFormData = { ...prevFormData };
+          delete updatedFormData[textField.name];
+          return updatedFormData;
+        });
+      }
+    }
+  };
+  
+  
+  
   
 
   // Handle form submission
@@ -77,37 +138,37 @@ function Notice({ page, fieldsData, title }) {
     setErrors(formErrors);
 
     if (Object.keys(formErrors).length === 0) {
-      try {
-        const data = new FormData();
+      // try {
+      //   const data = new FormData();
 
-        Object.entries(formData).forEach(([key, value]) => {
-          if (key === "date_range" && Array.isArray(value)) {
-            data.append("from_date", new Date(value[0]).toLocaleDateString("en-CA"));
-            data.append("to_date", new Date(value[1]).toLocaleDateString("en-CA"));
-          } else {
-            data.append(key, value);
-          }
-        });
+      //   Object.entries(formData).forEach(([key, value]) => {
+      //     if (key === "date_range" && Array.isArray(value)) {
+      //       data.append("from_date", new Date(value[0]).toLocaleDateString("en-CA"));
+      //       data.append("to_date", new Date(value[1]).toLocaleDateString("en-CA"));
+      //     } else {
+      //       data.append(key, value);
+      //     }
+      //   });
 
-        data.append("title", title);
+      //   data.append("title", title);
 
-        // Call the API
-        const resp = await post_notice(data);
+      //   // Call the API
+      //   const resp = await post_notice(data);
 
-        // Show success message
-        setSnackbar({
-          open: true,
-          message: resp ? "Details stored successfully." : "Failed to store details.",
-          severity: resp ? "success" : "error",
-        });
-      } catch (e) {
-        console.error("Error during notice submission:", e);
-        setSnackbar({
-          open: true,
-          message: "Failed to store details.",
-          severity: "error",
-        });
-      }
+      //   // Show success message
+      //   setSnackbar({
+      //     open: true,
+      //     message: resp ? "Details stored successfully." : "Failed to store details.",
+      //     severity: resp ? "success" : "error",
+      //   });
+      // } catch (e) {
+      //   console.error("Error during notice submission:", e);
+      //   setSnackbar({
+      //     open: true,
+      //     message: "Failed to store details.",
+      //     severity: "error",
+      //   });
+      // }
     }
   };
 
@@ -138,6 +199,9 @@ function Notice({ page, fieldsData, title }) {
             helperText={errors[field.name]}
             optionalCname={field.cName}
             required={field.required}
+            btn={field.btn}
+            handleAddClick={handleAddField}
+            handleRemoveClick={() => handleRemoveField(field.label)} // Pass field name for removal
           />
         </React.Fragment>
       ))}
@@ -158,4 +222,4 @@ function Notice({ page, fieldsData, title }) {
   );
 }
 
-export default Notice;
+export default LEDBoard;

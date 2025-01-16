@@ -143,4 +143,18 @@ export const noticeFieldData = {
       type: "message",
     },
   ],
+
+  LED_board_display: [
+    {
+      id: 1,
+      label: "Message 1",
+      btn: 'Add',
+    },    
+    {
+      id: 2,
+      label: "Message",
+      name: "message_1",
+      type: "text",
+    },
+  ],
 };

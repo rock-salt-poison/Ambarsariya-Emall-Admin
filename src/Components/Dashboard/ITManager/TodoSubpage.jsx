@@ -11,6 +11,7 @@ import { noticeFieldData } from '../../../noticeFieldData';
 import CRUD from '../DashboardContent/CRUD';
 import Clock_CRUD from './Clock_CRUD';
 import Notice from './Notice';
+import LEDBoard from './LEDBoard';
 
 function TodoSubpage() {
   const { page } = useParams();
@@ -47,7 +48,8 @@ function TodoSubpage() {
           <Form page={formatPageName(page)} fieldsData={fieldsData} />
         ): page === "clock" ? (
           <Clock_CRUD page="airline_arrival" />
-        ): (page === "district-administration" || page === "city-events" || page === "ambarsariya-mall-events" || page === "thought-of-the-day") && <Notice page={formatPageName(page)} title={convert_case_to_capitalize(page)} fieldsData={noticeFieldData}/>
+        ): (page === "district-administration" || page === "city-events" || page === "ambarsariya-mall-events" || page === "thought-of-the-day" ) ? <Notice page={formatPageName(page)} title={convert_case_to_capitalize(page)} fieldsData={noticeFieldData}/>
+        : (page === "LED-board-display") && <LEDBoard page={formatPageName(page)} title={convert_case_to_capitalize(page)} fieldsData={noticeFieldData}/>
         }
         </Box>
       </Box>
