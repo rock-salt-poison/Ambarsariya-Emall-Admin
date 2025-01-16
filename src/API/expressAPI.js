@@ -41,7 +41,11 @@ export const get_countries = async () => {
 
 export const post_notice = async (data) => {
     try{
-        const response = await axios.post(`${admin_link}/notice`, data);
+        const response = await axios.post(`${admin_link}/notice`, data, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });        
         return response.data;
     }catch(e){
         throw e;

@@ -16,12 +16,20 @@ export const noticeFieldData = {
     },
     {
       id: 3,
-      label: "Image Link",
+      // label: "Image Link",
       name: "img",
-      type: "url",
+      type: "file",
+      cName:'flex-auto'
     },
     {
       id: 4,
+      label: "From :",
+      name: "from",
+      type: "text",
+      cName:'flex-auto'
+    },
+    {
+      id: 5,
       label: "Message",
       name: "message",
       type: "message",
@@ -60,9 +68,9 @@ export const noticeFieldData = {
     },
     {
       id: 5,
-      label: "Image Link",
+      // label: "Image Link",
       name: "img",
-      type: "url",
+      type: "file",
     },
     {
       id: 6,
@@ -81,13 +89,34 @@ export const noticeFieldData = {
     },
     {
       id: 2,
-      label: "Image Link",
+      // label: "Image Link",
       name: "img",
-      type: "url",
+      type: "file",
       cName:'flex-auto'
     },
     {
       id: 3,
+      label: "Shop",
+      name: "shop",
+      type: "text",
+      cName:'flex-auto',
+    },
+    {
+      id: 4,
+      label: "Member",
+      name: "member",
+      type: "text",
+      cName:'flex-auto',
+    },
+    {
+      id: 5,
+      label: "Community",
+      name: "community",
+      type: "text",
+      cName:'flex-auto',
+    },
+    {
+      id: 6,
       label: "Message",
       name: "message",
       type: "message",
@@ -103,10 +132,9 @@ export const noticeFieldData = {
     },
     {
       id: 2,
-      label: "Image Link",
+      // label: "Image Link",
       name: "img",
-      type: "url",
-      cName:'flex-auto'
+      type: "file",
     },
     {
       id: 3,

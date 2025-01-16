@@ -17,14 +17,16 @@ function Notice({ page, fieldsData, title }) {
     severity: "success",
   });
 
+  // Generate initial form data based on fields
   const generateInitialData = (fields) => {
     const data = {};
     fields.forEach((field) => {
-      data[field.name] = field.value || "";
+      data[field.name] = field.value || (field.type === "file" ? null : "");
     });
     return data;
   };
 
+  // Handle category change
   const handleCategoryChange = (key) => {
     const fields = fieldsData[key] || [];
     setCategory(key);
@@ -33,6 +35,7 @@ function Notice({ page, fieldsData, title }) {
     });
   };
 
+  // Handle input changes for text, number, etc.
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({
@@ -41,58 +44,72 @@ function Notice({ page, fieldsData, title }) {
     }));
   };
 
+  // Handle file input changes
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        img: file, // Store the actual file in state
+      }));
+    }
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formErrors = {};
 
-    Object.keys(formData).forEach((field) => {
-      if (!formData[field] && !Array.isArray(formData[field])) {
-        formErrors[field] = `${field} is required`;
+    // Validate required fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (!value && key !== "img") {
+        formErrors[key] = `${key} is required`;
       }
     });
+
+    // Check if the file is missing
+    if (!formData.img) {
+      formErrors.img = "Image is required";
+    }
 
     setErrors(formErrors);
 
     if (Object.keys(formErrors).length === 0) {
-        console.log(new Date(formData.date_range[0]).toLocaleDateString("en-CA"));
-        if (title) {
-          try {
-            const {
-              to,
-              date_range,
-              time,
-              location,
-              entry_fee,
-              img,
-              message,
-            } = formData; // Destructure formData here
-  
-            const data = {
-              ...formData,
-              title,
-              to,
-              from_date: new Date(date_range[0]).toLocaleDateString("en-CA"), // Assuming date_range is an array
-              to_date: new Date(date_range[1]).toLocaleDateString("en-CA"),   // Assuming date_range is an array
-              time,
-              location,
-              entry_fee,
-              img,
-              message,
-            };
-  
-            const resp = await post_notice(data);
-            setSnackbar({
-              open: true,
-              message: resp ? "Details stored successfully." : "Failed to store details.",
-              severity: resp ? "success" : "error",
-            });
-          } catch (e) {
-            setSnackbar({ open: true, message: "Failed to store details.", severity: "error" });
-          }
-        }
-      }
-    };
+      try {
+        const data = new FormData();
 
+        Object.entries(formData).forEach(([key, value]) => {
+          if (key === "date_range" && Array.isArray(value)) {
+            data.append("from_date", new Date(value[0]).toLocaleDateString("en-CA"));
+            data.append("to_date", new Date(value[1]).toLocaleDateString("en-CA"));
+          } else {
+            data.append(key, value);
+          }
+        });
+
+        data.append("title", title);
+
+        // Call the API
+        const resp = await post_notice(data);
+
+        // Show success message
+        setSnackbar({
+          open: true,
+          message: resp ? "Details stored successfully." : "Failed to store details.",
+          severity: resp ? "success" : "error",
+        });
+      } catch (e) {
+        console.error("Error during notice submission:", e);
+        setSnackbar({
+          open: true,
+          message: "Failed to store details.",
+          severity: "error",
+        });
+      }
+    }
+  };
+
+  // Initialize the form data based on the selected category
   useEffect(() => {
     handleCategoryChange(page);
   }, [page]);
@@ -111,14 +128,14 @@ function Notice({ page, fieldsData, title }) {
           <FormFields
             label={field.label}
             name={field.name}
-            value={formData[field.name]} // Bind value to formData
+            value={field.type !== "file" ? formData[field.name] || "" : undefined} // Bind value for non-file fields
             type={field.type}
             options={field.options}
             error={!!errors[field.name]}
-            onChange={handleChange} // Pass the onChange handler
+            onChange={field.type === "file" ? handleFileChange : handleChange} // Handle file or text changes
             helperText={errors[field.name]}
             optionalCname={field.cName}
-            required={true}
+            required={field.required}
           />
         </React.Fragment>
       ))}
