@@ -52,6 +52,8 @@ const AuthLayout = () => {
         navigate("../todo");
       }else if (selectedItem === "To-Do") {
         navigate("../todo");
+      }else if (selectedItem === "Accounts") {
+        navigate("../accounts");
       }
     }
   }, [selectedItem]);

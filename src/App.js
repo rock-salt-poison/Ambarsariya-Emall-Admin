@@ -6,6 +6,7 @@ import TodoSubpage from "./Components/Dashboard/ITManager/TodoSubpage";
 import AuthLayout from "./Pages/AuthLayout";
 import ToDo from "./Components/Dashboard/ITManager/ToDo";
 import 'rsuite/DateRangePicker/styles/index.css';
+import Accounts from "./Components/Dashboard/Accounts/Accounts";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/todo" element={<ToDo />} />
         <Route path="/todo/:page" element={<TodoSubpage />} />
+        <Route path="/accounts" element={<Accounts />} />
       </Route>
     </Routes>
   );
