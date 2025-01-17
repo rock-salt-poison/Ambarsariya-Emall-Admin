@@ -65,3 +65,45 @@ export const get_notice = async (title) => {
         throw e;
     }
 }
+
+export const get_led_board_message = async () => {
+    try{
+        const response = await axios.get(`${admin_link}/led-board-messages`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const post_led_board_message = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_link}/led-board-messages`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const put_led_board_message = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.put(`${admin_link}/led-board-messages`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const delete_led_board_message = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.delete(`${admin_link}/led-board-message/${data.id}`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 

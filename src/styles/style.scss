@@ -405,10 +405,10 @@ a{
               .btn-link{
                 color: $blue-link;
                 @include text(16px, $blue-link, 600);
+                text-transform: capitalize;
                 
                 &.remove{
                   color: $error;
-                  text-transform: capitalize;
                 }
               }
             }

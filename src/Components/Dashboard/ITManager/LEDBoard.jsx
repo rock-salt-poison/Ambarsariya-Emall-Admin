@@ -3,12 +3,13 @@ import { Box, Button } from "@mui/material";
 import FormFields from "../../Form/FormFields";
 import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
-import { post_notice } from "../../../API/expressAPI";
+import { get_led_board_message, post_notice } from "../../../API/expressAPI";
 import { noticeFieldData } from "../../../noticeFieldData"; // Import your fields data
 
 function LEDBoard({ page, fieldsData, title }) {
   const [category, setCategory] = useState(fieldsData[0]); // Default category
   const [formData, setFormData] = useState({});
+  const [dynamicFields, setDynamicFields] = useState(noticeFieldData.LED_board_display);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
@@ -22,7 +23,9 @@ function LEDBoard({ page, fieldsData, title }) {
   const generateInitialData = (fields) => {
     const data = {};
     fields.forEach((field) => {
-      data[field.name] = field.value || (field.type === "file" ? null : "");
+      if (field.name) {
+        data[field.name] = field.value || ""; // Only add fields with a 'name' to formData
+      }
     });
     return data;
   };
@@ -45,24 +48,10 @@ function LEDBoard({ page, fieldsData, title }) {
     }));
   };
 
-  // Handle file input changes
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        img: file, // Store the actual file in state
-      }));
-    }
-  };
-
-  // Handle Add Button Click for LED_board_display
   const handleAddField = () => {
-    const currentFields = noticeFieldData.LED_board_display;
-    const lastField = currentFields[currentFields.length - 1];
-    const newMessageNumber = currentFields.filter((field) => field.name?.startsWith("message_")).length + 1;
+    const lastField = dynamicFields[dynamicFields.length - 1];
+    const newMessageNumber = dynamicFields.filter((field) => field.name?.startsWith("message_")).length + 1;
 
-    // Create new fields
     const newFields = [
       {
         id: (lastField?.id || 0) + 1,
@@ -77,34 +66,27 @@ function LEDBoard({ page, fieldsData, title }) {
       },
     ];
 
-    // Add new fields to noticeFieldData
-    noticeFieldData.LED_board_display.push(...newFields);
+    setDynamicFields((prevFields) => [...prevFields, ...newFields]);
 
-    // Reinitialize formData with the updated fields
     setFormData((prevFormData) => ({
       ...prevFormData,
       [`message_${newMessageNumber}`]: "",
     }));
   };
 
-  // Handle Remove Button Click for LED_board_display
   const handleRemoveField = (labelValue) => {
-    // Find the index of the label field
-    const currentFields = noticeFieldData.LED_board_display;
-    const fieldIndex = currentFields.findIndex((field) => field.label === labelValue);
-  
+    const fieldIndex = dynamicFields.findIndex((field) => field.label === labelValue);
+
     if (fieldIndex !== -1) {
-      // Identify the label and the corresponding text field
-      const labelField = currentFields[fieldIndex];
-      const textField = currentFields[fieldIndex + 1]; // Text field follows the label field
-  
+      const textField = dynamicFields[fieldIndex + 1];
+
+      const updatedFields = dynamicFields.filter(
+        (field, index) => index !== fieldIndex && index !== fieldIndex + 1
+      );
+
+      setDynamicFields(updatedFields);
+
       if (textField?.name) {
-        // Update noticeFieldData by removing the label and text field
-        noticeFieldData.LED_board_display = currentFields.filter(
-          (field, index) => index !== fieldIndex && index !== fieldIndex + 1
-        );
-  
-        // Remove the corresponding value from formData
         setFormData((prevFormData) => {
           const updatedFormData = { ...prevFormData };
           delete updatedFormData[textField.name];
@@ -115,8 +97,6 @@ function LEDBoard({ page, fieldsData, title }) {
   };
   
   
-  
-  
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -125,18 +105,13 @@ function LEDBoard({ page, fieldsData, title }) {
 
     // Validate required fields
     Object.entries(formData).forEach(([key, value]) => {
-      if (!value && key !== "img") {
+      if (!value) {
         formErrors[key] = `${key} is required`;
       }
     });
 
-    // Check if the file is missing
-    if (!formData.img) {
-      formErrors.img = "Image is required";
-    }
-
     setErrors(formErrors);
-
+    
     if (Object.keys(formErrors).length === 0) {
       // try {
       //   const data = new FormData();
@@ -175,7 +150,65 @@ function LEDBoard({ page, fieldsData, title }) {
   // Initialize the form data based on the selected category
   useEffect(() => {
     handleCategoryChange(page);
+    fetch_message_from_database();
   }, [page]);
+
+  const fetch_message_from_database = async () => {
+    try {
+      const resp = await get_led_board_message(); // Fetch data from the API
+      console.log(resp);
+  
+      if (resp && resp.length > 0) {
+        // If the response has messages, populate the dynamicFields and formData
+        const newFields = [];
+        const newFormData = {};
+  
+        resp.forEach((message, index) => {
+          const messageNumber = index + 1; // Create dynamic message numbers
+  
+          newFields.push(
+            {
+              id: messageNumber * 2 - 1,
+              label: `Message ${messageNumber}`, // Label for the message
+              btn: messageNumber === 1 ? "Add" : "remove", // First field gets "add", others get "remove"
+            },
+            {
+              id: messageNumber * 2,
+              label: "Message",
+              name: `message_${messageNumber}`, // Field name for the input
+              type: "text",
+            }
+          );
+  
+          newFormData[`message_${messageNumber}`] = message.message; // Populate formData with message content
+        });
+  
+        // Update state with fetched messages
+        setDynamicFields(newFields);
+        setFormData(newFormData);
+      } else {
+        // If no messages exist, reset to default field with an "Add" button
+        setDynamicFields([
+          {
+            id: 1,
+            label: "Message 1",
+            btn: "add", // First field starts with "add"
+          },
+          {
+            id: 2,
+            label: "Message",
+            name: "message_1",
+            type: "text",
+          },
+        ]);
+        setFormData({ message_1: "" });
+      }
+    } catch (e) {
+      console.error("Error fetching messages:", e);
+    }
+  };
+  
+  
 
   const fields = fieldsData[category] || [];
 
@@ -186,7 +219,7 @@ function LEDBoard({ page, fieldsData, title }) {
       onSubmit={handleSubmit}
       className="form2"
     >
-      {[...fields].map((field) => (
+      {dynamicFields.map((field) => (
         <React.Fragment key={field.id}>
           <FormFields
             label={field.label}
@@ -195,7 +228,7 @@ function LEDBoard({ page, fieldsData, title }) {
             type={field.type}
             options={field.options}
             error={!!errors[field.name]}
-            onChange={field.type === "file" ? handleFileChange : handleChange} // Handle file or text changes
+            onChange={handleChange} // Handle file or text changes
             helperText={errors[field.name]}
             optionalCname={field.cName}
             required={field.required}
