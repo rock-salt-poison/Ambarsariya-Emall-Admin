@@ -99,7 +99,6 @@ function LEDBoard({ page, fieldsData, title }) {
   
   const handleDelete = async (id) => {
     try{
-
       const resp = await delete_led_board_message(id);
       if(resp){
         setSnackbar({
@@ -108,7 +107,6 @@ function LEDBoard({ page, fieldsData, title }) {
           severity: "success",
         });
       }
-
     }catch(e){
       setSnackbar({
         open: true,
