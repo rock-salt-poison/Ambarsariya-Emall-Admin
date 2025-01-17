@@ -86,21 +86,10 @@ export const post_led_board_message = async (data) => {
     }
 } 
 
-export const put_led_board_message = async (data) => {
+export const delete_led_board_message = async (id) => {
     try{
-        if(data){
-            const response = await  axios.put(`${admin_link}/led-board-messages`, data);
-            return response.data;
-        }
-    }catch(e){
-        throw e;
-    }
-} 
-
-export const delete_led_board_message = async (data) => {
-    try{
-        if(data){
-            const response = await  axios.delete(`${admin_link}/led-board-message/${data.id}`);
+        if(id){
+            const response = await  axios.delete(`${admin_link}/led-board-message/${id}`);
             return response.data;
         }
     }catch(e){

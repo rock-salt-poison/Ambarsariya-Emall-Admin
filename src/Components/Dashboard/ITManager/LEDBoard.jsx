@@ -3,7 +3,7 @@ import { Box, Button } from "@mui/material";
 import FormFields from "../../Form/FormFields";
 import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
-import { get_led_board_message, post_notice } from "../../../API/expressAPI";
+import { delete_led_board_message, get_led_board_message, post_led_board_message, post_notice } from "../../../API/expressAPI";
 import { noticeFieldData } from "../../../noticeFieldData"; // Import your fields data
 
 function LEDBoard({ page, fieldsData, title }) {
@@ -87,6 +87,7 @@ function LEDBoard({ page, fieldsData, title }) {
       setDynamicFields(updatedFields);
 
       if (textField?.name) {
+        handleDelete((textField.name).split('_')[1]);
         setFormData((prevFormData) => {
           const updatedFormData = { ...prevFormData };
           delete updatedFormData[textField.name];
@@ -96,7 +97,26 @@ function LEDBoard({ page, fieldsData, title }) {
     }
   };
   
-  
+  const handleDelete = async (id) => {
+    try{
+
+      const resp = await delete_led_board_message(id);
+      if(resp){
+        setSnackbar({
+          open: true,
+          message: "Deleted Successfully.",
+          severity: "success",
+        });
+      }
+
+    }catch(e){
+      setSnackbar({
+        open: true,
+        message: "Failed to delete message.",
+        severity: "error",
+      });
+    }
+  }
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -113,37 +133,31 @@ function LEDBoard({ page, fieldsData, title }) {
     setErrors(formErrors);
     
     if (Object.keys(formErrors).length === 0) {
-      // try {
-      //   const data = new FormData();
+      try {
+        const messages = dynamicFields
+        .filter((field) => field.name) // Only include input fields
+        .map((field) => ({
+          id: `${(field.name).split('_')[1]}` || null,
+          text: formData[field.name],
+        }));
+        
+        // Call the API
+        const resp = await post_led_board_message({messages});
 
-      //   Object.entries(formData).forEach(([key, value]) => {
-      //     if (key === "date_range" && Array.isArray(value)) {
-      //       data.append("from_date", new Date(value[0]).toLocaleDateString("en-CA"));
-      //       data.append("to_date", new Date(value[1]).toLocaleDateString("en-CA"));
-      //     } else {
-      //       data.append(key, value);
-      //     }
-      //   });
-
-      //   data.append("title", title);
-
-      //   // Call the API
-      //   const resp = await post_notice(data);
-
-      //   // Show success message
-      //   setSnackbar({
-      //     open: true,
-      //     message: resp ? "Details stored successfully." : "Failed to store details.",
-      //     severity: resp ? "success" : "error",
-      //   });
-      // } catch (e) {
-      //   console.error("Error during notice submission:", e);
-      //   setSnackbar({
-      //     open: true,
-      //     message: "Failed to store details.",
-      //     severity: "error",
-      //   });
-      // }
+        // Show success message
+        setSnackbar({
+          open: true,
+          message: resp ? "Details stored successfully." : "Failed to store details.",
+          severity: resp ? "success" : "error",
+        });
+      } catch (e) {
+        console.error("Error during message submission:", e);
+        setSnackbar({
+          open: true,
+          message: "Failed to store message.",
+          severity: "error",
+        });
+      }
     }
   };
 
@@ -156,7 +170,6 @@ function LEDBoard({ page, fieldsData, title }) {
   const fetch_message_from_database = async () => {
     try {
       const resp = await get_led_board_message(); // Fetch data from the API
-      console.log(resp);
   
       if (resp && resp.length > 0) {
         // If the response has messages, populate the dynamicFields and formData
@@ -211,7 +224,6 @@ function LEDBoard({ page, fieldsData, title }) {
   
 
   const fields = fieldsData[category] || [];
-
   return (
     <Box
       component="form"
