@@ -130,8 +130,7 @@ function Notice({ page, fieldsData, title }) {
           <FormFields
             label={field.label}
             name={field.name}
-            value={formData[field.name] || ""} // Bind value for fields
-            type={field.type}
+            value={field.type !== "file" ? formData[field.name] || "" : undefined}            type={field.type}
             options={field.options}
             error={!!errors[field.name]}
             onChange={field.type === "file" ? handleFileChange : handleChange} // Handle file or text changes
