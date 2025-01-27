@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, {useEffect, useState} from "react";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
@@ -63,21 +63,21 @@ const Drawer = styled(MuiDrawer, {
 }));
 
 export default function MiniDrawer({ onSelectItem, menuItems }) {
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = useState(true);
 
   // const menuItems = [
   //   { name: "Dashboard", icon: <HomeOutlinedIcon /> },
   //   { name: "-", icon: <MailIcon /> },
   // ];
 
-  const [selectedItem, setSelectedItem] = React.useState(menuItems[0].name);
+  const [selectedItem, setSelectedItem] = useState(menuItems[0].name);
 
   const handleItemClick = (item) => {
     setSelectedItem(item.name);
     onSelectItem(item.name);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     onSelectItem(menuItems[0].name);
   }, []);
 

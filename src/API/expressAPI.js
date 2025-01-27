@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const admin_link = `${process.env.REACT_APP_EXPRESS_API_LINK}/admin/api`;
+const link = `${process.env.REACT_APP_EXPRESS_API_LINK}/api/ambarsariya`;
+
 
 export const post_travel_time = async (data) => {
     try{
@@ -85,6 +87,15 @@ export const post_led_board_message = async (data) => {
         throw e;
     }
 } 
+
+export const allShops = async () => {
+    try{
+      const response = await axios.get(`${link}/sell/shops`);
+      return response.data;
+    }catch(error){
+      throw error;
+    }
+  }
 
 export const delete_led_board_message = async (id) => {
     try{

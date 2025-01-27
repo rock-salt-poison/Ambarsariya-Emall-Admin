@@ -1,4 +1,4 @@
-import * as React from "react";
+import React ,{useEffect, useState} from "react";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -19,9 +19,8 @@ import { TimePicker } from "@mui/x-date-pickers";
 import { DateRangePicker } from 'rsuite';
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
-import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-// import Font from "@ckeditor/ckeditor5-font/src/font";
+import ReactQuill from 'react-quill'; // Import ReactQuill for the message2 field
+import 'react-quill/dist/quill.snow.css';
 
 export default function FormFields({
   label,
@@ -34,20 +33,32 @@ export default function FormFields({
   width = true,
   helperText,
   type, // Can be 'text', 'password', 'select', 'date', 'time', or 'autocomplete'
-  options = [], // For select/autocomplete field options
+  options, // For select/autocomplete field options
   handleAddClick,
   handleRemoveClick,
   optionalCname,
   required,
 }) {
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { beforeToday } = DateRangePicker;
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event) => event.preventDefault();
 
+  const [editorInstance, setEditorInstance] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (editorInstance) {
+        console.log("Destroying CKEditor instance...");
+        editorInstance.destroy().catch((error) => {
+          console.error("Error destroying CKEditor instance:", error);
+        });
+      }
+    };
+  }, [editorInstance]);
   const handleOpenAutocomplete = () => {
     setOpen(true);
     if (!options.length) {
@@ -63,11 +74,11 @@ export default function FormFields({
     setOpen(false);
   };
 
-  const [timeValue, setTimeValue] = React.useState(
+  const [timeValue, setTimeValue] = useState(
     value ? dayjs(value, "HH:mm:ss") : null
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (value) {
       if (type === "time") {
         setTimeValue(dayjs(value, "HH:mm:ss")); // Parse time format correctly
@@ -77,24 +88,34 @@ export default function FormFields({
     }
   }, [value, type]);
 
+  const handleSelectChange = (e) => {
+    const { value } = e.target;
+    onChange({
+      target: {
+        name,
+        value
+      }
+    });
+  };
+
   return (
     <>
       {type === "select" ? (
-        <FormControl variant="outlined" fullWidth size="small">
+        <FormControl variant="outlined" fullWidth={width} size="small" >
           <InputLabel>{label}</InputLabel>
           <Select
-            value={value}
-            onChange={onChange}
-            label={label}
-            size="small"
-            name={name}
-          >
-            {options.map((option, index) => (
-              <MenuItem key={index} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
+                  name={name}
+                  value={value || ''}
+                  onChange={(e)=> handleSelectChange(e)}
+                  label={label}
+                >
+                 
+                  {options?.map((option, index) => (
+                    <MenuItem key={index+1} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
         </FormControl>
       ) : type === "password" ? (
         <FormControl variant="outlined" fullWidth size="small">
@@ -185,57 +206,19 @@ export default function FormFields({
         />
       ) : type === "message" ? (
         <Box sx={{ width: "100%" }}>
-          <CKEditor
-            name={name}
-            editor={ClassicEditor}
-            data={value || ""}
-            onChange={(event, editor) => {
-              const data = editor.getData();
+          <ReactQuill
+            value={value || ""}
+            onChange={(newValue) => {
               onChange({
                 target: {
                   name,
-                  value: data, // Return the time in the correct format
+                  value: newValue,
                 },
               });
             }}
-            config={{
-              plugins: [...ClassicEditor.builtinPlugins], // Add Font plugin
-              toolbar: [
-                "heading",
-                "|",
-                "fontFamily",
-                "fontSize",
-                "bold",
-                "italic",
-                "underline",
-                "|",
-                "bulletedList",
-                "numberedList",
-                "|",
-                "blockQuote",
-                "link",
-                "undo",
-                "redo",
-              ],
-              fontFamily: {
-                options: [
-                  "default",
-                  "Arial, Helvetica, sans-serif",
-                  "Courier New, Courier, monospace",
-                  "Georgia, serif",
-                  "Lucida Sans Unicode, Lucida Grande, sans-serif",
-                  "Tahoma, Geneva, sans-serif",
-                  "Times New Roman, Times, serif",
-                  "Trebuchet MS, Helvetica, sans-serif",
-                  "Verdana, Geneva, sans-serif",
-                ],
-              },
-              fontSize: {
-                options: [10, 12, 14, "default", 18, 20, 22, 24, 28],
-                supportAllValues: true,
-              },
-              placeholder: "Type your message here...",
-            }}
+            placeholder="Type your message here..."
+            theme="snow" // Use 'snow' theme
+            style={{ minHeight: 150, width:'100%' }} // Optional: You can set the height of the editor
           />
         </Box>
       ) : type === "autocomplete" ? (

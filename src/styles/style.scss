@@ -413,6 +413,14 @@ a{
               }
             }
 
+            .quill{
+              @include flex(column);
+
+              .ql-container{
+                flex: auto;
+              }
+            }
+
             .flex-auto{
               flex: auto;
               width: auto;

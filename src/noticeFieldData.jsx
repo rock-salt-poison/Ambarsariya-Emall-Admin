@@ -5,34 +5,39 @@ export const noticeFieldData = {
       label: "To : ",
       name: "to",
       type: "text",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 2,
       label: "From-To",
       name: "date_range",
       type: "date-range",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 3,
       // label: "Image Link",
       name: "img",
       type: "file",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 4,
       label: "From :",
       name: "from",
       type: "text",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 5,
       label: "Message",
       name: "message",
       type: "message",
+      required:true
     },
   ],
 
@@ -42,14 +47,18 @@ export const noticeFieldData = {
       label: "From-To",
       name: "date_range",
       type: "date-range",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
+
     },
     {
       id: 2,
       label: "Time",
       name: "time",
       type: "time",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
+
     },
     {
       id: 3,
@@ -57,26 +66,32 @@ export const noticeFieldData = {
       name: "location",
       type: "text",
       value: "Amritsar",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 4,
       label: "Entry Fee",
       name: "entry_fee",
       type: "number",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 5,
       // label: "Image Link",
       name: "img",
       type: "file",
+      required:true
+
     },
     {
       id: 6,
       label: "Message",
       name: "message",
       type: "message",
+      required:true
+
     },
   ],
   ambarsariya_mall_events: [
@@ -85,41 +100,39 @@ export const noticeFieldData = {
       label: "From-To",
       name: "date_range",
       type: "date-range",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 2,
       // label: "Image Link",
       name: "img",
       type: "file",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 3,
       label: "Shop",
-      name: "shop",
-      type: "text",
+      name: "shop_name",
+      type: "select",
+      options: [],
       cName:'flex-auto',
+      required:true
     },
     {
       id: 4,
-      label: "Member",
-      name: "member",
-      type: "text",
-      cName:'flex-auto',
-    },
-    {
-      id: 5,
       label: "Community",
       name: "community",
       type: "text",
       cName:'flex-auto',
     },
     {
-      id: 6,
+      id: 5,
       label: "Message",
       name: "message",
       type: "message",
+      required:true
     },
   ],
   thought_of_the_day: [
@@ -128,19 +141,22 @@ export const noticeFieldData = {
       label: "From-To",
       name: "date_range",
       type: "date-range",
-      cName:'flex-auto'
+      cName:'flex-auto',
+      required:true
     },
     {
       id: 2,
       // label: "Image Link",
       name: "img",
       type: "file",
+      required:true
     },
     {
       id: 3,
       label: "Message",
       name: "message",
       type: "message",
+      required:true
     },
   ],
 
