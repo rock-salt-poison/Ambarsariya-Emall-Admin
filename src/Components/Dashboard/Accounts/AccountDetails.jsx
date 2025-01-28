@@ -25,7 +25,7 @@ function AccountDetails() {
         try {
           const resp = await get_visitorData(token);
           if (resp.valid) {
-            setData(resp?.data[0]);
+            setData(resp?.data);
           }
         } catch (e) {
           console.log(e);
@@ -35,7 +35,7 @@ function AccountDetails() {
         try {
           const resp = await getMemberData(token);
           if (resp.length>0) {
-            setData(resp[0]);
+            setData(resp);
           }
         } catch (e) {
           console.log(e);
@@ -45,7 +45,7 @@ function AccountDetails() {
         try {
           const resp = await getShopUserData(token);
           if (resp.length>0) {
-            setData(resp[0]);
+            setData(resp);
             const coupons = await get_discount_coupons(resp[0].shop_no);
             if(coupons.valid){
                 if(coupons.data.length>0){
@@ -115,7 +115,7 @@ function AccountDetails() {
     {
       id: 2,
       name: "Book E-shop",
-      content:'',
+      content:<AccountsTable data={data} tab={'book-eshop'}/>,
     },
     {
         id: 3,
@@ -129,12 +129,12 @@ function AccountDetails() {
      <BreadCrumbs 
         main_page={`${user_type}s`} 
         redirectTo={`../accounts/${user_type}`}  
-        subpage={data?.name || data?.full_name}
+        subpage={data?.[0].name || data?.[0].full_name}
     />
 
       <Box className="content">
         <BoxHeader
-          title={data?.name || data?.full_name}
+          title={data?.[0].name || data?.[0].full_name}
           searchField={false}
         />
         <Box className="body">

@@ -14,7 +14,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-export default function AccountsTable({ data, tab }) {
+export default function AccountsTable({ data }) {
   const { user_type, token } = useParams();
   const navigate = useNavigate();
   console.log(data);
@@ -36,23 +36,14 @@ export default function AccountsTable({ data, tab }) {
       setTableHeader(["Name", "Phone No.", "Email", "Address", "", ""]);
     } else if (user_type === "shop") {
       if (token) {
-        if(tab === 'book-eshop'){
-          setTableHeader([
-            "Fields",
-            "Details",
-            "",
-            "",
-          ]);
-        }else{
-          setTableHeader([
-            "S No.",
-            "Coupon Type",
-            "Coupon",
-            "Description",
-            "",
-            "",
-          ]);
-        }
+        setTableHeader([
+          "S No.",
+          "Coupon Type",
+          "Coupon",
+          "Description",
+          "",
+          "",
+        ]);
       } else {
         setTableHeader([
           "User Name",
@@ -307,7 +298,7 @@ export default function AccountsTable({ data, tab }) {
                     </TableCell>
                   </TableRow>
                 ))
-              : user_type === "shop" && !token && !tab
+              : user_type === "shop" && !token
               ? data?.map((row) => (
                   <TableRow
                     key={row.shop_access_token}
@@ -334,7 +325,7 @@ export default function AccountsTable({ data, tab }) {
                   </TableRow>
                 ))
               : user_type === "shop" &&
-                token && !tab ?
+                token &&
                 data?.map((row, rowIndex) =>
                   row.coupons?.map((coupon, couponIndex) => (
                     <TableRow key={coupon.coupon_id} hover>
@@ -356,22 +347,7 @@ export default function AccountsTable({ data, tab }) {
                       </TableCell>
                     </TableRow>
                   ))
-                ): user_type === "shop" &&
-                token && tab==='book-eshop' &&
-                Object.entries(data[0]).map(([key, value], index) => (
-                  <TableRow key={index}>
-                    <TableCell sx={{ textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</TableCell>
-                    <TableCell>
-                      {Array.isArray(value) ? value.join(", ") : value?.toString() || "N/A"}
-                    </TableCell>
-                    <TableCell>
-                        <EditIcon />
-                      </TableCell>
-                      <TableCell>
-                        <DeleteIcon />
-                      </TableCell>
-                  </TableRow>
-                ))}
+                )}
           </TableBody>
         </Table>
       </TableContainer>
