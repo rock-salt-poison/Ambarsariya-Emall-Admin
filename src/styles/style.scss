@@ -33,6 +33,15 @@ body {
   font-size: $fontSize !important;
 }
 
+@mixin full-absolute($top: 0px, $right: 0px, $bottom: 0px, $left: 0px) {
+  position: absolute;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
+}
+
+
 @mixin flex(
   $direction: row,
   $justify: flex-start,
@@ -92,6 +101,7 @@ a{
 .link {
   @include text(15px, $light-blue-link, 500);
   text-decoration: none;
+  text-transform: capitalize;
 }
 
 .heading-2 {
@@ -262,10 +272,15 @@ a{
         border-color: $blue;
       }
 
+      div.MuiList-root{
+        padding: 0px;
+      }
+
       .MuiList-root {
         padding: 20px 0px;
         @include flex(column, center, center);
         gap: 5px;
+        width: 100%;
 
         .MuiListItem-root {
           .item {
@@ -339,7 +354,7 @@ a{
 
         .col {
           overflow-x: auto;
-          padding: 0 15px 15px;
+          padding: 15px 15px;
 
           table {
             thead {
@@ -357,6 +372,7 @@ a{
                 td {
                   @include text(16px);
                   padding: 12px;
+                  white-space: nowrap;
                 }
 
                 &:last-child {
@@ -454,12 +470,13 @@ a{
 
       .MuiTab-root{
           background-color: $light-gray;
-          @include text(16px, $black, 600);
-          padding: 6px 25px ;
+          @include text(15px, $black, 600);
+          padding: 10px 25px;
+          min-height: max-content;
 
         &.Mui-selected{
           background-color: $blue;
-          @include text(16px, $white, 600);
+          @include text(15px, $white, 600);
         }
       }
     }
@@ -525,6 +542,33 @@ a{
           }
         }
       }
+    }
+  }
+}
+
+
+::-webkit-scrollbar-thumb{
+  background-color: $blue;
+}
+
+::-webkit-scrollbar{
+  width: 8px;
+  height: 8px;
+}
+
+
+.loading {
+  @include full-absolute(0px, 0px, 0px, 0px);
+  position: fixed;
+  z-index: 9999;
+  @include flex(row, center,center);
+  width: 100%;
+  height: 100%;
+  background-color: #00000080;
+
+  .MuiCircularProgress-root {
+    svg {
+      color: $light-blue;
     }
   }
 }

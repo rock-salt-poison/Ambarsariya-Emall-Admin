@@ -47,11 +47,10 @@ function TodoSubpage() {
     },
   ];
 
-  console.log(page);
 
   return (
     <Box className="body">
-      <BreadCrumbs main_page="To Do" redirectTo="../todo" />
+      <BreadCrumbs main_page="To Do" redirectTo="../todo" subpage={convert_case_to_capitalize(page)}/>
       <Box className="content">
         <BoxHeader title={convert_case_to_capitalize(page)} />
         <Box className="body">

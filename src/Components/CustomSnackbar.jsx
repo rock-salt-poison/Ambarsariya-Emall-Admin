@@ -1,11 +1,8 @@
 import React from "react";
 import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
-import { Typography } from "@mui/material";
 
 export default function CustomSnackbar({
   message,
-  severity,
   open,
   handleClose,
 }) {
@@ -17,9 +14,6 @@ export default function CustomSnackbar({
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         message={message}
       >
-          {/* <Typography className="snackbar">{message}</Typography> */}
-        {/* <Alert onClose={handleClose} severity={severity} variant="filled">
-        </Alert> */}
       </Snackbar>
   );
 }

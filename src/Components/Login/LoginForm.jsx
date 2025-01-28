@@ -71,6 +71,15 @@ function LoginForm() {
           navigate("../");
         }, 1000);
         setSnackbar({ open: true, message: "Login successful" });
+      } else if (
+        formData.email.toLowerCase() == "accounts@ambarsariyamall.com"
+      ) {
+        dispatch(setAdminToken("Accounts"));
+        localStorage.setItem("token", "Accounts");
+        setTimeout(() => {
+          navigate("../");
+        }, 1000);
+        setSnackbar({ open: true, message: "Login successful" });
       } else {
         setSnackbar({ open: true, message: "Invalid credentials!" });
       }

@@ -107,3 +107,50 @@ export const delete_led_board_message = async (id) => {
         throw e;
     }
 } 
+
+export const get_allUsers = async (user_type) => {
+    try{
+        if(user_type){
+            const resp = await axios.get(`${admin_link}/users/${user_type}`);
+            return resp.data;
+        }
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_visitorData = async (access_token) => {
+    try{
+        const response = await axios.get(`${link}/sell/support/${access_token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const getShopUserData = async (shopAccessToken) => {
+    try{
+      const response = await axios.get(`${link}/sell/shop-user-data?shop_access_token=${shopAccessToken}`);
+      return response.data;
+    }catch(error){
+      throw error;
+    }
+}
+
+export const get_discount_coupons = async (shop_no) => {
+    try{
+      const response = await axios.get(`${link}/sell/discount-coupons/${shop_no}`);
+      return response.data;
+    }catch(e){
+      throw e;
+    }
+  }
+
+export const getMemberData = async (memberAccessToken) => {
+    try{
+      const response = await axios.get(`${link}/sell/member?memberAccessToken=${memberAccessToken}`);
+      return response.data;
+    }catch(error){
+      throw error;
+    }
+  }

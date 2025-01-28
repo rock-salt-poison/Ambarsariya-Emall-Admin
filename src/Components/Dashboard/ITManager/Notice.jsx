@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button } from "@mui/material";
 import FormFields from "../../Form/FormFields";
-import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
-import { allShops, post_notice } from "../../../API/expressAPI";
-import { noticeFieldData } from "../../../noticeFieldData"; // Import your fields data
+import { post_notice } from "../../../API/expressAPI";
 
 function Notice({ page, fieldsData, title }) {
   const [category, setCategory] = useState(fieldsData[0]); // Default category
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate();
-  const [shop, setShops] = useState([]);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -19,18 +15,6 @@ function Notice({ page, fieldsData, title }) {
     severity: "success",
   });
 
-
-   // Fetch Shops and Update Fields
-   const fetchShops = async () => {
-    try {
-      const resp = await allShops();
-      if (resp) {
-        setShops(resp.map((shop) => shop.business_name)); // Extract shop names
-      }
-    } catch (e) {
-      console.error("Error fetching shops:", e);
-    }
-  };
 
   // Generate initial form data based on fields
   const generateInitialData = (fields) => {
@@ -57,10 +41,6 @@ function Notice({ page, fieldsData, title }) {
       ...prevFormData,
       [name]: value,
     }));
-  };
-
-  const handleSelectClick = async () => {
-    fetchShops();
   };
 
   // Handle file input changes
@@ -150,7 +130,6 @@ function Notice({ page, fieldsData, title }) {
             name={field.name}
             value={field.type !== "file" ? formData[field.name] || "" : undefined}            type={field.type}
             options={field.options}
-            handleSelectClick={handleSelectClick} // Trigger fetch when the select is clicked
             error={!!errors[field.name]}
             onChange={field.type === "file" ? handleFileChange : handleChange} // Handle file or text changes
             helperText={errors[field.name]}

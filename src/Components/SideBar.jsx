@@ -1,18 +1,25 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import mallIcon from "../Utils/images/gatelogo.webp";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
+import MailIcon from "@mui/icons-material/Mail";
 import ListItemText from "@mui/material/ListItemText";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import MailIcon from "@mui/icons-material/Mail";
-import { Typography } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import Typography from "@mui/material/Typography";
+import mallIcon from "../Utils/images/gatelogo.webp";
+import CustomSnackbar from "./CustomSnackbar";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { clearTokens } from "../store/authSlice";
 
 const drawerWidth = 240;
 
@@ -64,22 +71,45 @@ const Drawer = styled(MuiDrawer, {
 
 export default function MiniDrawer({ onSelectItem, menuItems }) {
   const [open, setOpen] = useState(true);
-
-  // const menuItems = [
-  //   { name: "Dashboard", icon: <HomeOutlinedIcon /> },
-  //   { name: "-", icon: <MailIcon /> },
-  // ];
-
+  const [expandedItems, setExpandedItems] = useState({});
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [selectedItem, setSelectedItem] = useState(menuItems[0].name);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  useEffect(() => {
+    onSelectItem(menuItems[0].name);
+  }, []);
 
   const handleItemClick = (item) => {
     setSelectedItem(item.name);
     onSelectItem(item.name);
   };
 
-  useEffect(() => {
-    onSelectItem(menuItems[0].name);
-  }, []);
+  const handleExpandToggle = (itemName) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [itemName]: !prev[itemName],
+    }));
+  };
+
+  const handleLogout = () => {
+    setSnackbar({
+      open: true,
+      message: "Logout successful",
+      severity: "success",
+    });
+
+    setTimeout(() => {
+      dispatch(clearTokens());
+      localStorage.removeItem("token");
+      navigate("../login");
+    }, 2000);
+  };
 
   return (
     <Drawer variant="permanent" open={open}>
@@ -100,33 +130,111 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem key={item.name} disablePadding>
-            <ListItemButton
-              onClick={() => handleItemClick(item)}
-              className={selectedItem === item.name ? "item active" : "item"}
-              sx={{
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-            >
-              <ListItemIcon
+          <React.Fragment key={item.name}>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() =>
+                  item.children
+                    ? handleExpandToggle(item.name)
+                    : handleItemClick(item)
+                }
+                className={selectedItem === item.name ? "item active" : "item"}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
                 }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.name}
-                sx={{ opacity: open ? 1 : 0 }}
-                className="text"
-              />
-            </ListItemButton>
-          </ListItem>
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                  }}
+                >
+                  {item.icon || <HomeOutlinedIcon />}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.name}
+                  sx={{ opacity: open ? 1 : 0 }}
+                  className="text"
+                />
+                {item.children && (
+                  <IconButton
+                    edge="end"
+                    size="small"
+                    onClick={() => handleExpandToggle(item.name)}
+                  >
+                    {expandedItems[item.name] ? (
+                      <ExpandLessIcon />
+                    ) : (
+                      <ExpandMoreIcon />
+                    )}
+                  </IconButton>
+                )}
+              </ListItemButton>
+            </ListItem>
+            {item.children && expandedItems[item.name] && (
+              <List component="div" disablePadding>
+                {item.children.map((child) => (
+                  <ListItem key={child.name} disablePadding>
+                    <ListItemButton
+                      onClick={() => handleItemClick(child)}
+                      sx={{ pl: "32px !important" }}
+                      className={
+                        selectedItem === item.name ? "item active" : "item"
+                      }
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          ml: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {child.icon || <MailIcon />}
+                      </ListItemIcon>
+                      <ListItemText primary={child.name} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </React.Fragment>
         ))}
       </List>
+      <Divider />
+      <List>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={handleLogout}
+            className="item logout"
+            sx={{
+              justifyContent: open ? "initial" : "center",
+              px: 2.5,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: open ? 3 : "auto",
+                justifyContent: "center",
+              }}
+            >
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Logout"
+              sx={{ opacity: open ? 1 : 0 }}
+              className="text"
+            />
+          </ListItemButton>
+        </ListItem>
+      </List>
+      <CustomSnackbar
+        open={snackbar.open}
+        handleClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
     </Drawer>
   );
 }

@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import TabContext from '@mui/lab/TabContext';
 import TabPanel from '@mui/lab/TabPanel';
-import { Tabs, tabsClasses, ThemeProvider } from '@mui/material';
+import { Tabs, tabsClasses } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 export default function ScrollableTabsButton(props) {

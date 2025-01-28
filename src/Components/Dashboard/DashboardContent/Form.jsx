@@ -88,16 +88,13 @@ function Form({ page, fieldsData }) {
                     mode: mode
                 }
                 const resp = await post_travel_time(formData);
-                console.log(resp)
             }
 
             console.log('Form Submitted', formData);
             setTimeout(() => navigate('../todo'), 1000);
         }
     };
-    const heading = page.split("_");
-    
-    console.log((heading[0].slice(0,1)).toUpperCase()+(heading[0].slice(1)));
+   
 
     useEffect(() => {
         handleCategoryChange(page);

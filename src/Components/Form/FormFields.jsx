@@ -47,18 +47,7 @@ export default function FormFields({
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event) => event.preventDefault();
 
-  const [editorInstance, setEditorInstance] = useState(null);
-
-  useEffect(() => {
-    return () => {
-      if (editorInstance) {
-        console.log("Destroying CKEditor instance...");
-        editorInstance.destroy().catch((error) => {
-          console.error("Error destroying CKEditor instance:", error);
-        });
-      }
-    };
-  }, [editorInstance]);
+ 
   const handleOpenAutocomplete = () => {
     setOpen(true);
     if (!options.length) {

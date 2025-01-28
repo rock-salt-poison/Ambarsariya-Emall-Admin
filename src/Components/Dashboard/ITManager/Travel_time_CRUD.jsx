@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { get_travel_time, post_travel_time } from '../../../API/expressAPI';
 import CustomSnackbar from '../../CustomSnackbar';
 
-function Travel_time_CRUD({ page, fieldsData }) {
+function TravelTimeCRUD({ page, fieldsData }) {
     const [category, setCategory] = useState(fieldsData[0]); // Default category
     const [formData, setFormData] = useState({});
     const [errors, setErrors] = useState({});
@@ -97,7 +97,7 @@ function Travel_time_CRUD({ page, fieldsData }) {
             mode = heading[0].charAt(0).toUpperCase() + heading[0].slice(1);
             travel_type = heading[1].charAt(0).toUpperCase() + heading[1].slice(1);
             const data = { ...formData, travel_type, mode };
-            console.log(data)
+
             try {
                 const resp = await post_travel_time(data);
                 setSnackbar({
@@ -110,7 +110,6 @@ function Travel_time_CRUD({ page, fieldsData }) {
             }
         // }
     };
-    console.log(formData)
 
     useEffect(() => {
         handleCategoryChange(page);
@@ -118,9 +117,9 @@ function Travel_time_CRUD({ page, fieldsData }) {
             heading = page.split("_");
             mode = heading[0].charAt(0).toUpperCase() + heading[0].slice(1);
             travel_type = heading[1].charAt(0).toUpperCase() + heading[1].slice(1);
-            console.log(mode)
+
             fetchData({ mode, travel_type }).then((resp) => {
-                console.log(resp)
+
                 setFormData( { 
                     location: resp?.[0].location || 'Amritsar',
                 date: resp?.[0].date || '',
@@ -213,4 +212,4 @@ function Travel_time_CRUD({ page, fieldsData }) {
     );
 }
 
-export default Travel_time_CRUD;
+export default TravelTimeCRUD;
