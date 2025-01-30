@@ -54,10 +54,10 @@ export const post_notice = async (data) => {
     }
 }
 
-export const get_notice = async (title) => {
+export const get_notice = async (title, id) => {
     try{
         if(title){
-            const response = await  axios.get(`${admin_link}/notice/${title}`);
+            const response = await  axios.get(`${admin_link}/notice/${title}/${id}`);
             return response.data;
         }else{
             const response = await  axios.get(`${admin_link}/notices`);
@@ -67,6 +67,17 @@ export const get_notice = async (title) => {
         throw e;
     }
 }
+
+export const delete_notice = async (id, title) => {
+    try{
+        if(id && title){
+            const response = await  axios.delete(`${admin_link}/notice/${title}/${id}`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
 
 export const get_led_board_message = async () => {
     try{

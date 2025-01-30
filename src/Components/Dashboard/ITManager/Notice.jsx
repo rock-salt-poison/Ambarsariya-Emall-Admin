@@ -3,11 +3,13 @@ import { Box, Button } from "@mui/material";
 import FormFields from "../../Form/FormFields";
 import CustomSnackbar from "../../CustomSnackbar";
 import { post_notice } from "../../../API/expressAPI";
+import { useNavigate } from "react-router-dom";
 
 function Notice({ page, fieldsData, title }) {
   const [category, setCategory] = useState(fieldsData[0]); // Default category
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -80,8 +82,8 @@ function Notice({ page, fieldsData, title }) {
 
         Object.entries(formData).forEach(([key, value]) => {
           if (key === "date_range" && Array.isArray(value)) {
-            data.append("from_date", new Date(value[0]).toLocaleDateString("en-CA"));
-            data.append("to_date", new Date(value[1]).toLocaleDateString("en-CA"));
+            data.append("from_date", new Date(value[0]).toLocaleString().split("T")[0]);
+            data.append("to_date", new Date(value[1]).toLocaleString().split("T")[0]);
           } else {
             data.append(key, value);
           }
@@ -98,6 +100,9 @@ function Notice({ page, fieldsData, title }) {
           message: resp ? "Details stored successfully." : "Failed to store details.",
           severity: resp ? "success" : "error",
         });
+        setTimeout(()=> {
+          navigate('../todo');
+        }, 2500);
       } catch (e) {
         console.error("Error during notice submission:", e);
         setSnackbar({

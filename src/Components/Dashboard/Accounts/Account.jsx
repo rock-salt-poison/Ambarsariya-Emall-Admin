@@ -64,7 +64,7 @@ function Account() {
         </Box>}
       <Box className="content">
         <BoxHeader
-          title="Visitor"
+          title={user_type}
           searchField={true}
           onSearch={(e) => setSearchQuery(e.target.value)}  // Update the search query
         />

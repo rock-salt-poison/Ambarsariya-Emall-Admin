@@ -43,16 +43,6 @@ function Form({ page, fieldsData }) {
         });
     };
 
-    const handleAddField = () => {
-        const newShopIndex = formData.dynamicShops.length;
-        setFormData((prevData) => ({
-            ...prevData,
-            dynamicShops: [
-                ...prevData.dynamicShops,
-                { shop: `shop_${newShopIndex}`, upload_banner: `upload_banner_${newShopIndex}` },
-            ],
-        }));
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -61,15 +51,6 @@ function Form({ page, fieldsData }) {
         Object.keys(formData).forEach((field) => {
             if (!formData[field] && !Array.isArray(formData[field])) {
                 formErrors[field] = `${field} is required`;
-            }
-        });
-
-        formData.dynamicShops.forEach((shop, index) => {
-            if (!shop.shop) {
-                formErrors[`shop_${index}`] = `Shop is required.`;
-            }
-            if (!shop.upload_banner) {
-                formErrors[`upload_banner_${index}`] = `Banner is required.`;
             }
         });
 
@@ -115,8 +96,6 @@ function Form({ page, fieldsData }) {
                         error={!!errors[field.name]}
                         onChange={handleChange}
                         helperText={errors[field.name]}
-                        btn={field.btn && field.btn}
-                        handleAddClick={handleAddField}
                         optionalCname={field.cName}
                     />
                     {field.fields && (
@@ -137,25 +116,6 @@ function Form({ page, fieldsData }) {
                         </Box>
                     )}
                 </React.Fragment>
-            ))}
-
-            {/* Dynamic Shops */}
-            {formData.dynamicShops && formData.dynamicShops.map((shop, index) => (
-                <Box key={index} className="form-group">
-                    <FormFields
-                        label="Select shop"
-                        name={`shop_${index}`}
-                        // value={shop.shop}
-                        type="select"
-                        options={['Shop 1', 'Shop 2']} // Replace with dynamic options if needed
-                        onChange={handleChange}
-                    />
-                    <FormFields
-                        name={`upload_banner_${index}`}
-                        type="file"
-                        onChange={handleChange}
-                    />
-                </Box>
             ))}
 
             {fields.length>0 && <Button type="submit" variant="contained" className='btn_submit'>

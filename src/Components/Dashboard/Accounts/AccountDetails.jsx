@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import { useParams } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
@@ -12,6 +12,8 @@ function AccountDetails() {
   const [data, setData] = useState(null);
   const [coupons, setCoupons] = useState();
   const { user_type, token } = useParams();
+  const [loading, setLoading] = useState(false);
+  
   
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -23,6 +25,7 @@ function AccountDetails() {
     const fetchDetails = async () => {
       if (user_type === 'visitor') {
         try {
+          setLoading(true);
           const resp = await get_visitorData(token);
           if (resp.valid) {
             setData(resp?.data);
@@ -30,9 +33,12 @@ function AccountDetails() {
         } catch (e) {
           console.log(e);
           setSnackbar({ open: true, message: "Error fetching records" });
+        }finally{
+          setLoading(false);
         }
       }else if (user_type === 'member') {
         try {
+          setLoading(true);
           const resp = await getMemberData(token);
           if (resp.length>0) {
             setData(resp);
@@ -40,9 +46,12 @@ function AccountDetails() {
         } catch (e) {
           console.log(e);
           setSnackbar({ open: true, message: "Error fetching records" });
+        } finally{
+          setLoading(false);
         }
       }else if (user_type === 'shop') {
         try {
+          setLoading(true);
           const resp = await getShopUserData(token);
           if (resp.length>0) {
             setData(resp);
@@ -57,10 +66,13 @@ function AccountDetails() {
           console.log(e);
           setSnackbar({ open: true, message: "Error fetching records" });
         }
+        finally{
+          setLoading(false);
+        }
       }
     };
     fetchDetails();
-  }, [user_type]);
+  }, [user_type, token]);
   
   const visitorData = [
     {
@@ -88,7 +100,7 @@ function AccountDetails() {
     {
       id: 1,
       name: "Profile",
-      content: '',
+      content: <AccountsTable data={data} tab={'profile'}/>,
     },
     {
       id: 2,
@@ -114,27 +126,25 @@ function AccountDetails() {
     },
     {
       id: 2,
-      name: "Book E-shop",
+      name: "E-shop",
       content:<AccountsTable data={data} tab={'book-eshop'}/>,
-    },
-    {
-        id: 3,
-        name: "E-shop",
-        content:'',
-    },
+    }
   ];
 
   return (
     <Box className="body">
+       {loading && <Box className="loading">
+                <CircularProgress/>
+              </Box>}
      <BreadCrumbs 
         main_page={`${user_type}s`} 
         redirectTo={`../accounts/${user_type}`}  
-        subpage={data?.[0].name || data?.[0].full_name}
+        subpage={user_type==='shop' ?data?.[0].business_name : data?.[0].name || data?.[0].full_name}
     />
 
       <Box className="content">
         <BoxHeader
-          title={data?.[0].name || data?.[0].full_name}
+          title={user_type==='shop' ?`Shop : ${data?.[0].business_name}` : data?.[0].name || data?.[0].full_name}
           searchField={false}
         />
         <Box className="body">

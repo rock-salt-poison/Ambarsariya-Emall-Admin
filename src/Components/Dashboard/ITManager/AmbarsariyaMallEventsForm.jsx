@@ -113,12 +113,12 @@ const AmbarsariyaMallEventsForm = ({ page, title }) => {
     e.preventDefault();
     const formErrors = {};
 
-    // Validate required fields
-    Object.entries(formData).forEach(([key, value]) => {
-      if (!value && key !== "img") {
-        formErrors[key] = `${key} is required`;
-      }
-    });
+    // // Validate required fields
+    // Object.entries(formData).forEach(([key, value]) => {
+    //   if (!value && key !== "img") {
+    //     formErrors[key] = `${key} is required`;
+    //   }
+    // });
 
     setErrors(formErrors);
     console.log(formErrors)
@@ -138,14 +138,14 @@ const AmbarsariyaMallEventsForm = ({ page, title }) => {
         data.append("title", title);
         // Call the API to post the notice
         const resp = await post_notice(data);
-        console.log(data)
-        console.log(resp)
-        // Show success message
         setSnackbar({
           open: true,
           message: resp ? "Details stored successfully." : "Failed to store details.",
           severity: resp ? "success" : "error",
         });
+        setTimeout(()=> {
+          navigate('../todo');
+        }, 2500);
       } catch (e) {
         console.error("Error during notice submission:", e);
         setSnackbar({

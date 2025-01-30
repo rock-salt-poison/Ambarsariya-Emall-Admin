@@ -61,8 +61,11 @@ export const fieldsData = {
         }
       ]
     },
+    
+  ], 
+  advt:[
     {
-      id: 5,
+      id: 1,
       label: "ADVT",
       btn: 'Add',
       fields: [
@@ -80,7 +83,7 @@ export const fieldsData = {
         }
       ]
     },
-  ], 
+  ],
   aqi_api:[
     {
         id: 1,

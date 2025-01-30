@@ -13,7 +13,7 @@ body {
 @mixin text($size: 16px, $color: $black, $weight: 400) {
   font-size: $size !important;
   color: $color;
-  font-weight: $weight !important;
+  font-weight: $weight;
 }
 
 @mixin button(
@@ -330,7 +330,14 @@ a{
       background-color: $white;
       padding: 15px 20px;
       border-bottom: 1px solid $light-gray-5;
+
+      .icons{
+        @include flex(row, flex-start);
+        gap: 10px;
+      }
     }
+
+
 
     .body {
       @include flex(column);
@@ -342,6 +349,47 @@ a{
         @include flex($justify: flex-end);
       }
 
+      .notice{
+        .title{
+          align-self: flex-start;
+        }
+        .desc{
+          display: -webkit-box;         // Use the flexible box layout for truncation
+          -webkit-box-orient: vertical; // Set the box orientation to vertical
+          overflow: hidden;             // Hide overflowing content
+          -webkit-line-clamp: 3; 
+        }
+
+        .message * {
+          margin: 0;
+        }
+
+        .col{
+          &.grid{
+            grid-template-columns: 1fr 1fr 1fr !important;
+          }
+          .card{
+            justify-content: flex-start !important;
+            align-items: flex-start !important;
+
+
+            .title{
+              text-align: left !important;
+            }
+
+            .desc *{
+              margin: 0px !important;
+              @include text(16px, $gray, $weight:400);
+            }
+
+            .date{
+              @include text(16px, $blue);
+              margin-top: auto;
+              padding-top: 10px; 
+            }
+          }
+        }
+      }
       .content {
         @include flex(column);
         background-color: $white;
@@ -369,6 +417,7 @@ a{
 
             tbody {
               tr {
+                cursor: pointer;
                 td {
                   @include text(16px);
                   padding: 12px;
@@ -454,6 +503,18 @@ a{
 
             .btn_submit{
               width: max-content;
+            }
+          }
+
+          &.notice{
+            .row{
+              @include flex(row, space-between);
+              gap: 20px;
+              flex-wrap: wrap;
+
+            }
+            .heading{
+              @include text(15px, $blue, 600);
             }
           }
         }

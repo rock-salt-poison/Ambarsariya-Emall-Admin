@@ -13,6 +13,8 @@ import Clock_CRUD from "./Clock_CRUD";
 import Notice from "./Notice";
 import LEDBoard from "./LEDBoard";
 import AmbarsariyaMallEventsForm from "./AmbarsariyaMallEventsForm";
+import NoticesCard from "./NoticesCard";
+import ADVT from "../DashboardContent/ADVT";
 
 function TodoSubpage() {
   const { page } = useParams();
@@ -45,6 +47,11 @@ function TodoSubpage() {
           ""
         ),
     },
+    {
+      id: 3,
+      name: "ADVT",
+      content:<ADVT/>
+    },
   ];
 
 
@@ -60,6 +67,8 @@ function TodoSubpage() {
             <Form page={formatPageName(page)} fieldsData={fieldsData} />
           ) : page === "clock" ? (
             <Clock_CRUD page="airline_arrival" />
+          ) : page === "notices" ? (
+              <NoticesCard/>
           ) : page === "district-administration" ||
             page === "city-events" ||
             page === "thought-of-the-day" ? (
