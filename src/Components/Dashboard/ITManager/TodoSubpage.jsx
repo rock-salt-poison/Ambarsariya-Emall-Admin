@@ -50,7 +50,7 @@ function TodoSubpage() {
     {
       id: 3,
       name: "ADVT",
-      content:<ADVT/>
+      content:<ADVT page={page}/>
     },
   ];
 

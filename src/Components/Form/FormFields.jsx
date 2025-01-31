@@ -97,6 +97,7 @@ export default function FormFields({
                   value={value || ''}
                   onChange={(e)=> handleSelectChange(e)}
                   label={label}
+                  required={required}
                 >
                  
                   {options?.map((option, index) => (

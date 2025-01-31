@@ -165,3 +165,39 @@ export const getMemberData = async (memberAccessToken) => {
       throw error;
     }
   }
+
+export const post_advt = async (data) => {
+    try{    
+        if(data){
+            const response = await axios.post(`${admin_link}/advt`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_advt = async (advt_page) => {
+    try{
+        if(advt_page){
+            const response = await  axios.get(`${admin_link}/advt/${advt_page}`);
+            return response.data;
+        }else{
+            const response = await  axios.get(`${admin_link}/advt`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+}
+
+export const delete_advt = async (id) => {
+    try{
+        if(id){
+            const response = await  axios.delete(`${admin_link}/advt/${id}`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
