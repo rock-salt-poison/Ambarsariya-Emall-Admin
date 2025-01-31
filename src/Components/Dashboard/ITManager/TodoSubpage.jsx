@@ -54,6 +54,24 @@ function TodoSubpage() {
     },
   ];
 
+  const clockTabsData = [
+    {
+      id: 1,
+      name: "CRUD",
+      content:
+        page === "clock" ? (
+          <Clock_CRUD page="airline_arrival" />
+        ) : (
+          ""
+        ),
+    },
+    {
+      id: 3,
+      name: "ADVT",
+      content:<ADVT page={page}/>
+    },
+  ];
+
 
   return (
     <Box className="body">
@@ -66,7 +84,7 @@ function TodoSubpage() {
           ) : page === "aqi-api" ? (
             <Form page={formatPageName(page)} fieldsData={fieldsData} />
           ) : page === "clock" ? (
-            <Clock_CRUD page="airline_arrival" />
+            <Tabs data={clockTabsData} />
           ) : page === "notices" ? (
               <NoticesCard/>
           ) : page === "district-administration" ||
