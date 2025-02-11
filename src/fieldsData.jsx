@@ -111,4 +111,54 @@ export const fieldsData = {
         ]
       },
     ],
+    support_page_header_famous_areas: [
+      {
+        id: 1,
+        label: "Area 1",
+        btn: 'Add',
+        groupNumber: 1,
+      },    
+      {
+        id: 2,
+        label: "Enter a famous area or market",
+        name: "area_1",
+        type: "address",
+        groupNumber: 1,
+        required:true
+      },
+      {
+        id: 3,
+        label: "Radius To (in km)",
+        name: "radius_to_1",
+        type: "number",
+        groupNumber: 1,
+        cName:'flex-auto',
+        required:true
+      },
+      {
+        id: 4,
+        label: "Radius From (in km)",
+        name: "radius_from_1",
+        type: "number",
+        groupNumber: 1,
+        cName:'flex-auto',
+        required:true
+      },
+      {
+        id: 5,
+        label: "Enter name of the area",
+        name: "area_name_1",
+        type: "text",
+        groupNumber: 1,
+        required:true
+      },
+      {
+        id: 6,
+        // label: "Upload background image",
+        name: "bg_img_1",
+        type: "file",
+        groupNumber: 1,
+        required:true
+      },
+    ],
 };

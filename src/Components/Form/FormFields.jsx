@@ -21,6 +21,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import ReactQuill from 'react-quill'; // Import ReactQuill for the message2 field
 import 'react-quill/dist/quill.snow.css';
+import Address_Google_Map_Field from "./Address_Google_Map_Field";
 
 export default function FormFields({
   label,
@@ -244,7 +245,14 @@ export default function FormFields({
             onChange({ target: { name, value: newValue } });
           }}
         />
-      ) : type ? (
+      ) : type === 'address' ? (
+        <Box>
+          <Address_Google_Map_Field
+            value={value}
+            label={label}
+            onChange={(data) => console.log(data)}
+          />
+        </Box>): type ? (
         <TextField
           label={label}
           name={name}

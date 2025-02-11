@@ -15,6 +15,7 @@ import LEDBoard from "./LEDBoard";
 import AmbarsariyaMallEventsForm from "./AmbarsariyaMallEventsForm";
 import NoticesCard from "./NoticesCard";
 import ADVT from "../DashboardContent/ADVT";
+import SupportPageHeaderFamousAreas from "./SupportPageHeaderFamousAreas";
 
 function TodoSubpage() {
   const { page } = useParams();
@@ -100,15 +101,22 @@ function TodoSubpage() {
               page={formatPageName(page)}
               title={convert_case_to_capitalize(page)}
             />
-          ) : (
-            page === "LED-board-display" && (
+          ) : 
+            page === "LED-board-display" ? (
               <LEDBoard
                 page={formatPageName(page)}
                 title={convert_case_to_capitalize(page)}
                 fieldsData={noticeFieldData}
               />
+            ) : (
+            page === "support-page-header-famous-areas" && (
+              <SupportPageHeaderFamousAreas
+                page={formatPageName(page)}
+                title={convert_case_to_capitalize(page)}
+                fieldsData={fieldsData}
+              />
             )
-          )}
+        )}
         </Box>
       </Box>
     </Box>
