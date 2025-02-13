@@ -79,6 +79,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         label: "Enter a famous area",
         name: `area_${groupNumber}`,
         type: "address",
+        cName:'flex-auto',
         required: true,
         groupNumber,
       },
@@ -87,6 +88,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         label: "Enter Length (km)",
         name: `length_${groupNumber}`,
         type: "number",
+        cName:'flex-auto',
         required: true,
         groupNumber,
       },
@@ -95,6 +97,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         label: "Enter area name",
         name: `areaname_${groupNumber}`,
         type: "text",
+        cName:'flex-auto',
         required: true,
         groupNumber,
       },
@@ -108,6 +111,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         id: groupNumber + 5,
         label: "Shop number (optional)",
         name: `shop_no_${groupNumber}`,
+        cName:'flex-auto',
         type: "text",
         groupNumber,
       },
@@ -116,6 +120,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         name: `bg_img_${groupNumber}`,
         type: "file",
         required: true,
+        cName:'flex-auto',
         groupNumber,
       },
     ];
@@ -220,6 +225,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         error={!!errors[field.name]}
         onChange={handleChange}
         helperText={errors[field.name]}
+        optionalCname={field.cName}
         required={field.required}
         btn={field.btn}
         handleAddClick={handleAddField}
