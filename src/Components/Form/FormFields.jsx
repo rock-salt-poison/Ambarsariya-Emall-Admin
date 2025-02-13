@@ -222,6 +222,7 @@ export default function FormFields({
           isOptionEqualToValue={(option, value) => option === value}
           getOptionLabel={(option) => option}
           loading={loading}
+          required={required}
           renderInput={(params) => (
             <TextField
               {...params}

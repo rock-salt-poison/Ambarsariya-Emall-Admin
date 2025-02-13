@@ -9,7 +9,7 @@ import parse from "autosuggest-highlight/parse";
 import { debounce } from "@mui/material/utils";
 import GoogleMapsLoader from "../Maps/GoogleMapsLoader"; // Ensure correct import
 
-export default function AddressGoogleMapField({ value, label, onChange, cName }) {
+export default function AddressGoogleMapField({ value, label, onChange, cName, required }) {
   const [inputValue, setInputValue] = useState("");
   const [updatedValue, setUpdatedValue] = useState(null);
   const [options, setOptions] = useState([]);
@@ -102,11 +102,11 @@ export default function AddressGoogleMapField({ value, label, onChange, cName })
         filterOptions={(x) => x}
         options={options}
         autoComplete
+        required
         includeInputInList
         filterSelectedOptions
         value={updatedValue}
         size="small"
-        fullWidth
         noOptionsText="No locations"
         className={cName}
         isOptionEqualToValue={(option, value) => option?.description === value?.description}

@@ -76,7 +76,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       },
       {
         id: groupNumber + 1,
-        label: "Enter a famous area",
+        label: "Enter a famous area or market",
         name: `area_${groupNumber}`,
         type: "address",
         cName:'flex-auto',
