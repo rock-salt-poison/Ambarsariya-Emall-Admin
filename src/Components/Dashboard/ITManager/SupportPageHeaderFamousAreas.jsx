@@ -5,23 +5,23 @@ import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
 import {
   delete_led_board_message,
-  get_led_board_message,
   post_led_board_message,
-  post_notice,
 } from "../../../API/expressAPI";
+import MapWithMarker from "../../Maps/MapWithMarker";
 
 function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
-  const [category, setCategory] = useState(fieldsData[0]); // Default category
+  const [category, setCategory] = useState(fieldsData[0]);
   const [formData, setFormData] = useState({});
-  const [dynamicFields, setDynamicFields] = useState(fieldsData[page]);
+  const [dynamicFields, setDynamicFields] = useState(fieldsData[page] || []);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
+
+  const fields = fieldsData[category] || [];
 
   // Generate initial form data based on fields
   const generateInitialData = (fields) => {
@@ -35,31 +35,38 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
   };
 
   // Handle category change
-  const handleCategoryChange = (key) => {
-    const fields = fieldsData[key] || [];
-    setCategory(key);
-    setFormData({
-      ...generateInitialData(fields),
+  useEffect(() => {
+    if (page) {
+      setCategory(page);
+      setFormData(generateInitialData(fieldsData[page]));
+    }
+  }, [page, fieldsData]);
+
+  // Handle input changes
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((prev) => {
+      const updatedFormData = { ...prev, [name]: value };
+
+      // If field is area, extract and store lat/lng separately
+      if (name.startsWith("area_") && value?.latitude && value?.longitude) {
+        updatedFormData[`lat_${name}`] = value.latitude;
+        updatedFormData[`lng_${name}`] = value.longitude;
+      }
+      console.log(updatedFormData);
+
+      return updatedFormData;
     });
   };
 
-  // Handle input changes for text, number, etc.
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-  };
-
+  // Handle adding a new field group
   const handleAddField = () => {
     const groupNumber =
-    dynamicFields.length > 0
-      ? Math.max(...dynamicFields.map((field) => field.groupNumber || 0)) + 1
-      : 1;
+      dynamicFields.length > 0
+        ? Math.max(...dynamicFields.map((field) => field.groupNumber || 0)) + 1
+        : 1;
 
-  console.log("New groupNumber:", groupNumber);
-    
     const newFields = [
       {
         id: groupNumber,
@@ -69,7 +76,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       },
       {
         id: groupNumber + 1,
-        label: "Enter a famous area or market",
+        label: "Enter a famous area",
         name: `area_${groupNumber}`,
         type: "address",
         required: true,
@@ -77,30 +84,35 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       },
       {
         id: groupNumber + 2,
-        label: "Radius To (in km)",
-        name: `radius_to_${groupNumber}`,
+        label: "Enter Length (km)",
+        name: `length_${groupNumber}`,
         type: "number",
         required: true,
         groupNumber,
       },
       {
         id: groupNumber + 3,
-        label: "Radius From (in km)",
-        name: `radius_from_${groupNumber}`,
-        type: "number",
-        required: true,
-        groupNumber,
-      },
-      {
-        id: groupNumber + 4,
-        label: "Enter name of the area",
-        name: `area_name_${groupNumber}`,
+        label: "Enter area name",
+        name: `areaname_${groupNumber}`,
         type: "text",
         required: true,
         groupNumber,
       },
       {
+        id: groupNumber + 4,
+        type: "map",
+        name: `map_${groupNumber}`,
+        groupNumber,
+      },
+      {
         id: groupNumber + 5,
+        label: "Shop number (optional)",
+        name: `shop_no_${groupNumber}`,
+        type: "text",
+        groupNumber,
+      },
+      {
+        id: groupNumber + 6,
         name: `bg_img_${groupNumber}`,
         type: "file",
         required: true,
@@ -108,64 +120,32 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       },
     ];
 
-    setDynamicFields((prevFields) => [...prevFields, ...newFields]);
-    setFormData((prevFormData) => ({
-      ...prevFormData,
+    setDynamicFields((prev) => [...prev, ...newFields]);
+    setFormData((prev) => ({
+      ...prev,
       [`area_${groupNumber}`]: "",
+      [`lat_area_${groupNumber}`]: "",
+      [`lng_area_${groupNumber}`]: "",
     }));
   };
 
+  // Handle removing a field group
   const handleRemoveField = (groupNumber) => {
-    // Filter out all fields belonging to the group
-    const fieldsToRemove = dynamicFields.filter(
-      (field) => field.groupNumber === groupNumber
+    setDynamicFields((prev) =>
+      prev.filter((field) => field.groupNumber !== groupNumber)
     );
-  
-    // Update state by removing the group fields
-    setDynamicFields((prevFields) =>
-      prevFields.filter((field) => field.groupNumber !== groupNumber)
-    );
-  
-    // Remove related form data
-    setFormData((prevFormData) => {
-      const updatedFormData = { ...prevFormData };
-      fieldsToRemove.forEach((field) => {
-        if (field.name) {
-          delete updatedFormData[field.name];
+
+    setFormData((prev) => {
+      const updatedFormData = { ...prev };
+      Object.keys(updatedFormData).forEach((key) => {
+        if (key.includes(`_${groupNumber}`)) {
+          delete updatedFormData[key];
         }
       });
       return updatedFormData;
     });
-  
-    // Call delete API for each field with a database ID
-    fieldsToRemove.forEach((field) => {
-      if (field.name && field.name.includes("_")) {
-        const id = field.name.split("_")[1]; // Extract the ID
-        handleDelete(id);
-      }
-    });
-  
-    console.log(`Group ${groupNumber} removed successfully.`);
-  };
-  
 
-  const handleDelete = async (id) => {
-    try {
-      const resp = await delete_led_board_message(id);
-      if (resp) {
-        setSnackbar({
-          open: true,
-          message: "Deleted Successfully.",
-          severity: "success",
-        });
-      }
-    } catch (e) {
-      setSnackbar({
-        open: true,
-        message: "Failed to delete message.",
-        severity: "error",
-      });
-    }
+    console.log(`Group ${groupNumber} removed successfully.`);
   };
 
   // Handle form submission
@@ -173,7 +153,6 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     e.preventDefault();
     const formErrors = {};
 
-    // Validate required fields
     Object.entries(formData).forEach(([key, value]) => {
       if (!value) {
         formErrors[key] = `${key} is required`;
@@ -185,16 +164,14 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     if (Object.keys(formErrors).length === 0) {
       try {
         const messages = dynamicFields
-          .filter((field) => field.name) // Only include input fields
+          .filter((field) => field.name)
           .map((field) => ({
-            id: `${field.name.split("_")[1]}` || null,
+            id: field.name.split("_")[1] || null,
             text: formData[field.name],
           }));
 
-        // Call the API
         const resp = await post_led_board_message({ messages });
 
-        // Show success message
         setSnackbar({
           open: true,
           message: resp
@@ -203,7 +180,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
           severity: resp ? "success" : "error",
         });
       } catch (e) {
-        console.error("Error during message submission:", e);
+        console.error("Error submitting:", e);
         setSnackbar({
           open: true,
           message: "Failed to store message.",
@@ -212,56 +189,8 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       }
     }
   };
+  console.log(formData);
 
-  // Initialize the form data based on the selected category
-  useEffect(() => {
-    handleCategoryChange(page);
-    fetch_message_from_database();
-  }, [page]);
-
-  const fetch_message_from_database = async () => {
-    try {
-      let resp; // Fetch data from the API
-
-      if (resp && resp.length > 0) {
-        // If the response has messages, populate the dynamicFields and formData
-        const newFields = [];
-        const newFormData = {};
-
-        resp.forEach((message, index) => {
-          const messageNumber = index + 1; // Create dynamic message numbers
-
-          newFields.push(
-            {
-              id: messageNumber * 2 - 1,
-              label: `Message ${messageNumber}`, // Label for the message
-              btn: messageNumber === 1 ? "Add" : "remove", // First field gets "add", others get "remove"
-            },
-            {
-              id: messageNumber * 2,
-              label: "Message",
-              name: `message_${messageNumber}`, // Field name for the input
-              type: "text",
-            }
-          );
-
-          newFormData[`message_${messageNumber}`] = message.message; // Populate formData with message content
-        });
-
-        // Update state with fetched messages
-        setDynamicFields(newFields);
-        setFormData(newFormData);
-      } else {
-        // If no messages exist, reset to default field with an "Add" button
-        setDynamicFields(fieldsData[page]);
-        setFormData({ message_1: "" });
-      }
-    } catch (e) {
-      console.error("Error fetching messages:", e);
-    }
-  };
-
-  const fields = fieldsData[category] || [];
   return (
     <Box
       component="form"
@@ -269,38 +198,45 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       onSubmit={handleSubmit}
       className="form2"
     >
-      {dynamicFields.map((field, index) => (
-        <React.Fragment key={index}>
-          <FormFields
-            label={field.label}
-            name={field.name}
-            value={formData[field.name] || ""} // Bind value for fields
-            type={field.type}
-            options={field.options}
-            error={!!errors[field.name]}
-            onChange={handleChange} // Handle file or text changes
-            helperText={errors[field.name]}
-            optionalCname={field.cName}
-            required={field.required}
-            btn={field.btn}
-            handleAddClick={handleAddField}
-            handleRemoveClick={() => handleRemoveField(field.groupNumber)} // Pass field name for removal
-          />
-        </React.Fragment>
-      ))}
+      {dynamicFields?.map((field, index) => {
+  if (field.type === "map") {
+    const areaIndex = field.name.split("_")[1]; // Extracting number from `map_1`
+    return (
+      <MapWithMarker
+        key={index}
+        latitude={Number(formData[`lat_area_${areaIndex}`]) || 31.6331}
+        longitude={Number(formData[`lng_area_${areaIndex}`]) || 74.8656}
+        length={Number(formData[`length_${areaIndex}`]) || 0}
+      />
+    );
+  } else {
+    return (
+      <FormFields
+        key={index}
+        label={field.label}
+        name={field.name}
+        value={formData[field.name] || ""}
+        type={field.type}
+        error={!!errors[field.name]}
+        onChange={handleChange}
+        helperText={errors[field.name]}
+        required={field.required}
+        btn={field.btn}
+        handleAddClick={handleAddField}
+        handleRemoveClick={() => handleRemoveField(field.groupNumber)}
+      />
+    );
+  }
+})}
 
       {fields.length > 0 && (
-        <Button type="submit" variant="contained" className="btn_submit">
-          Save
-        </Button>
-      )}
-
-      <CustomSnackbar
-        open={snackbar.open}
-        handleClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-        severity={snackbar.severity}
-      />
+        <Box sx={{ width: "100%" }}>
+          <Button type="submit" variant="contained" className="btn_submit">
+            Save
+          </Button>
+        </Box>
+      )}{" "}
+      <CustomSnackbar {...snackbar} />
     </Box>
   );
 }

@@ -22,6 +22,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ReactQuill from 'react-quill'; // Import ReactQuill for the message2 field
 import 'react-quill/dist/quill.snow.css';
 import Address_Google_Map_Field from "./Address_Google_Map_Field";
+import MapWithMarker from "../Maps/MapWithMarker";
 
 export default function FormFields({
   label,
@@ -44,10 +45,9 @@ export default function FormFields({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { beforeToday } = DateRangePicker;
-
+  
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event) => event.preventDefault();
-
  
   const handleOpenAutocomplete = () => {
     setOpen(true);
@@ -245,14 +245,15 @@ export default function FormFields({
             onChange({ target: { name, value: newValue } });
           }}
         />
-      ) : type === 'address' ? (
-        <Box>
+      ) : type === 'address' ? 
           <Address_Google_Map_Field
-            value={value}
-            label={label}
-            onChange={(data) => console.log(data)}
-          />
-        </Box>): type ? (
+              label = {label}
+              value={value ? value : ""} // Ensure value is set if it exists
+              onChange={(data) => {onChange({ target: { name, value: data } });
+            }}
+            cName={optionalCname}
+            />
+        :  type ? (
         <TextField
           label={label}
           name={name}

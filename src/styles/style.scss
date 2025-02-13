@@ -454,6 +454,17 @@ a{
                 }
                 
             }
+
+
+            @media (max-width:992px){
+              @include grid(1fr 1fr 1fr,$gap:20px);
+            }
+            @media (max-width:768px){
+              @include grid(1fr 1fr,$gap:20px);
+            }
+            @media (max-width:560px){
+              @include grid(1fr,$gap:20px);
+            }
           }
         }
 
