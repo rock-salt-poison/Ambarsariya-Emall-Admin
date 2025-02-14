@@ -201,3 +201,34 @@ export const delete_advt = async (id) => {
         throw e;
     }
 } 
+
+export const post_support_page_famous_areas = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_link}/famous-areas`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const get_support_page_famous_areas = async () => {
+    try{
+        const response = await axios.get(`${admin_link}/famous-areas`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const delete_support_page_famous_areas = async (id) => {
+    try{
+        if(id){
+            const response = await  axios.delete(`${admin_link}/famous-area/${id}`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 

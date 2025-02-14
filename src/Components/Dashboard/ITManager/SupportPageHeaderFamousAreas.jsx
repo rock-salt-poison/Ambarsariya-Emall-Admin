@@ -4,8 +4,9 @@ import FormFields from "../../Form/FormFields";
 import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
 import {
-  delete_led_board_message,
-  post_led_board_message,
+  delete_support_page_famous_areas,
+  get_support_page_famous_areas,
+  post_support_page_famous_areas,
 } from "../../../API/expressAPI";
 import MapWithMarker from "../../Maps/MapWithMarker";
 
@@ -39,8 +40,102 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     if (page) {
       setCategory(page);
       setFormData(generateInitialData(fieldsData[page]));
+      fetch_areas_from_database();
     }
   }, [page, fieldsData]);
+
+
+  const fetch_areas_from_database = async () => {
+    try {
+      const resp = await get_support_page_famous_areas(); // Fetch data from API
+  
+      if (resp && resp.length > 0) {
+        const newFields = [];
+        const newFormData = {};
+  
+        resp.forEach((area, index) => {
+          const groupNumber = index + 1; // Unique group number
+  
+          newFields.push(
+            {
+              id: groupNumber,
+              label: `Area ${groupNumber}`, // Label for area
+              btn: groupNumber === 1 ? "Add" : "remove", // "Add" for first, "Remove" for others
+            },
+            {
+              id: groupNumber + 1,
+              label: "Enter a famous area or market",
+              name: `area_${groupNumber}`,
+              type: "address",
+              cName: "flex-auto",
+              required: true,
+              groupNumber,
+            },
+            {
+              id: groupNumber + 2,
+              label: "Enter Length (km)",
+              name: `length_${groupNumber}`,
+              type: "number",
+              cName: "flex-auto",
+              required: true,
+              groupNumber,
+            },
+            {
+              id: groupNumber + 3,
+              label: "Enter area name",
+              name: `areaname_${groupNumber}`,
+              type: "text",
+              cName: "flex-auto",
+              required: true,
+              groupNumber,
+            },
+            {
+              id: groupNumber + 4,
+              type: "map",
+              name: `map_${groupNumber}`,
+              groupNumber,
+            },
+            {
+              id: groupNumber + 5,
+              label: "Shop number (optional)",
+              name: `shop_no_${groupNumber}`,
+              cName: "flex-auto",
+              type: "text",
+              groupNumber,
+            },
+            {
+              id: groupNumber + 6,
+              name: `bg_img_${groupNumber}`,
+              type: "file",
+              required: true,
+              cName: "flex-auto",
+              groupNumber,
+            }
+          );
+          console.log(area)
+          // Populate form data with fetched values
+          newFormData[`area_${groupNumber}`] = area.area_address || "";
+          newFormData[`lat_area_${groupNumber}`] = area.latitude || "";
+          newFormData[`lng_area_${groupNumber}`] = area.longitude || "";
+          newFormData[`length_${groupNumber}`] = area.length_in_km || "";
+          newFormData[`areaname_${groupNumber}`] = area.area_title || "";
+          newFormData[`shop_no_${groupNumber}`] = area.shop_no || "";
+          newFormData[`bg_img_${groupNumber}`] = area.bg_img || "";
+        });
+  
+        // Update state with fetched data
+        setDynamicFields(newFields);
+        setFormData(newFormData);
+      } else {
+        // If no data, reset fields
+        setDynamicFields(fieldsData[page] || []);
+        setFormData({});
+      }
+    } catch (e) {
+      console.error("Error fetching areas:", e);
+    }
+  };
+  
 
   // Handle input changes
   const handleChange = (event) => {
@@ -54,8 +149,6 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         updatedFormData[`lat_${name}`] = value.latitude;
         updatedFormData[`lng_${name}`] = value.longitude;
       }
-      console.log(updatedFormData);
-
       return updatedFormData;
     });
   };
@@ -79,7 +172,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         label: "Enter a famous area or market",
         name: `area_${groupNumber}`,
         type: "address",
-        cName:'flex-auto',
+        cName: "flex-auto",
         required: true,
         groupNumber,
       },
@@ -88,7 +181,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         label: "Enter Length (km)",
         name: `length_${groupNumber}`,
         type: "number",
-        cName:'flex-auto',
+        cName: "flex-auto",
         required: true,
         groupNumber,
       },
@@ -97,7 +190,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         label: "Enter area name",
         name: `areaname_${groupNumber}`,
         type: "text",
-        cName:'flex-auto',
+        cName: "flex-auto",
         required: true,
         groupNumber,
       },
@@ -111,7 +204,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         id: groupNumber + 5,
         label: "Shop number (optional)",
         name: `shop_no_${groupNumber}`,
-        cName:'flex-auto',
+        cName: "flex-auto",
         type: "text",
         groupNumber,
       },
@@ -120,7 +213,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         name: `bg_img_${groupNumber}`,
         type: "file",
         required: true,
-        cName:'flex-auto',
+        cName: "flex-auto",
         groupNumber,
       },
     ];
@@ -134,48 +227,61 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     }));
   };
 
-  // Handle removing a field group
-  const handleRemoveField = (groupNumber) => {
-    setDynamicFields((prev) =>
-      prev.filter((field) => field.groupNumber !== groupNumber)
-    );
-
-    setFormData((prev) => {
-      const updatedFormData = { ...prev };
-      Object.keys(updatedFormData).forEach((key) => {
-        if (key.includes(`_${groupNumber}`)) {
-          delete updatedFormData[key];
-        }
+  const handleRemoveField = async (groupNumber) => {
+    try {
+      // Optional: Delete the record from the database if it exists
+      const areaId = formData[`area_${groupNumber}`]?.id; // Assuming API stores ID
+      if (areaId) {
+        await delete_support_page_famous_areas(areaId); // API call to delete
+      }
+  
+      // Remove fields from dynamicFields
+      setDynamicFields((prev) =>
+        prev.filter((field) => field.groupNumber !== groupNumber)
+      );
+  
+      // Remove data from formData
+      setFormData((prev) => {
+        const updatedFormData = { ...prev };
+        Object.keys(updatedFormData).forEach((key) => {
+          if (key.includes(`_${groupNumber}`)) {
+            delete updatedFormData[key];
+          }
+        });
+        return updatedFormData;
       });
-      return updatedFormData;
-    });
-
-    console.log(`Group ${groupNumber} removed successfully.`);
+  
+      console.log(`Group ${groupNumber} removed successfully.`);
+    } catch (error) {
+      console.error(`Error deleting area ${groupNumber}:`, error);
+    }
   };
+  
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formErrors = {};
 
-    Object.entries(formData).forEach(([key, value]) => {
-      if (!value) {
-        formErrors[key] = `${key} is required`;
-      }
-    });
-
-    setErrors(formErrors);
-
     if (Object.keys(formErrors).length === 0) {
       try {
-        const messages = dynamicFields
-          .filter((field) => field.name)
-          .map((field) => ({
-            id: field.name.split("_")[1] || null,
-            text: formData[field.name],
-          }));
+        const areas = Object.keys(formData)
+          .filter((key) => key.startsWith("area_"))
+          .map((key) => {
+            const areaIndex = key.split("_")[1];
+            return {
+              id: areaIndex || null,
+              area_address: formData[`area_${areaIndex}`]?.description || "",
+              latitude: formData[`lat_area_${areaIndex}`] || "",
+              longitude: formData[`lng_area_${areaIndex}`] || "",
+              length: formData[`length_${areaIndex}`] || "",
+              area_name: formData[`areaname_${areaIndex}`] || "",
+              shop_no: formData[`shop_no_${areaIndex}`] || null,
+              bg_img: formData[`bg_img_${areaIndex}`] || "",
+            };
+          });
 
-        const resp = await post_led_board_message({ messages });
+        const resp = await post_support_page_famous_areas({ areas });
 
         setSnackbar({
           open: true,
@@ -188,13 +294,13 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
         console.error("Error submitting:", e);
         setSnackbar({
           open: true,
-          message: "Failed to store message.",
+          message: "Failed to store area(s).",
           severity: "error",
         });
       }
     }
   };
-  console.log(formData);
+  // console.log(formData);
 
   return (
     <Box
@@ -204,37 +310,36 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       className="form2"
     >
       {dynamicFields?.map((field, index) => {
-  if (field.type === "map") {
-    const areaIndex = field.name.split("_")[1]; // Extracting number from `map_1`
-    return (
-      <MapWithMarker
-        key={index}
-        latitude={Number(formData[`lat_area_${areaIndex}`]) || 31.6331}
-        longitude={Number(formData[`lng_area_${areaIndex}`]) || 74.8656}
-        length={Number(formData[`length_${areaIndex}`]) || 0}
-      />
-    );
-  } else {
-    return (
-      <FormFields
-        key={index}
-        label={field.label}
-        name={field.name}
-        value={formData[field.name] || ""}
-        type={field.type}
-        error={!!errors[field.name]}
-        onChange={handleChange}
-        helperText={errors[field.name]}
-        optionalCname={field.cName}
-        required={field.required}
-        btn={field.btn}
-        handleAddClick={handleAddField}
-        handleRemoveClick={() => handleRemoveField(field.groupNumber)}
-      />
-    );
-  }
-})}
-
+        if (field.type === "map") {
+          const areaIndex = field.name.split("_")[1]; // Extracting number from `map_1`
+          return (
+            <MapWithMarker
+              key={index}
+              latitude={Number(formData[`lat_area_${areaIndex}`]) || 31.6331}
+              longitude={Number(formData[`lng_area_${areaIndex}`]) || 74.8656}
+              length={Number(formData[`length_${areaIndex}`]) || 0}
+            />
+          );
+        } else {
+          return (
+            <FormFields
+              key={index}
+              label={field.label}
+              name={field.name}
+              value={formData[field.name] || ""}
+              type={field.type}
+              error={!!errors[field.name]}
+              onChange={handleChange}
+              helperText={errors[field.name]}
+              optionalCname={field.cName}
+              required={field.required}
+              btn={field.btn}
+              handleAddClick={handleAddField}
+              handleRemoveClick={() => handleRemoveField(field.groupNumber)}
+            />
+          );
+        }
+      })}
       {fields.length > 0 && (
         <Box sx={{ width: "100%" }}>
           <Button type="submit" variant="contained" className="btn_submit">
