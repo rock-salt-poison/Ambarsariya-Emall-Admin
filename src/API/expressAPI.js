@@ -222,13 +222,15 @@ export const get_support_page_famous_areas = async () => {
     }
 } 
 
-export const delete_support_page_famous_areas = async (id) => {
-    try{
-        if(id){
-            const response = await  axios.delete(`${admin_link}/famous-area/${id}`);
+export const delete_support_page_famous_areas = async (data) => { 
+    try {
+        if (data) {
+            const response = await axios.delete(`${admin_link}/famous-area`, {
+                data: data // Correct way to send data in DELETE request
+            });
             return response.data;
         }
-    }catch(e){
+    } catch (e) {
         throw e;
     }
-} 
+};

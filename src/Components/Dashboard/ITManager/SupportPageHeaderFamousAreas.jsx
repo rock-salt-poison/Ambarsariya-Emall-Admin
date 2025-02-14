@@ -55,12 +55,14 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
   
         resp.forEach((area, index) => {
           const groupNumber = index + 1; // Unique group number
-  
+          console.log(area);
+          
           newFields.push(
             {
               id: groupNumber,
               label: `Area ${groupNumber}`, // Label for area
               btn: groupNumber === 1 ? "Add" : "remove", // "Add" for first, "Remove" for others
+              groupNumber
             },
             {
               id: groupNumber + 1,
@@ -112,7 +114,6 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
               groupNumber,
             }
           );
-          console.log(area)
           // Populate form data with fetched values
           newFormData[`area_${groupNumber}`] = area.area_address || "";
           newFormData[`lat_area_${groupNumber}`] = area.latitude || "";
@@ -227,35 +228,66 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     }));
   };
 
-  const handleRemoveField = async (groupNumber) => {
-    try {
-      // Optional: Delete the record from the database if it exists
-      const areaId = formData[`area_${groupNumber}`]?.id; // Assuming API stores ID
-      if (areaId) {
-        await delete_support_page_famous_areas(areaId); // API call to delete
-      }
+  const handleRemoveField = (groupNumber) => {
+    console.log(groupNumber);
+    
+    if (!groupNumber) return;
   
-      // Remove fields from dynamicFields
-      setDynamicFields((prev) =>
-        prev.filter((field) => field.groupNumber !== groupNumber)
-      );
+    deleteAreaFromDatabase(groupNumber);
   
-      // Remove data from formData
-      setFormData((prev) => {
-        const updatedFormData = { ...prev };
-        Object.keys(updatedFormData).forEach((key) => {
-          if (key.includes(`_${groupNumber}`)) {
-            delete updatedFormData[key];
-          }
-        });
-        return updatedFormData;
+    // Remove all fields associated with the groupNumber
+    setDynamicFields((prev) => prev.filter((field) => field.groupNumber !== groupNumber));
+  
+    // Remove corresponding form data
+    setFormData((prev) => {
+      const updatedFormData = { ...prev };
+      Object.keys(prev).forEach((key) => {
+        if (key.endsWith(`_${groupNumber}`) || key === `area_${groupNumber}`) {
+          delete updatedFormData[key];
+        }
       });
+      return updatedFormData;
+    });
   
-      console.log(`Group ${groupNumber} removed successfully.`);
-    } catch (error) {
-      console.error(`Error deleting area ${groupNumber}:`, error);
-    }
+    console.log(`Group ${groupNumber} removed successfully.`);
   };
+  
+
+  const deleteAreaFromDatabase = async (groupNumber) => {
+    try {
+        const areaData = {
+            area_name: formData[`areaname_${groupNumber}`],
+            area_address: formData[`area_${groupNumber}`],
+            latitude: formData[`lat_area_${groupNumber}`],
+            longitude: formData[`lng_area_${groupNumber}`],
+        };
+
+        // Check if all values in areaData are non-empty
+        if (Object.values(areaData).some(value => !value)) {
+            console.warn(`Skipping delete: Area ${groupNumber} has empty values.`);
+            return;
+        }
+
+        console.log("Deleting area with data:", areaData);
+        await delete_support_page_famous_areas(areaData);
+
+        console.log(`Area ${groupNumber} deleted from database.`);
+        setSnackbar({
+            open: true,
+            message: "Deleted Successfully.",
+            severity: "success",
+        });
+    } catch (error) {
+        console.error(`Error deleting area ${groupNumber}:`, error);
+        setSnackbar({
+            open: true,
+            message: "Error deleting area.",
+            severity: "error",
+        });
+    }
+};
+
+  
   
 
   // Handle form submission
@@ -300,7 +332,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       }
     }
   };
-  // console.log(formData);
+  console.log('dynamicFields', dynamicFields);
 
   return (
     <Box
@@ -314,10 +346,10 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
           const areaIndex = field.name.split("_")[1]; // Extracting number from `map_1`
           return (
             <MapWithMarker
-              key={index}
-              latitude={Number(formData[`lat_area_${areaIndex}`]) || 31.6331}
-              longitude={Number(formData[`lng_area_${areaIndex}`]) || 74.8656}
-              length={Number(formData[`length_${areaIndex}`]) || 0}
+            key={index}
+            latitude={Number(formData[`lat_area_${areaIndex}`]) || 31.6331}
+            longitude={Number(formData[`lng_area_${areaIndex}`]) || 74.8656}
+            length={Number(formData[`length_${areaIndex}`]) || 0}
             />
           );
         } else {
