@@ -105,11 +105,21 @@ function Notice({ page, fieldsData, title }) {
         }, 2500);
       } catch (e) {
         console.error("Error during notice submission:", e);
-        setSnackbar({
-          open: true,
-          message: "Failed to store details.",
-          severity: "error",
-        });
+        console.log(e.response.data.error);
+        
+        if(e.response.data.error==="File size exceeds the 1MB limit."){
+          setSnackbar({
+            open: true,
+            message: "File size should not exceed the 1MB limit.",
+            severity: "error",
+          });
+        }else{
+          setSnackbar({
+            open: true,
+            message: "Failed to store details.",
+            severity: "error",
+          });
+        }
       }
     }
   };
