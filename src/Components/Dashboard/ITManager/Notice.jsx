@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import FormFields from "../../Form/FormFields";
 import CustomSnackbar from "../../CustomSnackbar";
 import { post_notice } from "../../../API/expressAPI";
@@ -159,6 +159,10 @@ function Notice({ page, fieldsData, title }) {
           Save
         </Button>
       )}
+
+      <Typography className="note">
+      Note: Only JPEG, PNG, WEBP, and PDF files are allowed. Maximum file size: <Typography variant="span">1MB</Typography>.
+      </Typography>
 
       <CustomSnackbar
         open={snackbar.open}

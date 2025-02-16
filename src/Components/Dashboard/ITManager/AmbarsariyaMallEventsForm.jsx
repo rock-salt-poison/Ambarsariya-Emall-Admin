@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, CircularProgress } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import FormFields from "../../Form/FormFields";
 import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
@@ -160,7 +160,7 @@ const AmbarsariyaMallEventsForm = ({ page, title }) => {
   return (
     <Box component="form" autoComplete="off" onSubmit={handleSubmit} className="form2">
       {loading ? (
-        <CircularProgress />
+        <Box className="loading"><CircularProgress /></Box> 
       ) : (
         formFields && formFields?.map((field) => (
             <FormFields
@@ -183,6 +183,10 @@ const AmbarsariyaMallEventsForm = ({ page, title }) => {
       <Button type="submit" variant="contained" className="btn_submit">
         Save
       </Button>
+
+      <Typography className="note">
+      Note: Only JPEG, PNG, WEBP, and PDF files are allowed. Maximum file size: <Typography variant="span">1MB</Typography>.
+      </Typography>
 
       <CustomSnackbar
         open={snackbar.open}
