@@ -9,6 +9,7 @@ import { get_countries, post_countries } from "../../../API/expressAPI";
 function Clock_CRUD() {
   const open_weather_api_key = process.env.REACT_APP_OPENWEATHERMAP_API_KEY;
   const country_api_key = process.env.REACT_APP_COUNTRY_API_KEY;
+  const timezone_db_api_key = process.env.REACT_APP_TIMEZONEDB_API_KEY;
 
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -90,48 +91,53 @@ function Clock_CRUD() {
 
   const fetchCapitalTime = async (city) => {
     try {
-      // Check if the city is the United Kingdom (or London)
-      if (
-        city.toLowerCase() === "london" ||
-        city.toLowerCase() === "united kingdom"
-      ) {
-        return "+00:00"; // Return UK timezone directly
-      }
-
       // Get the weather data from OpenWeatherMap API
-      const response = await axios.get(
+      const weatherResponse = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather`,
         {
           params: {
             q: city,
-            appid: open_weather_api_key,
+            appid: open_weather_api_key, // Ensure this key is defined
           },
         }
       );
-
-      console.log("API Response:", response.data); // Log the response to check the data
-
-      if (response.data && response.data.timezone) {
-        const timezoneOffset = response.data.timezone; // The timezone offset in seconds
-        const timezoneHours = Math.floor(timezoneOffset / 3600); // Convert seconds to hours
-        const timezoneMinutes = Math.floor((timezoneOffset % 3600) / 60); // Get minutes
-        const timezone = ` ${timezoneHours >= 0 ? "+" : "-"}${Math.abs(
-          timezoneHours
-        )
-          .toString()
-          .padStart(2, "0")}:${Math.abs(timezoneMinutes)
-          .toString()
-          .padStart(2, "0")}`;
-
-        return timezone;
-      } else {
-        return "N/A"; // If no timezone is found, return "N/A"
+  
+      if (weatherResponse.data && weatherResponse.data.coord) {
+        const { lat: latitude, lon: longitude } = weatherResponse.data.coord; // Extract lat & lon
+        
+        if (latitude && longitude) {
+          try {
+            const timezoneResponse = await axios.get(
+              `https://api.timezonedb.com/v2.1/get-time-zone`,
+              {
+                params: {
+                  key: timezone_db_api_key, // Ensure this key is defined
+                  format: "json",
+                  by: "position",
+                  lat: latitude,
+                  lng: longitude,
+                },
+              }
+            );
+  
+            console.log("API Response:", timezoneResponse.data); // Log response
+  
+            if (timezoneResponse.data && timezoneResponse.data.zoneName) {
+              return timezoneResponse.data.zoneName; // e.g., Asia/Kolkata
+            }
+          } catch (timezoneError) {
+            console.error("Error fetching timezone data:", timezoneError);
+            return "N/A";
+          }
+        }
       }
-    } catch (error) {
-      console.error("Error fetching capital time from OpenWeatherMap:", error);
+      return "N/A"; // If no timezone is found, return "N/A"
+    } catch (weatherError) {
+      console.error("Error fetching weather data:", weatherError);
       return "N/A"; // Return "N/A" in case of any error
     }
   };
+  
 
   const fetchCountryDetails = async (countryName, index) => {
     try {

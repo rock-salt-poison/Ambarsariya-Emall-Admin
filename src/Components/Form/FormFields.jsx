@@ -218,7 +218,7 @@ export default function FormFields({
           open={open}
           onOpen={handleOpenAutocomplete}
           onClose={handleCloseAutocomplete}
-          options={options}
+          options={[...new Set(options)]}
           isOptionEqualToValue={(option, value) => option === value}
           getOptionLabel={(option) => option}
           loading={loading}
