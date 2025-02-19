@@ -209,12 +209,12 @@ function Clock_CRUD() {
           currency_code_4: data ? data[3].currency_code : "",
           currency_code_5: data ? data[4].currency_code : "",
           currency_code_6: data ? data[5].currency_code : "",
-          time_1: data ? data[0].capital_time : "",
-          time_2: data ? data[1].capital_time : "",
-          time_3: data ? data[2].capital_time : "",
-          time_4: data ? data[3].capital_time : "",
-          time_5: data ? data[4].capital_time : "",
-          time_6: data ? data[5].capital_time : "",
+          time_1: data ? data[0].capital_timezone : "",
+          time_2: data ? data[1].capital_timezone : "",
+          time_3: data ? data[2].capital_timezone : "",
+          time_4: data ? data[3].capital_timezone : "",
+          time_5: data ? data[4].capital_timezone : "",
+          time_6: data ? data[5].capital_timezone : "",
         });
       }
       console.log(res);
@@ -281,7 +281,7 @@ function Clock_CRUD() {
         },
         {
           id: 3,
-          label: "Capital Time",
+          label: "Capital Timezone",
           name: "time_1",
           type: "text",
         },
@@ -312,7 +312,7 @@ function Clock_CRUD() {
         },
         {
           id: 3,
-          label: "Capital Time",
+          label: "Capital Timezone",
           name: "time_2",
           type: "text",
         },
@@ -343,7 +343,7 @@ function Clock_CRUD() {
         },
         {
           id: 3,
-          label: "Capital Time",
+          label: "Capital Timezone",
           name: "time_3",
           type: "text",
         },
@@ -374,7 +374,7 @@ function Clock_CRUD() {
         },
         {
           id: 3,
-          label: "Capital Time",
+          label: "Capital Timezone",
           name: "time_4",
           type: "text",
         },
@@ -405,7 +405,7 @@ function Clock_CRUD() {
         },
         {
           id: 3,
-          label: "Capital Time",
+          label: "Capital Timezone",
           name: "time_5",
           type: "text",
         },
@@ -436,7 +436,7 @@ function Clock_CRUD() {
         },
         {
           id: 3,
-          label: "Capital Time",
+          label: "Capital Timezone",
           value: "&#8366;",
           name: "time_6",
           type: "text",
