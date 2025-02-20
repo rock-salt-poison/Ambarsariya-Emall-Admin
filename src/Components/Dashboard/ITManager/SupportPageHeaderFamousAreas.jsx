@@ -117,7 +117,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
           newFormData[`area_${groupNumber}`] = area.area_address || "";
           newFormData[`lat_area_${groupNumber}`] = area.latitude || "";
           newFormData[`lng_area_${groupNumber}`] = area.longitude || "";
-          newFormData[`length_${groupNumber}`] = area.length_in_km || "";
+          newFormData[`length_${groupNumber}`] = Number(area.length_in_km) || "";
           newFormData[`areaname_${groupNumber}`] = area.area_title || "";
           newFormData[`shop_no_${groupNumber}`] = area.shop_no || "";
           newFormData[`bg_img_${groupNumber}`] = area.bg_img || "";
