@@ -256,7 +256,7 @@ export default function FormFields({
             cName={optionalCname}
             />
         :  type === 'file' ? (
-          <>
+       
           <TextField
           label={label}
           name={name}
@@ -272,10 +272,6 @@ export default function FormFields({
           className={optionalCname}
           required={required && !file}
         />
-        {file && (
-            <p>Selected file: {file.name || file}</p>
-          )}
-        </>
         ) : type ? (
         <TextField
           label={label}
