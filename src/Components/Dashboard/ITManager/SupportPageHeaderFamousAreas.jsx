@@ -338,11 +338,19 @@ console.log(formData);
         });
       } catch (e) {
         console.error("Error submitting:", e);
-        setSnackbar({
-          open: true,
-          message: "Failed to store area(s).",
-          severity: "error",
-        });
+        if(e.response.data.error==="File too large"){
+          setSnackbar({
+            open: true,
+            message: "File size should not exceed the 1MB limit.",
+            severity: "error",
+          });
+        }else{
+          setSnackbar({
+            open: true,
+            message: "Failed to store area(s).",
+            severity: "error",
+          });
+        }
       }
     }
   };
