@@ -49,6 +49,8 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     try {
       const resp = await get_support_page_famous_areas(); // Fetch data from API
   
+      console.log(resp);
+      
       if (resp && resp.length > 0) {
         const newFields = [];
         const newFormData = {};
@@ -120,7 +122,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
           newFormData[`length_${groupNumber}`] = Number(area.length_in_km) || "";
           newFormData[`areaname_${groupNumber}`] = area.area_title || "";
           newFormData[`shop_no_${groupNumber}`] = area.shop_no || "";
-          newFormData[`bg_img_${groupNumber}`] = area.bg_img || "";
+          newFormData[`bg_img_${groupNumber}`] = area.image_src || "";
         });
   
         // Update state with fetched data
@@ -370,6 +372,7 @@ console.log(formData);
               label={field.label}
               name={field.name}
               value={field.type !== "file" ? formData[field.name] || "" : undefined}
+              file={field.type === "file" ? formData[field.name] || null : undefined} 
               type={field.type}
               error={!!errors[field.name]}
               onChange={handleChange}

@@ -40,6 +40,7 @@ export default function FormFields({
   handleRemoveClick,
   optionalCname,
   required,
+  file,
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [open, setOpen] = useState(false);
@@ -254,7 +255,28 @@ export default function FormFields({
             }}
             cName={optionalCname}
             />
-        :  type ? (
+        :  type === 'file' ? (
+          <>
+          <TextField
+          label={label}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete="off"
+          error={error}
+          helperText={helperText}
+          fullWidth={width}
+          type='file'
+          size="small"
+          className={optionalCname}
+          required={required && !file}
+        />
+        {file && (
+            <p>Selected file: {file.name || file}</p>
+          )}
+        </>
+        ) : type ? (
         <TextField
           label={label}
           name={name}
