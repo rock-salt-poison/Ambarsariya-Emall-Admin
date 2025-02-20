@@ -55,7 +55,6 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
   
         resp.forEach((area, index) => {
           const groupNumber = index + 1; // Unique group number
-          console.log(area);
           
           newFields.push(
             {
@@ -137,22 +136,33 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     }
   };
   
+console.log(formData);
 
   // Handle input changes
   const handleChange = (event) => {
-    const { name, value } = event.target;
-
+    const { name, value, type, files } = event.target;
+  
     setFormData((prev) => {
-      const updatedFormData = { ...prev, [name]: value };
-
-      // If field is area, extract and store lat/lng separately
-      if (name.startsWith("area_") && value?.latitude && value?.longitude) {
-        updatedFormData[`lat_${name}`] = value.latitude;
-        updatedFormData[`lng_${name}`] = value.longitude;
+      let updatedFormData = { ...prev };
+      
+      if (type === "file") {
+        console.log(updatedFormData);
+        
+        updatedFormData[name] = files[0]; // Store the file object
+      } else {
+        updatedFormData[name] = value;
+  
+        // If field is area, extract and store lat/lng separately
+        if (name.startsWith("area_") && value && value.latitude && value.longitude) {
+          updatedFormData[`lat_${name}`] = value.latitude;
+          updatedFormData[`lng_${name}`] = value.longitude;
+        }
       }
+  
       return updatedFormData;
     });
   };
+  
 
   // Handle adding a new field group
   const handleAddField = () => {
@@ -303,7 +313,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
             const areaIndex = key.split("_")[1];
             return {
               id: areaIndex || null,
-              area_address: formData[`area_${areaIndex}`]?.description || "",
+              area_address: formData[`area_${areaIndex}`]?.description || formData[`area_${areaIndex}`] || null,
               latitude: formData[`lat_area_${areaIndex}`] || "",
               longitude: formData[`lng_area_${areaIndex}`] || "",
               length: formData[`length_${areaIndex}`] || "",
@@ -313,7 +323,9 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
             };
           });
 
+          console.log('areas', areas);
         const resp = await post_support_page_famous_areas({ areas });
+        
 
         setSnackbar({
           open: true,
@@ -332,7 +344,6 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
       }
     }
   };
-  console.log('dynamicFields', dynamicFields);
 
   return (
     <Box
@@ -358,7 +369,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
               key={index}
               label={field.label}
               name={field.name}
-              value={formData[field.name] || ""}
+              value={field.type !== "file" ? formData[field.name] || "" : undefined}
               type={field.type}
               error={!!errors[field.name]}
               onChange={handleChange}

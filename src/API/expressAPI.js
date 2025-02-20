@@ -205,7 +205,11 @@ export const delete_advt = async (id) => {
 export const post_support_page_famous_areas = async (data) => {
     try{
         if(data){
-            const response = await  axios.post(`${admin_link}/famous-areas`, data);
+            const response = await  axios.post(`${admin_link}/famous-areas`, data, {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              });
             return response.data;
         }
     }catch(e){

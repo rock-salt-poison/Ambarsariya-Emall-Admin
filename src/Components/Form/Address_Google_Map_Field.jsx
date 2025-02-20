@@ -72,27 +72,52 @@ export default function AddressGoogleMapField({ value, label, onChange, cName, r
 
   const handlePlaceSelect = (event, newValue) => {
     if (!newValue) {
-      onChange(null);
+      // Handle clearing the value
       setUpdatedValue(null);
+      onChange(null);
       return;
     }
+    if (newValue && newValue.place_id !== "no_match") {
+      if (!placesService.current && window.google) {
+        placesService.current = new window.google.maps.places.PlacesService(document.createElement('div'));
+      }
 
-    if (placesService) {
-      placesService.getDetails({ placeId: newValue.place_id }, (placeDetails, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          const placeData = {
-            description: newValue.description,
-            place_id: newValue.place_id,
-            latitude: placeDetails.geometry.location.lat(),
-            longitude: placeDetails.geometry.location.lng(),
-            formatted_address: placeDetails.formatted_address,
-          };
+      placesService.current.getDetails(
+        { placeId: newValue.place_id },
+        (placeDetails, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            const placeData = {
+              description: newValue.description,
+              place_id: newValue.place_id,
+              latitude: placeDetails.geometry?.location?.lat() || 31.6340, // Default Amritsar
+              longitude: placeDetails.geometry?.location?.lng() || 74.8723, // Default Amritsar
+              formatted_address: placeDetails.formatted_address || newValue.description,
+            };
 
-          onChange(placeData);
-          setUpdatedValue(placeData);
+            onChange(placeData);
+            setUpdatedValue(placeData);
+          }
         }
-      });
+      );
+    } else {
+      saveUserTypedLocation();
     }
+  };
+
+  // Saves the user-typed input if no option is selected
+  const saveUserTypedLocation = () => {
+    if (!inputValue.trim() || (updatedValue && updatedValue.place_id !== "manual_entry")) return;
+  
+    const defaultPlace = {
+      description: inputValue, 
+      place_id: "manual_entry",
+      latitude: 31.6340, 
+      longitude: 74.8723,
+      formatted_address: inputValue, 
+    };
+  
+    onChange(defaultPlace);
+    setUpdatedValue(defaultPlace);
   };
 
   return (
@@ -111,7 +136,13 @@ export default function AddressGoogleMapField({ value, label, onChange, cName, r
         className={cName}
         isOptionEqualToValue={(option, value) => option?.description === value?.description}
         onChange={handlePlaceSelect}
-        onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
+        onInputChange={(event, newInputValue) => {setInputValue(newInputValue) ;
+          if (!newInputValue.trim()) {
+          setUpdatedValue(null);
+          onChange(null);
+        }}}
+        onBlur={saveUserTypedLocation} // Handle case when user leaves input without selection
+
         renderInput={(params) => <TextField {...params} label={label} fullWidth className="input_field address" />}
         renderOption={(props, option) => {
           const matches = option.structured_formatting?.main_text_matched_substrings || [];
