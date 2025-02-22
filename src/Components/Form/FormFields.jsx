@@ -270,7 +270,7 @@ export default function FormFields({
           type='file'
           size="small"
           className={optionalCname}
-          required={required && !file}
+          required={required }
         />
         ) : type ? (
         <TextField
