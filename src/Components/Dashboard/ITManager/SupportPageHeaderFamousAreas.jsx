@@ -148,9 +148,11 @@ console.log(formData);
       let updatedFormData = { ...prev };
       
       if (type === "file") {
-        console.log(updatedFormData);
-        
-        updatedFormData[name] = files[0]; // Store the file object
+        if (files.length > 0) {
+          console.log(`File uploaded for field: ${name}`);
+          
+          updatedFormData[name] = files[0]; // Correctly store the file object
+        }
       } else {
         updatedFormData[name] = value;
   
@@ -390,6 +392,7 @@ console.log(formData);
               btn={field.btn}
               handleAddClick={handleAddField}
               handleRemoveClick={() => handleRemoveField(field.groupNumber)}
+              uploadedFile={formData[`bg_img_${field.groupNumber}`]}
             />
           );
         }
