@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
+  CircularProgress,
   Paper,
   Table,
   TableBody,
@@ -13,12 +14,29 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmationDialog from "../DashboardContent/ConfirmationDialog";
+import CustomSnackbar from "../../CustomSnackbar";
+import { delete_user } from "../../../API/expressAPI";
 
 export default function AccountsTable({ data, tab }) {
   const { user_type, token } = useParams();
   const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+      open: false,
+      message: "",
+      severity: "success",
+  });
 
   const [tableHeader, setTableHeader] = useState([]);
+
+  const [tableData, setTableData] = useState([]);
+
+  useEffect(() => {
+    setTableData(data || []);
+  }, [data]);
 
   useEffect(() => {
     // Dynamically set table header based on user_type
@@ -274,8 +292,39 @@ export default function AccountsTable({ data, tab }) {
     }
   };
 
+  const handleDelete = async (e, row) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setDialogOpen(true);
+    setSelectedRow(row);
+  }
+
+
+  const handleConfirmDelete = async () => {
+    if(selectedRow){
+        try{
+          setLoading(true);
+          const resp = await delete_user(selectedRow?.user_id);
+          setTableData((prev) => prev.filter(row => row.user_id !== selectedRow.user_id));
+
+          setSnackbar({ open: true, message: resp.message });
+        }catch(e){
+            setSnackbar({ open: true, message: 'Failed to remove the user' });
+        }finally{
+          setLoading(false);
+        }
+
+        console.log(selectedRow);
+        
+    }
+    setDialogOpen(false);
+  };
+
   return (
     <Box className="col">
+      {loading && <Box className="loading">
+        <CircularProgress/>
+      </Box>}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -288,7 +337,7 @@ export default function AccountsTable({ data, tab }) {
           </TableHead>
           <TableBody>
             {user_type === "visitor"
-              ? data?.map((row) => (
+              ? tableData?.map((row) => (
                 <TableRow
                   key={row.visitor_id}
                   hover
@@ -304,8 +353,8 @@ export default function AccountsTable({ data, tab }) {
                   <TableCell>{row.message}</TableCell>
                 </TableRow>
               ))
-              : user_type === "member" && token && tab ==='profile' && data ?
-              Object.entries(data && data[0]).map(([key, value], index) => (
+              : user_type === "member" && token && tab ==='profile' && tableData ?
+              Object.entries(tableData && tableData[0]).map(([key, value], index) => (
                 <TableRow key={index}>
                   <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
                   <TableCell sx={{ maxWidth: '380px', whiteSpace: 'wrap !important', wordBreak: 'break-all' }}>
@@ -320,7 +369,7 @@ export default function AccountsTable({ data, tab }) {
                 </TableRow>
               ))
                  : user_type === "member" && !token && !tab
-                  ? data?.map((row) => (
+                  ? tableData?.map((row) => (
                     <TableRow
                       key={row.user_id}
                       hover
@@ -336,12 +385,12 @@ export default function AccountsTable({ data, tab }) {
                         <EditIcon />
                       </TableCell>
                       <TableCell>
-                        <DeleteIcon />
+                        <DeleteIcon onClick = {(e) => handleDelete(e, row)}/>
                       </TableCell>
                     </TableRow>
                   ))
                   : user_type === "shop" && !token && !tab
-                    ? data?.map((row) => (
+                    ? tableData?.map((row) => (
                       <TableRow
                         key={row.shop_access_token}
                         hover
@@ -365,13 +414,13 @@ export default function AccountsTable({ data, tab }) {
                           <EditIcon />
                         </TableCell>
                         <TableCell>
-                          <DeleteIcon />
+                          <DeleteIcon onClick = {(e) => handleDelete(e, row)}/>
                         </TableCell>
                       </TableRow>
                     ))
                     : user_type === "shop" &&
                       token && !tab ?
-                      data?.map((row, rowIndex) =>
+                      tableData?.map((row, rowIndex) =>
                         row.coupons?.map((coupon, couponIndex) => (
                           <TableRow key={coupon.coupon_id} hover>
                             <TableCell sx={{ textTransform: "capitalize" }}>
@@ -394,7 +443,7 @@ export default function AccountsTable({ data, tab }) {
                         ))
                       ) : user_type === "shop" &&
                       token && tab === 'book-eshop' &&
-                      Object.entries(data[0]).map(([key, value], index) => (
+                      Object.entries(tableData[0]).map(([key, value], index) => (
                         <TableRow key={index}>
                           <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
                           <TableCell sx={{ maxWidth: '380px', whiteSpace: 'wrap !important', wordBreak: 'break-all' }}>
@@ -411,6 +460,20 @@ export default function AccountsTable({ data, tab }) {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <ConfirmationDialog
+              open={dialogOpen}
+              onClose={() => setDialogOpen(false)}
+              onConfirm={handleConfirmDelete}
+              title="Delete Notice"
+              message="Are you sure you want to delete this notice?"
+            />
+            <CustomSnackbar
+                    open={snackbar.open}
+                    handleClose={() => setSnackbar({ ...snackbar, open: false })}
+                    message={snackbar.message}
+                    severity={snackbar.severity}
+                />
     </Box>
   );
 }

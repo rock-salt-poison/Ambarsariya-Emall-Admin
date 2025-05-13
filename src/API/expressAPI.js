@@ -238,3 +238,14 @@ export const delete_support_page_famous_areas = async (data) => {
         throw e;
     }
 };
+
+export const delete_user = async (user_id) => {
+    try{
+        if(user_id){
+            const response = await axios.delete(`${admin_link}/user/${user_id}`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
