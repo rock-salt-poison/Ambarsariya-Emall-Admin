@@ -465,8 +465,8 @@ export default function AccountsTable({ data, tab }) {
               open={dialogOpen}
               onClose={() => setDialogOpen(false)}
               onConfirm={handleConfirmDelete}
-              title="Delete Notice"
-              message="Are you sure you want to delete this notice?"
+              title="Delete User"
+              message="Are you sure you want to delete this user?"
             />
             <CustomSnackbar
                     open={snackbar.open}
