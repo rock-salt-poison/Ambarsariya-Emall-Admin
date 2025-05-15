@@ -322,7 +322,7 @@ console.log(formData);
               longitude: formData[`lng_area_${areaIndex}`] || "",
               length: formData[`length_${areaIndex}`] || "",
               area_name: formData[`areaname_${areaIndex}`] || "",
-              shop_no: formData[`shop_no_${areaIndex}`] || null,
+              // shop_no: formData[`shop_no_${areaIndex}`] || null,
               bg_img: formData[`bg_img_${areaIndex}`] || "",
             };
           });
