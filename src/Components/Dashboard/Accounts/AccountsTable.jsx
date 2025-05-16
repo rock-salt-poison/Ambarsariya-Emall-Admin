@@ -289,6 +289,8 @@ export default function AccountsTable({ data, tab }) {
       navigate(`${row.shop_access_token}`);
     } else {
       navigate(`${row.access_token}`);
+      console.log(row);
+      
     }
   };
 
@@ -354,7 +356,7 @@ export default function AccountsTable({ data, tab }) {
                 </TableRow>
               ))
               : user_type === "member" && token && tab ==='profile' && tableData ?
-              Object.entries(tableData && tableData[0]).map(([key, value], index) => (
+              Object.entries(tableData && tableData[0])?.map(([key, value], index) => (
                 <TableRow key={index}>
                   <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
                   <TableCell sx={{ maxWidth: '380px', whiteSpace: 'wrap !important', wordBreak: 'break-all' }}>
@@ -421,7 +423,7 @@ export default function AccountsTable({ data, tab }) {
                     : user_type === "shop" &&
                       token && !tab ?
                       tableData?.map((row, rowIndex) =>
-                        row.coupons?.map((coupon, couponIndex) => (
+                        row?.coupons?.map((coupon, couponIndex) => (
                           <TableRow key={coupon.coupon_id} hover>
                             <TableCell sx={{ textTransform: "capitalize" }}>
                               {rowIndex + 1}.{couponIndex + 1}
@@ -443,7 +445,7 @@ export default function AccountsTable({ data, tab }) {
                         ))
                       ) : user_type === "shop" &&
                       token && tab === 'book-eshop' &&
-                      Object.entries(tableData[0]).map(([key, value], index) => (
+                      Object.entries(tableData[0])?.map(([key, value], index) => (
                         <TableRow key={index}>
                           <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
                           <TableCell sx={{ maxWidth: '380px', whiteSpace: 'wrap !important', wordBreak: 'break-all' }}>
