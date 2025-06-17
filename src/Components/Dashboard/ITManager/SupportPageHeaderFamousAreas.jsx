@@ -48,9 +48,7 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
   const fetch_areas_from_database = async () => {
     try {
       const resp = await get_support_page_famous_areas(); // Fetch data from API
-  
-      console.log(resp);
-      
+        
       if (resp && resp.length > 0) {
         const newFields = [];
         const newFormData = {};
@@ -138,8 +136,6 @@ function SupportPageHeaderFamousAreas({ page, fieldsData, title }) {
     }
   };
   
-console.log(formData);
-
   // Handle input changes
   const handleChange = (event) => {
     const { name, value, type, files } = event.target;

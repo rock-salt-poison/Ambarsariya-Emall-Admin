@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, CircularProgress } from "@mui/material";
 import BoxHeader from "../DashboardContent/BoxHeader";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
 import { get_allUsers, get_discount_coupons, get_visitorData, getMemberData, getShopUserData } from "../../../API/expressAPI";
 import Tabs from "../DashboardContent/Tabs";
@@ -12,6 +12,9 @@ function AccountDetails() {
   const [data, setData] = useState(null);
   const [coupons, setCoupons] = useState();
   const { user_type, token } = useParams();
+  const [searchParams] = useSearchParams();
+    
+  const visitor_id = searchParams.get('visitor-id'); 
   const [loading, setLoading] = useState(false);
   
   
@@ -26,8 +29,8 @@ function AccountDetails() {
       if (user_type === 'visitor') {
         try {
           setLoading(true);
-          const resp = await get_visitorData(token);
-          if (resp.valid) {
+          const resp = await get_visitorData(token, visitor_id);
+          if (resp?.valid) {
             setData(resp?.data);
           }
         } catch (e) {
@@ -40,6 +43,7 @@ function AccountDetails() {
         try {
           setLoading(true);
           const resp = await getMemberData(token);
+          
           if (resp.length>0) {
             setData(resp);
           }

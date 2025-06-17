@@ -130,12 +130,21 @@ export const get_allUsers = async (user_type) => {
     }
 }
 
-export const get_visitorData = async (access_token) => {
-    try{
-        const response = await axios.get(`${link}/sell/support/${access_token}`);
-        return response.data;
-    }catch(e){
-        throw e;
+export const get_visitorData = async (access_token, sender_id) => {
+    if(sender_id){
+        try{
+            const response = await axios.get(`${link}/sell/support/${access_token}/${sender_id}`);
+            return response.data;
+        }catch(e){
+            throw e;
+        }
+    }else{
+        try{
+            const response = await axios.get(`${link}/sell/support/${access_token}`);
+            return response.data;
+        }catch(e){
+            throw e;
+        }
     }
 }
 

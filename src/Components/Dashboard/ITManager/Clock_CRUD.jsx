@@ -217,7 +217,6 @@ function Clock_CRUD() {
           time_6: data ? data[5].capital_timezone : "",
         });
       }
-      console.log(res);
     } catch (e) {
       console.log(e);
     }

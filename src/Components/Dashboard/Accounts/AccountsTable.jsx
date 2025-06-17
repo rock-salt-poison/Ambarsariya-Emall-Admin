@@ -287,10 +287,10 @@ export default function AccountsTable({ data, tab }) {
   const handleClick = (e, row) => {
     if (user_type === "shop") {
       navigate(`${row.shop_access_token}`);
+    } else if (user_type === "visitor") {
+      navigate(`${row.access_token}?visitor-id=${row.visitor_id}`);
     } else {
       navigate(`${row.access_token}`);
-      console.log(row);
-      
     }
   };
 
@@ -315,13 +315,12 @@ export default function AccountsTable({ data, tab }) {
         }finally{
           setLoading(false);
         }
-
-        console.log(selectedRow);
         
     }
     setDialogOpen(false);
   };
 
+  
   return (
     <Box className="col">
       {loading && <Box className="loading">
@@ -339,9 +338,9 @@ export default function AccountsTable({ data, tab }) {
           </TableHead>
           <TableBody>
             {user_type === "visitor"
-              ? tableData?.map((row) => (
+              ? tableData && tableData?.map((row, index) => (
                 <TableRow
-                  key={row.visitor_id}
+                  key={index}
                   hover
                   onClick={(e) => handleClick(e, row)}
                 >
@@ -355,8 +354,8 @@ export default function AccountsTable({ data, tab }) {
                   <TableCell>{row.message}</TableCell>
                 </TableRow>
               ))
-              : user_type === "member" && token && tab ==='profile' && tableData ?
-              Object.entries(tableData && tableData[0])?.map(([key, value], index) => (
+              : user_type === "member" && token && tab ==='profile' && tableData.length>0 ?
+              Object.entries(tableData && tableData?.[0])?.map(([key, value], index) => (
                 <TableRow key={index}>
                   <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
                   <TableCell sx={{ maxWidth: '380px', whiteSpace: 'wrap !important', wordBreak: 'break-all' }}>
@@ -371,9 +370,9 @@ export default function AccountsTable({ data, tab }) {
                 </TableRow>
               ))
                  : user_type === "member" && !token && !tab
-                  ? tableData?.map((row) => (
+                  ? tableData?.map((row, index) => (
                     <TableRow
-                      key={row.user_id}
+                      key={index}
                       hover
                       onClick={(e) => handleClick(e, row)}
                     >
@@ -392,9 +391,9 @@ export default function AccountsTable({ data, tab }) {
                     </TableRow>
                   ))
                   : user_type === "shop" && !token && !tab
-                    ? tableData?.map((row) => (
+                    ? tableData?.map((row, index) => (
                       <TableRow
-                        key={row.shop_access_token}
+                        key={index}
                         hover
                         onClick={(e) => handleClick(e, row)}
                       >
@@ -444,8 +443,8 @@ export default function AccountsTable({ data, tab }) {
                           </TableRow>
                         ))
                       ) : user_type === "shop" &&
-                      token && tab === 'book-eshop' &&
-                      Object.entries(tableData[0])?.map(([key, value], index) => (
+                      token && tab === 'book-eshop' && tableData.length>0 &&
+                      Object.entries(tableData?.[0])?.map(([key, value], index) => (
                         <TableRow key={index}>
                           <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
                           <TableCell sx={{ maxWidth: '380px', whiteSpace: 'wrap !important', wordBreak: 'break-all' }}>

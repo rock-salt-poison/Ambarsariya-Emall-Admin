@@ -192,61 +192,62 @@ useEffect(() => {
   }, [page]);
 
   const fetch_advt_from_database = async () => {
-    setLoading(true);
-    try {
-      const resp = await get_advt(page); // Fetch data from the API
-      console.log(resp);
-  
-      if (resp.message === 'Valid' && resp.data.length > 0) {
-        // Start with the current formFields
-        const newFields = []; // Start with existing formFields
-        
-        // Add new fields based on the fetched data
-        resp.data.forEach((ad, index) => {
-          let newIndex = index + 1; // Start with the next index
-          newFields.push({
-            id: ad.id, // Ensure a unique ID for the new field section
-            label: `ADVT ${newIndex}`,
-            btn: newIndex === 1 ? "Add" : "Remove", // Add a "Remove" button
-            fields: [
-              {
-                id: `shop_${newIndex}`, // Unique ID for the shop field
-                label: "Shop",
-                name: `shop_${newIndex}`,
-                type: "text",
-                value: ad.shop_no || "", // Assign value from API response
-                required: true,
-              },
-              {
-                id: `bg_${newIndex}`, // Unique ID for the background field
-                label: "Select Background",
-                name: `bg_${newIndex}`,
-                type: "select",
-                options: [
-                  "Coupon Frame",
-                  "Post Stamp Frame",
-                  "Turkey Stamp Frame",
-                  "Zig-zag Border",
-                  "Travel Postal Stamp",
-                ],
-                value: ad.background || "", // Assign value from API response
-                required: true,
-              },
-            ],
-          });
-  
-          newIndex++; // Increment the index for the next field
-        });
-  
-        setFormFields(newFields); // Update the formFields state with new fields
-      }
-    } catch (e) {
-      console.error("Error fetching advt:", e);
-    } finally {
-      setLoading(false);
+  setLoading(true);
+
+  try {
+    const resp = await get_advt(page);
+
+    if (resp?.message === 'Valid' && resp?.data?.length > 0) {
+      const newFields = resp.data.map((ad, index) => {
+        const newIndex = index + 1;
+
+        return {
+          id: ad.id ?? `advt_${newIndex}`,
+          label: `ADVT ${newIndex}`,
+          btn: newIndex === 1 ? "Add" : "Remove",
+          fields: [
+            {
+              id: `shop_${newIndex}`,
+              label: "Shop",
+              name: `shop_${newIndex}`,
+              type: "text",
+              value: ad?.shop_no ?? "",
+              required: true,
+            },
+            {
+              id: `bg_${newIndex}`,
+              label: "Select Background",
+              name: `bg_${newIndex}`,
+              type: "select",
+              options: [
+                "Coupon Frame",
+                "Post Stamp Frame",
+                "Turkey Stamp Frame",
+                "Zig-zag Border",
+                "Travel Postal Stamp",
+              ],
+              value: ad?.background ?? "",
+              required: true,
+            },
+          ],
+        };
+      });
+
+      setFormFields(newFields);
+    } else {
+      setFormFields([]); // Optional: Clear form if no valid data
     }
-  };
-  
+  } catch (e) {
+    setSnackbar({
+      open: true,
+      message: "No Advt created.",
+      severity: "error",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
   
 
   return (
