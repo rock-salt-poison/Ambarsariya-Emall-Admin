@@ -29,6 +29,7 @@ const AuthLayout = () => {
             { name: "Visitor", icon: <PersonOutlineIcon /> },
             { name: "Member", icon: <PersonOutlineIcon /> },
             { name: "Shop", icon: <PersonOutlineIcon /> },
+            { name: "Merchant", icon: <PersonOutlineIcon /> },
           ],
         },
         {
@@ -52,6 +53,7 @@ const AuthLayout = () => {
         { name: "Visitor", icon: <PersonOutlineIcon /> },
         { name: "Member", icon: <PersonOutlineIcon /> },
         { name: "Shop", icon: <PersonOutlineIcon /> },
+        { name: "Merchant", icon: <PersonOutlineIcon /> },
       ],
 
       "IT Manager": [
@@ -86,6 +88,8 @@ const AuthLayout = () => {
         navigate("../accounts/member");
       }else if (selectedItem === "Shop") {
         navigate("../accounts/shop");
+      }else if (selectedItem === "Merchant") {
+        navigate("../accounts/merchant");
       }
     }
   }, [selectedItem]);

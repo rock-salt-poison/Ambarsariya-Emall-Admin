@@ -102,7 +102,19 @@ export default function AccountsTable({ data, tab }) {
           "",
         ]);
       }
-    } else {
+    } else if (user_type === "merchant") {
+      setTableHeader([
+        "Shop User ID",
+        "Member User ID",
+        "Member ID",
+        "Shop No.",
+        "Shop Phone No.",
+        "Member Phone No.",
+        "Shop Username",
+        "Member Username",
+        "Business Name"
+      ]);
+    }else {
       setTableHeader([]);
     }
     // Add additional conditions for other user types if needed
@@ -443,7 +455,7 @@ export default function AccountsTable({ data, tab }) {
                           </TableRow>
                         ))
                       ) : user_type === "shop" &&
-                      token && tab === 'book-eshop' && tableData.length>0 &&
+                      token && tab === 'book-eshop' && tableData.length>0 ?
                       Object.entries(tableData?.[0])?.map(([key, value], index) => (
                         <TableRow key={index}>
                           <TableCell sx={{ textTransform: "capitalize", fontWeight: '600 !important' }}>{key.replace(/_/g, " ")}</TableCell>
@@ -457,7 +469,27 @@ export default function AccountsTable({ data, tab }) {
                             <DeleteIcon />
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )): user_type === "merchant"
+              && tableData && tableData?.map((row, index) => (
+                <TableRow
+                  key={index}
+                  hover
+                  onClick={(e) => handleClick(e, row)}
+                >
+                  <TableCell sx={{ textTransform: "capitalize" }}>
+                    {row.shop_user_id}
+                  </TableCell>
+                  <TableCell>{row.member_user_id}</TableCell>
+                  <TableCell>{row.member_id}</TableCell>
+                  <TableCell>{row.shop_no}</TableCell>
+                  <TableCell>{row.shop_phone_no}</TableCell>
+                  <TableCell>{row.member_phone_no}</TableCell>
+                  <TableCell>{row.shop_username}</TableCell>
+                  <TableCell>{row.member_username}</TableCell>
+                  <TableCell>{row.business_name}</TableCell>
+                </TableRow>
+              ))
+              }
           </TableBody>
         </Table>
       </TableContainer>

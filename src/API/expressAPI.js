@@ -235,6 +235,15 @@ export const get_support_page_famous_areas = async () => {
     }
 } 
 
+export const get_merchant_users = async () => {
+    try{
+        const response = await axios.get(`${link}/merchants`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+} 
+
 export const delete_support_page_famous_areas = async (data) => { 
     try {
         if (data) {

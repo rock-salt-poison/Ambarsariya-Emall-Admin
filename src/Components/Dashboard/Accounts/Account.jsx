@@ -28,6 +28,8 @@ function Account() {
         try {
           setLoading(true);
           const resp = await get_allUsers(user_type);
+          console.log(resp);
+          
           if (resp.length > 0) {
             setData(resp);
             setFilteredData(resp); // Initially show all data
