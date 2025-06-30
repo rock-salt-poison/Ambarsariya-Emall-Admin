@@ -104,9 +104,10 @@ export default function AccountsTable({ data, tab }) {
       }
     } else if (user_type === "merchant") {
       setTableHeader([
+        "Merchant ID",
         "Shop User ID",
         "Member User ID",
-        "Member ID",
+        // "Member ID",
         "Shop No.",
         "Shop Phone No.",
         "Member Phone No.",
@@ -476,11 +477,11 @@ export default function AccountsTable({ data, tab }) {
                   hover
                   onClick={(e) => handleClick(e, row)}
                 >
-                  <TableCell sx={{ textTransform: "capitalize" }}>
+                  <TableCell>{row.merchant_id || '-'}</TableCell>
+                  <TableCell>
                     {row.shop_user_id}
                   </TableCell>
                   <TableCell>{row.member_user_id}</TableCell>
-                  <TableCell>{row.member_id}</TableCell>
                   <TableCell>{row.shop_no}</TableCell>
                   <TableCell>{row.shop_phone_no}</TableCell>
                   <TableCell>{row.member_phone_no}</TableCell>
