@@ -3,8 +3,11 @@ import { Box, CircularProgress } from "@mui/material";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import Tabs from "../DashboardContent/Tabs";
 import ReceivableTable from "./ReceivableTable";
+import { useParams } from "react-router-dom";
 
 function B2B() {  
+
+  const { type } = useParams();
   
   const visitorData = [
     {
@@ -15,15 +18,24 @@ function B2B() {
     {
       id: 2,
       name: "Payable",
-      content:'',
+      content:<ReceivableTable/>,
     },
   ];
   
 
   return (
-      <Box className="content">
-            <Tabs data={visitorData} />
-      </Box>
+      <Box className="body finance">
+            <Box className="content">
+              <BoxHeader
+                title='Finance'
+                searchField={false}
+              />
+              <Box className="body">
+                  <Tabs data={visitorData} />
+              </Box>
+            </Box>
+           
+          </Box>
      
   );
 }

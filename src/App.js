@@ -10,6 +10,7 @@ import Account from "./Components/Dashboard/Accounts/Account";
 import AccountDetails from "./Components/Dashboard/Accounts/AccountDetails";
 import NoticeDetail from "./Components/Dashboard/ITManager/NoticeDetail";
 import Finance from "./Components/Dashboard/Finance/Finance";
+import B2B from "./Components/Dashboard/Finance/B2B";
 
 function App() {
   return (
@@ -25,7 +26,7 @@ function App() {
         <Route path="/todo/notices/:title/:id" element={<NoticeDetail />} />
         <Route path="/accounts/:user_type" element={<Account />} />
         <Route path="/accounts/:user_type/:token" element={<AccountDetails />} />
-        <Route path="/finance" element={<Finance />} />
+        <Route path="/finance/:type" element={<B2B />} />
       </Route>
     </Routes>
   );

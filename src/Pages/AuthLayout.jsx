@@ -46,7 +46,14 @@ const AuthLayout = () => {
             { name: "Take Away", icon: <PersonOutlineIcon /> },
           ],
         },
-        { name: "Finance", icon: <HomeOutlinedIcon /> },
+        { name: "Finance", icon: <HomeOutlinedIcon />, children: [
+            { name: "B2B", icon: <PersonOutlineIcon /> },
+            { name: "B2C", icon: <PersonOutlineIcon /> },
+            { name: "C2C", icon: <PersonOutlineIcon /> },
+            { name: "MoU", icon: <PersonOutlineIcon /> },
+            { name: "Services", icon: <PersonOutlineIcon /> },
+            { name: "Shops", icon: <PersonOutlineIcon /> },
+          ], },
         { name: "Log Activity", icon: <HomeOutlinedIcon /> },
       ],
       Accounts: [
@@ -90,8 +97,10 @@ const AuthLayout = () => {
         navigate("../accounts/shop");
       }else if (selectedItem === "Merchant") {
         navigate("../accounts/merchant");
-      }else if (selectedItem === "Finance") {
-        navigate("../finance");
+      }else if (selectedItem === "B2B") {
+        navigate("../finance/b2b");
+      }else if (selectedItem === "B2C") {
+        navigate("../finance/b2c");
       }
     }
   }, [selectedItem]);

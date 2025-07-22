@@ -407,6 +407,13 @@ a{
           table {
             thead {
               tr {
+                &:first-child{
+                  background: $blue;
+
+                  th{
+                    color: $white;
+                  }
+                }
                 th {
                   @include text(16px, $black, 600);
                   white-space: nowrap;

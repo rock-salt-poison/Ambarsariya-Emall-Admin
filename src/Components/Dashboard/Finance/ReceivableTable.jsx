@@ -80,6 +80,11 @@ export default function ReceivableTable({ data = [], tab }) {
         <Table>
           <TableHead>
             <TableRow>
+              {tableHeader?.map((header, i) => (
+                <TableCell key={i}>{header.label}</TableCell>
+              ))}
+            </TableRow>
+            <TableRow>
               {tableHeader.map((header, i) => (
                 <TableCell key={i}>
                   {header.dropdown ? (
