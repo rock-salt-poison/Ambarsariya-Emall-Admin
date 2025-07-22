@@ -411,6 +411,16 @@ a{
                   @include text(16px, $black, 600);
                   white-space: nowrap;
                   padding: 12px;
+
+                  .dropdown{
+                    .MuiSelect-select{
+                      padding: 0px 32px 0px 0px;
+                      font-weight: bold;
+                    }
+                    .MuiOutlinedInput-notchedOutline{
+                      border: 0px;
+                    }
+                  }
                 }
               }
             }
@@ -535,6 +545,16 @@ a{
             }
             .heading{
               @include text(15px, $blue, 600);
+            }
+          }
+        }
+      }
+
+      &.finance{
+        .content{
+          .body{
+            .tab_panel {
+              padding: 0px;
             }
           }
         }

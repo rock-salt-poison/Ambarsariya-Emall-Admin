@@ -9,6 +9,7 @@ import 'rsuite/DateRangePicker/styles/index.css';
 import Account from "./Components/Dashboard/Accounts/Account";
 import AccountDetails from "./Components/Dashboard/Accounts/AccountDetails";
 import NoticeDetail from "./Components/Dashboard/ITManager/NoticeDetail";
+import Finance from "./Components/Dashboard/Finance/Finance";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/todo/notices/:title/:id" element={<NoticeDetail />} />
         <Route path="/accounts/:user_type" element={<Account />} />
         <Route path="/accounts/:user_type/:token" element={<AccountDetails />} />
+        <Route path="/finance" element={<Finance />} />
       </Route>
     </Routes>
   );

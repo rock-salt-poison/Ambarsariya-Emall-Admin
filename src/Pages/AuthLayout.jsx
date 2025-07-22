@@ -90,6 +90,8 @@ const AuthLayout = () => {
         navigate("../accounts/shop");
       }else if (selectedItem === "Merchant") {
         navigate("../accounts/merchant");
+      }else if (selectedItem === "Finance") {
+        navigate("../finance");
       }
     }
   }, [selectedItem]);
