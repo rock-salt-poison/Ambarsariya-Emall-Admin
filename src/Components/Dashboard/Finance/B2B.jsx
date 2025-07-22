@@ -8,6 +8,8 @@ import { useParams } from "react-router-dom";
 function B2B() {  
 
   const { type } = useParams();
+  console.log(type);
+  
   
   const visitorData = [
     {
@@ -27,7 +29,7 @@ function B2B() {
       <Box className="body finance">
             <Box className="content">
               <BoxHeader
-                title='Finance'
+                title={`Finance - ${type?.toUpperCase()}`}
                 searchField={false}
               />
               <Box className="body">

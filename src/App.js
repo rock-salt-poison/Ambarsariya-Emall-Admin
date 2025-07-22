@@ -9,7 +9,6 @@ import 'rsuite/DateRangePicker/styles/index.css';
 import Account from "./Components/Dashboard/Accounts/Account";
 import AccountDetails from "./Components/Dashboard/Accounts/AccountDetails";
 import NoticeDetail from "./Components/Dashboard/ITManager/NoticeDetail";
-import Finance from "./Components/Dashboard/Finance/Finance";
 import B2B from "./Components/Dashboard/Finance/B2B";
 
 function App() {
