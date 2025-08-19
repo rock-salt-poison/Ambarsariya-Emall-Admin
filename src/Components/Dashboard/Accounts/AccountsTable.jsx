@@ -324,6 +324,8 @@ export default function AccountsTable({ data, tab }) {
 
           setSnackbar({ open: true, message: resp.message });
         }catch(e){
+          console.log(e);
+          
             setSnackbar({ open: true, message: 'Failed to remove the user' });
         }finally{
           setLoading(false);
