@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const admin_link = `${process.env.REACT_APP_EXPRESS_API_LINK}/admin/api`;
 const link = `${process.env.REACT_APP_EXPRESS_API_LINK}/api/ambarsariya`;
+const admin_roles_api = `${process.env.REACT_APP_EXPRESS_API_LINK}/admin/roles`;
 
 
 export const post_travel_time = async (data) => {
@@ -21,7 +22,6 @@ export const get_travel_time = async (data) => {
         throw e;
     }
 }
-
 
 export const post_countries = async (data) => {
     try{
@@ -261,6 +261,55 @@ export const delete_user = async (user_id) => {
     try{
         if(user_id){
             const response = await axios.delete(`${admin_link}/user/${user_id}`);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const get_departments = async () => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/departments`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_permissions = async () => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/permissions`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_role_employees = async () => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/employees`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const send_otp_to_email = async (data) => {
+  try {
+    if (data) {
+      const response = await axios.post(`${link}/sell/username-otp`, data);
+      return response.data;
+    }
+  } catch (e) {
+    throw e;
+  }
+}
+
+export const post_role_employees = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_roles_api}/create-role`, data);
             return response.data;
         }
     }catch(e){

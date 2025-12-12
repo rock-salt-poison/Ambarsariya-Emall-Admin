@@ -6,6 +6,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
 import FormFields from '../Form/FormFields';
+import CreateRoleForm from './Admin/CreateRoleForm';
 
 export default function DialogPopup({open, handleClose, fields, formData, handleOnChange, handleSubmit, errors}) {
   
@@ -27,25 +28,7 @@ export default function DialogPopup({open, handleClose, fields, formData, handle
                 <CloseIcon onClick={handleClose} sx={{cursor:'pointer'}}/>
             </Box>
             <Box className="body">
-                <Box component="form" noValidate autoComplete="off" onSubmit={handleSubmit}>
-                  {fields.map((field)=> {
-                      return <FormFields
-                        key={field.id}
-                        label={field.label}
-                        name={field.name}
-                        value={field.value? field.value : formData[field.name]}
-                        type={field.type}
-                        options={field.options}
-                        error={!!errors[field.name]}
-                        onChange={(e)=>handleOnChange(e)}
-                        helperText={errors[field.name]} 
-                      />
-                  })}
-
-                <Button type="submit" variant="contained" className='btn_submit'>
-                  Create
-                </Button>
-                </Box>
+               <CreateRoleForm onClose={handleClose}/>
             </Box>
         </DialogContent>
       </Dialog>

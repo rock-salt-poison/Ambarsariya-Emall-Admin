@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
+  CircularProgress,
   Table,
   TableBody,
   TableCell,
@@ -8,66 +9,44 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { get_role_employees } from "../../API/expressAPI";
+import { doesSectionFormatHaveLeadingZeros } from "@mui/x-date-pickers/internals/hooks/useField/useField.utils";
 
 export default function DashboardTable() {
-  function createData(
-    id,
-    name,
-    department,
-    start_date,
-    age,
-    phone_no,
-    email
-  ) {
-    return {
-      id,
-      name,
-      department,
-      start_date,
-      age,
-      phone_no,
-      email
-    };
-  }
 
-  const rows = [
-    createData(
-      1,
-      "Michael Silva",
-      "Sales Manager",
-      "2011-04-25",
-      28,
-      9876547890,
-      "michael@gmail.com"
-    ),
-    createData(
-      2,
-      "Gloria Little",
-      "IT Manager",
-      "2011-04-29",
-      29,
-      7894561302,
-      "gloria@gmail.com"
-    ),
-    createData(
-      3,
-      "Jennifer",
-      "Marketing Manager",
-      "2021-06-30",
-      30,
-      7845962987,
-      "jennifer@gmail.com"
-    ),
-  ];
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  useEffect(()=>{
+    const fetchEmployees = async () => {
+      try{
+        setLoading(true);
+        const resp = await get_role_employees();
+        console.log(resp);
+        if(resp){
+          setEmployees(resp);
+        }
+      }catch(e){
+        console.log(e);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    fetchEmployees();
+  }, []);
+
+  
   return (
     <>
+    {loading && <Box className="loading"><CircularProgress/></Box> }
       <Box className="col">
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Department</TableCell>
+              <TableCell>Role</TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>Age</TableCell>
               <TableCell>Phone No.</TableCell>
@@ -75,14 +54,15 @@ export default function DashboardTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id} hover>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.department}</TableCell>
-                <TableCell>{row.start_date}</TableCell>
-                <TableCell>{row.age}</TableCell>
-                <TableCell>{row.phone_no}</TableCell>
-                <TableCell>{row.email}</TableCell>
+            {employees.map((emp) => (
+              <TableRow key={emp.id} hover>
+                <TableCell>{emp.name}</TableCell>
+                <TableCell>{emp.department_name}</TableCell>
+                <TableCell sx={{textTransform:'capitalize'}}>{emp.role_name}</TableCell>
+                <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
+                <TableCell>{emp.age}</TableCell>
+                <TableCell>{emp.phone}</TableCell>
+                <TableCell>{emp.email}</TableCell>
               </TableRow>
             ))}
           </TableBody>
