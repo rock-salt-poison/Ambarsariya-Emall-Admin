@@ -54,7 +54,7 @@ export default function DashboardTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {employees.map((emp) => (
+            {employees.length > 0 ? employees.map((emp) => (
               <TableRow key={emp.id} hover>
                 <TableCell>{emp.name}</TableCell>
                 <TableCell>{emp.department_name}</TableCell>
@@ -64,7 +64,9 @@ export default function DashboardTable() {
                 <TableCell>{emp.phone}</TableCell>
                 <TableCell>{emp.email}</TableCell>
               </TableRow>
-            ))}
+            )) : <TableRow>
+                <TableCell colSpan={7} sx={{textAlign:'center'}}>No employee created</TableCell>
+            </TableRow> }
           </TableBody>
         </Table>
       </Box>
