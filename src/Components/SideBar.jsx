@@ -19,7 +19,7 @@ import mallIcon from "../Utils/images/gatelogo.webp";
 import CustomSnackbar from "./CustomSnackbar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { clearTokens } from "../store/authSlice";
+import { logout } from "../store/authSlice";
 
 const drawerWidth = 240;
 
@@ -74,16 +74,23 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
   const [expandedItems, setExpandedItems] = useState({});
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [selectedItem, setSelectedItem] = useState(menuItems[0].name);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
+  // useEffect(() => {
+  //   onSelectItem(menuItems[0].name);
+  // }, []);
+
   useEffect(() => {
-    onSelectItem(menuItems[0].name);
-  }, []);
+    if (menuItems.length > 0 && !selectedItem) {
+      setSelectedItem(menuItems[0].name);
+      onSelectItem(menuItems[0].name);
+    }
+  }, [menuItems, selectedItem, onSelectItem]);
 
   const handleItemClick = (item) => {
     setSelectedItem(item.name);
@@ -105,7 +112,7 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
     });
 
     setTimeout(() => {
-      dispatch(clearTokens());
+      dispatch(logout());
       localStorage.removeItem("token");
       navigate("../login");
     }, 2000);

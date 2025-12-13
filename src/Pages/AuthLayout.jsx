@@ -3,123 +3,187 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import SideBar from "../Components/SideBar";
 import DashboardHeader from "../Components/Dashboard/DashboardHeader";
-import { Box } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import MailIcon from "@mui/icons-material/Mail";
+import { get_userByToken } from "../API/expressAPI";
 
 const AuthLayout = () => {
-  const user = useSelector((state) => state.auth.adminAccessToken);
+  const token = useSelector((state) => state.auth.token);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // start with loading true
   const [selectedItem, setSelectedItem] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
   const navigate = useNavigate();
 
-  const getMenuItems = () => {
-    const items = {
-      Admin: [
-        { name: "Dashboard", icon: <HomeOutlinedIcon /> },
-        { name: "Admin", icon: <HomeOutlinedIcon /> },
-        { name: "Sales", icon: <HomeOutlinedIcon /> },
-        { name: "IT Manager", icon: <HomeOutlinedIcon /> },
-        { name: "Marketing", icon: <HomeOutlinedIcon /> },
-        { name: "Designers", icon: <HomeOutlinedIcon /> },
-        {
-          name: "Accounts",
-          icon: <HomeOutlinedIcon />,
-          children: [
-            { name: "Visitor", icon: <PersonOutlineIcon /> },
-            { name: "Member", icon: <PersonOutlineIcon /> },
-            { name: "Shop", icon: <PersonOutlineIcon /> },
-            { name: "Merchant", icon: <PersonOutlineIcon /> },
-          ],
-        },
-        {
-          name: "Services",
-          icon: <HomeOutlinedIcon />,
-          children: [
-            { name: "MoU", icon: <PersonOutlineIcon /> },
-            { name: "Co-Helpers", icon: <PersonOutlineIcon /> },
-            { name: "Pre-Paid / Post-Paid", icon: <PersonOutlineIcon /> },
-            { name: "Discount Coupons", icon: <PersonOutlineIcon /> },
-            { name: "Delivery", icon: <PersonOutlineIcon /> },
-            { name: "Home Visit", icon: <PersonOutlineIcon /> },
-            { name: "Pickup", icon: <PersonOutlineIcon /> },
-            { name: "Take Away", icon: <PersonOutlineIcon /> },
-          ],
-        },
-        { name: "Finance", icon: <HomeOutlinedIcon />, children: [
-            { name: "B2B", icon: <PersonOutlineIcon /> },
-            { name: "B2C", icon: <PersonOutlineIcon /> },
-            { name: "C2C", icon: <PersonOutlineIcon /> },
-            { name: "MoU", icon: <PersonOutlineIcon /> },
-            { name: "Services", icon: <PersonOutlineIcon /> },
-            { name: "Shops", icon: <PersonOutlineIcon /> },
-          ], },
-        { name: "Log Activity", icon: <HomeOutlinedIcon /> },
-      ],
-      Accounts: [
-        { name: "Visitor", icon: <PersonOutlineIcon /> },
-        { name: "Member", icon: <PersonOutlineIcon /> },
-        { name: "Shop", icon: <PersonOutlineIcon /> },
-        { name: "Merchant", icon: <PersonOutlineIcon /> },
-      ],
+  // Fetch user by token
+  useEffect(() => {
+    if (token) {
+      const fetchUser = async () => {
+        try {
+          const resp = await get_userByToken(token);
+          if (resp?.user) {
+            setUser(resp.user);
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+  }, [token]);
 
-      "IT Manager": [
-        { name: "Dashboard", icon: <HomeOutlinedIcon /> },
-        { name: "To-Do", icon: <MailIcon /> },
-      ],
-    };
-    return items[user] || [];
+  // Menu items mapping
+  const menuMap = {
+    Admin: [
+      { name: "Dashboard", icon: <HomeOutlinedIcon /> },
+      { name: "Admin", icon: <HomeOutlinedIcon /> },
+      {
+        name: "Sales", icon: <HomeOutlinedIcon />,
+        children: [
+          { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
+          { name: "Assign Task", icon: <MailIcon /> },
+          { name: "Sales Report", icon: <MailIcon /> },
+        ],
+      },
+      { name: "IT Manager", icon: <HomeOutlinedIcon /> },
+      { name: "Marketing", icon: <HomeOutlinedIcon /> },
+      { name: "Designers", icon: <HomeOutlinedIcon /> },
+      {
+        name: "Accounts",
+        icon: <HomeOutlinedIcon />,
+        children: [
+          { name: "Visitor", icon: <PersonOutlineIcon /> },
+          { name: "Member", icon: <PersonOutlineIcon /> },
+          { name: "Shop", icon: <PersonOutlineIcon /> },
+          { name: "Merchant", icon: <PersonOutlineIcon /> },
+        ],
+      },
+      {
+        name: "Services",
+        icon: <HomeOutlinedIcon />,
+        children: [
+          { name: "MoU", icon: <PersonOutlineIcon /> },
+          { name: "Co-Helpers", icon: <PersonOutlineIcon /> },
+          { name: "Pre-Paid / Post-Paid", icon: <PersonOutlineIcon /> },
+          { name: "Discount Coupons", icon: <PersonOutlineIcon /> },
+          { name: "Delivery", icon: <PersonOutlineIcon /> },
+          { name: "Home Visit", icon: <PersonOutlineIcon /> },
+          { name: "Pickup", icon: <PersonOutlineIcon /> },
+          { name: "Take Away", icon: <PersonOutlineIcon /> },
+        ],
+      },
+      {
+        name: "Finance",
+        icon: <HomeOutlinedIcon />,
+        children: [
+          { name: "B2B", icon: <PersonOutlineIcon /> },
+          { name: "B2C", icon: <PersonOutlineIcon /> },
+          { name: "C2C", icon: <PersonOutlineIcon /> },
+          { name: "MoU", icon: <PersonOutlineIcon /> },
+          { name: "Services", icon: <PersonOutlineIcon /> },
+          { name: "Shops", icon: <PersonOutlineIcon /> },
+        ],
+      },
+      { name: "Log Activity", icon: <HomeOutlinedIcon /> },
+    ],
+    Accounts: [
+      { name: "Visitor", icon: <PersonOutlineIcon /> },
+      { name: "Member", icon: <PersonOutlineIcon /> },
+      { name: "Shop", icon: <PersonOutlineIcon /> },
+      { name: "Merchant", icon: <PersonOutlineIcon /> },
+    ],
+    "IT Manager": [
+      { name: "Dashboard", icon: <HomeOutlinedIcon /> },
+      { name: "To-Do", icon: <MailIcon /> },
+    ],
   };
 
-  const menuItems = getMenuItems();
+  // Flatten menu items to get first leaf node
+  const getLeafItems = (items) => {
+    let leaves = [];
+    items.forEach(item => {
+      if (item.children) {
+        leaves = leaves.concat(getLeafItems(item.children));
+      } else {
+        leaves.push(item);
+      }
+    });
+    return leaves;
+  };
 
-  // UseEffect to set default selectedItem and trigger navigation
+  // Update menuItems when user changes
   useEffect(() => {
-    if (!selectedItem && menuItems.length > 0) {
-      setSelectedItem(menuItems[0].name);
-    }
-  }, [menuItems, selectedItem]);
+    if (user) {
+      const items = menuMap[user.department_name] || [];
+      setMenuItems(items);
 
-  useEffect(() => {
-    // Make sure we don't call navigate until selectedItem is set
-    if (selectedItem) {
-      if (selectedItem === "Dashboard") {
-        navigate("./");
-      } else if (selectedItem === "IT Manager") {
-        navigate("../todo");
-      } else if (selectedItem === "To-Do") {
-        navigate("../todo");
-      } else if (selectedItem === "Visitor") {
-        navigate("../accounts/visitor");
-      } else if (selectedItem === "Member") {
-        navigate("../accounts/member");
-      }else if (selectedItem === "Shop") {
-        navigate("../accounts/shop");
-      }else if (selectedItem === "Merchant") {
-        navigate("../accounts/merchant");
-      }else if (selectedItem === "B2B") {
-        navigate("../finance/b2b");
-      }else if (selectedItem === "B2C") {
-        navigate("../finance/b2c");
+      // Set first leaf as default selected
+      const leaves = getLeafItems(items);
+      if (leaves.length > 0) {
+        setSelectedItem(leaves[0].name);
       }
     }
-  }, [selectedItem]);
+  }, [user]);
+
+  // Navigate when selectedItem changes
+  useEffect(() => {
+    if (!selectedItem) return;
+
+    switch (selectedItem) {
+      case "Dashboard":
+        navigate("./");
+        break;
+      case "IT Manager":
+      case "To-Do":
+        navigate("../todo");
+        break;
+      case "Sales Dashboard":
+        navigate("../sales");
+        break;
+      case "Visitor":
+        navigate("../accounts/visitor");
+        break;
+      case "Member":
+        navigate("../accounts/member");
+        break;
+      case "Shop":
+        navigate("../accounts/shop");
+        break;
+      case "Merchant":
+        navigate("../accounts/merchant");
+        break;
+      case "B2B":
+        navigate("../finance/b2b");
+        break;
+      case "B2C":
+        navigate("../finance/b2c");
+        break;
+      default:
+        break;
+    }
+  }, [selectedItem, navigate]);
 
   // Early return for unauthorized user
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!loading && !user) return <Navigate to="/login" replace />;
 
-  const handleSelectItem = (item) => {
-    setSelectedItem(item);
-  };
+  const handleSelectItem = (item) => setSelectedItem(item);
 
   return (
     <Box className="dashboard_wrapper" sx={{ display: "flex" }}>
+      {loading && (
+        <Box className="loading" sx={{ position: "absolute", top: "50%", left: "50%" }}>
+          <CircularProgress />
+        </Box>
+      )}
       <SideBar onSelectItem={handleSelectItem} menuItems={menuItems} />
       <Box component="main" className="main">
-        <DashboardHeader user={user} />
-        {/* This will render the child routes */}
+        <DashboardHeader user={user?.department_name} />
         <Outlet context={{ selectedItem }} />
       </Box>
     </Box>

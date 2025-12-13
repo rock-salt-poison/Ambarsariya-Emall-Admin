@@ -1,12 +1,12 @@
 import { Box, Button } from "@mui/material";
 import React, { useState } from "react";
-import DashboardTable from "../DashboardTable";
-import DialogPopup from "../DialogPopup";
 import { useNavigate } from "react-router-dom";
-import BoxHeader from "../DashboardContent/BoxHeader";
-import CreateRoleForm from "./CreateRoleForm";
+import DialogPopup from "../../DialogPopup";
+import BoxHeader from "../../DashboardContent/BoxHeader";
+import DashboardTable from "../../../Dashboard/Sales/SalesManager/DashboardTable";
+import AddStaffForm from "./AddStaffForm";
 
-function DashboardMainContent() {
+function SalesDashboard() {
     const [open, setOpen] = useState(false);
 
     return (
@@ -19,22 +19,22 @@ function DashboardMainContent() {
                     className="btn_submit"
                 >
                 
-                    Create Role
+                    Add Staff Member
                 </Button>
             </Box>
             <Box className="content">
-                <BoxHeader title="Employees" searchField={true}/>
+                <BoxHeader title="Sales Executives" searchField={true}/>
                 <DashboardTable />
             </Box>
 
             <DialogPopup
                 open={open}
                 handleClose={() => setOpen(false)}
-                FormComponent={CreateRoleForm}
-                popupHeading="Create Role"
+                FormComponent= {AddStaffForm}
+                popupHeading="Add Staff Member"
             />
         </Box>
     );
 }
 
-export default DashboardMainContent;
+export default SalesDashboard;

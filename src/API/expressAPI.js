@@ -4,6 +4,23 @@ const admin_link = `${process.env.REACT_APP_EXPRESS_API_LINK}/admin/api`;
 const link = `${process.env.REACT_APP_EXPRESS_API_LINK}/api/ambarsariya`;
 const admin_roles_api = `${process.env.REACT_APP_EXPRESS_API_LINK}/admin/roles`;
 
+export const authenticateUser = async (data) => {
+  try {
+    const response = await axios.post(`${admin_link}/login`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const get_userByToken = async (token) => {
+    try{
+        const response = await axios.get(`${admin_link}/employee/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
 
 export const post_travel_time = async (data) => {
     try{
@@ -289,6 +306,15 @@ export const get_permissions = async () => {
 export const get_role_employees = async () => {
     try{
         const response = await axios.get(`${admin_roles_api}/employees`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_staff = async (token) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff/${token}`);
         return response.data;
     }catch(e){
         throw e;

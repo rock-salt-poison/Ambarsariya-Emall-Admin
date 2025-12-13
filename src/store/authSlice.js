@@ -1,40 +1,22 @@
+// store/authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
-// Initial state
 const initialState = {
-  adminAccessToken: localStorage.getItem('token') || null,
-  isAdminAccessTokenValid: false,
+  token: null,      // stores access_token only
 };
 
-// Create auth slice
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Action to set the user access token
     setAdminToken: (state, action) => {
-      state.adminAccessToken = action.payload;
+      state.token = action.payload; // just store the token
     },
-
-    // Action to set the validity of user token
-    setAdminTokenValid: (state, action) => {
-      state.isAdminAccessTokenValid = action.payload;
-    },
-
-    // Action to clear all tokens (e.g., on logout)
-    clearTokens: (state) => {
-      state.adminAccessToken = null;
-      state.isAdminAccessTokenValid = false;
+    logout: (state) => {
+      state.token = null; // clear token on logout
     },
   },
 });
 
-// Export actions
-export const { 
-  setAdminToken, 
-  setAdminTokenValid,  
-  clearTokens 
-} = authSlice.actions;
-
-// Export reducer
+export const { setAdminToken, logout } = authSlice.actions;
 export default authSlice.reducer;

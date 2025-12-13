@@ -10,6 +10,7 @@ import Account from "./Components/Dashboard/Accounts/Account";
 import AccountDetails from "./Components/Dashboard/Accounts/AccountDetails";
 import NoticeDetail from "./Components/Dashboard/ITManager/NoticeDetail";
 import B2B from "./Components/Dashboard/Finance/B2B";
+import SalesDashboard from "./Components/Dashboard/Sales/SalesManager/Dashboard";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Route element={<AuthLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/todo" element={<ToDo />} />
+        <Route path="/sales" element={<SalesDashboard />} />
         <Route path="/todo/:page" element={<TodoSubpage />} />
         <Route path="/todo/notices/:title/:id" element={<NoticeDetail />} />
         <Route path="/accounts/:user_type" element={<Account />} />

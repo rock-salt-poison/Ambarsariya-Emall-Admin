@@ -9,31 +9,36 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { get_role_employees } from "../../API/expressAPI";
+import { get_role_employees, get_staff } from "../../../../API/expressAPI";
+import { useSelector } from "react-redux";
 
 export default function DashboardTable() {
+  const token = useSelector((state) => state.auth.token);
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(()=>{
-    const fetchEmployees = async () => {
-      try{
-        setLoading(true);
-        const resp = await get_role_employees();
-        console.log(resp);
-        if(resp){
-          setEmployees(resp);
+    if(token){
+      const fetchEmployees = async () => {
+        try{
+          setLoading(true);
+          const resp = await get_staff(token);
+          console.log(resp);
+          if(resp){
+            setEmployees(resp);
+          }
+        }catch(e){
+          console.log(e);
+          setEmployees([])
+        }finally{
+          setLoading(false);
         }
-      }catch(e){
-        console.log(e);
-      }finally{
-        setLoading(false);
       }
+  
+      fetchEmployees();
     }
-
-    fetchEmployees();
-  }, []);
+  }, [token]);
 
   
   return (
@@ -64,7 +69,7 @@ export default function DashboardTable() {
                 <TableCell>{emp.email}</TableCell>
               </TableRow>
             )) : <TableRow>
-                <TableCell colSpan={7} sx={{textAlign:'center'}}>No employee created</TableCell>
+                <TableCell colSpan={7} sx={{textAlign:'center'}}>No staff created</TableCell>
             </TableRow> }
           </TableBody>
         </Table>

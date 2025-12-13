@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import FormFields from '../Form/FormFields';
 import CreateRoleForm from './Admin/CreateRoleForm';
 
-export default function DialogPopup({open, handleClose, fields, formData, handleOnChange, handleSubmit, errors}) {
+export default function DialogPopup({open, handleClose, FormComponent, popupHeading}) {
   
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -23,12 +23,12 @@ export default function DialogPopup({open, handleClose, fields, formData, handle
         <DialogContent>
             <Box className="header">
                 <Typography className="heading-2" variant="h2">
-                    Create Role
+                    {popupHeading}
                 </Typography>
                 <CloseIcon onClick={handleClose} sx={{cursor:'pointer'}}/>
             </Box>
             <Box className="body">
-               <CreateRoleForm onClose={handleClose}/>
+               {FormComponent && <FormComponent onClose={handleClose}/>}
             </Box>
         </DialogContent>
       </Dialog>
