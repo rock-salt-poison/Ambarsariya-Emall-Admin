@@ -2,16 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../../Form/FormFields';
 import CustomSnackbar from "../../../CustomSnackbar";
-import { get_departments, get_permissions, post_role_employees, send_otp_to_email } from '../../../../API/expressAPI';
+import { get_permissions, get_staff_types, send_otp_to_email } from '../../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from '../../../../store/otpSlice';
 
 const AddStaffForm = ({ onClose }) => {
 
   const [formData, setFormData] = useState({
-    department: '',
-    role_name: '',
-    rights: '',
+    staff_type: '',
     username: '',
     password: '',
     confirm_password: '',
@@ -22,11 +20,13 @@ const AddStaffForm = ({ onClose }) => {
     email_otp: '',
     age: '',
     start_date: '',
+    assign_area:'',
+    assign_area_name:'',
   });
 
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [departments, setDepartments] = useState([]);
+  const [staffTypes, setStaffTypes] = useState([]);
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showEmailOtp, setShowEmailOtp] = useState(false);
@@ -56,13 +56,13 @@ const AddStaffForm = ({ onClose }) => {
     const newErrors = {};
     let valid = true;
 
-    if (!formData.department) { newErrors.department = "Department is required"; valid = false; }
-    if (!formData.role_name) { newErrors.role_name = "Role name is required"; valid = false; }
-    if (!formData.rights) { newErrors.rights = "Rights is required"; valid = false; }
+    if (!formData.staff_type) { newErrors.staff_type = "Staff Type is required"; valid = false; }
     if (!formData.username) { newErrors.username = "Username is required"; valid = false; }
     if (!formData.name) { newErrors.name = "Name is required"; valid = false; }
     if (!formData.age) { newErrors.age = "Age is required"; valid = false; }
     if (!formData.start_date) { newErrors.start_date = "Start date is required"; valid = false; }
+    if (!formData.assign_area) { newErrors.assign_area = "Asisgn area is required"; valid = false; }
+    if (!formData.assign_area_name) { newErrors.assign_area = "Asisgn area name is required"; valid = false; }
 
     // Password validation
     if (!formData.password) {
@@ -120,11 +120,11 @@ const AddStaffForm = ({ onClose }) => {
 
 
   // Fetch API data
-  const fetchDepartments = async () => {
+  const fetchStaffTypes = async () => {
     try {
       setLoading(true);
-      const resp = await get_departments();
-      setDepartments(resp || []);
+      const resp = await get_staff_types();
+      setStaffTypes(resp || []);
     } catch (err) { console.log(err); }
     finally{
       setLoading(false);
@@ -143,7 +143,7 @@ const AddStaffForm = ({ onClose }) => {
   };
 
   useEffect(() => {
-    fetchDepartments();
+    fetchStaffTypes();
     fetchPermissions();
   }, []);
 
@@ -379,8 +379,9 @@ const AddStaffForm = ({ onClose }) => {
 //     setLoading(false);
 //   }
 // };
-console.log(departments, permissions);
+console.log(staffTypes);
 
+console.log(formData?.assign_area);
 
 
 
@@ -393,31 +394,31 @@ console.log(departments, permissions);
 
   // FIELDS
   const formFields = [
-    { id: 1, label: 'Select Sale Staff', name: 'staff', type: 'select', options: departments.map(d => d.department_name) },
-    { id: 2, label: 'Enter name of role', name: 'role_name', type: 'text' },
-    { id: 3, label: 'Rights', name: 'rights', type: 'select', options: permissions.map(p => p.permission_name) },
-    { id: 4, label: 'Enter name', name: 'name', type: 'text' },
-    { id: 5, label: 'Enter age', name: 'age', type: 'number' },
-    { id: 6, label: 'Start Date', name: 'start_date', type: 'date' },
-    { id: 7, label: 'Enter phone no.', name: 'phone', type: 'text' },
+    { id: 1, label: 'Select Sale Staff', name: 'staff_type', type: 'select', options: staffTypes.map(s => s.staff_type_name) },
+    { id: 2, label: 'Enter name', name: 'name', type: 'text' },
+    { id: 3, label: 'Enter age', name: 'age', type: 'number' },
+    { id: 4, label: 'Start Date', name: 'start_date', type: 'date' },
+    { id: 5, label: 'Enter phone no.', name: 'phone', type: 'text' },
 
     ...(showPhoneOtp ? [
-      { id: 8, label: "Enter Phone OTP", name: "phone_otp", type: "text" }
+      { id: 6, label: "Enter Phone OTP", name: "phone_otp", type: "text" }
     ] : []),
 
-    { id: 9, label: 'Enter email id', name: 'email', type: 'email' },
+    { id: 7, label: 'Enter email id', name: 'email', type: 'email' },
 
     ...(showEmailOtp ? [
-      { id: 10, label: "Enter Email OTP", name: "email_otp", type: "text" }
+      { id: 8, label: "Enter Email OTP", name: "email_otp", type: "text" }
     ] : []),
 
-    { id: 11, label: 'Enter username', name: 'username', type: 'text' },
-    { id: 12, label: 'Enter Password', name: 'password', type: 'password' },
-    { id: 13, label: 'Confirm Password', name: 'confirm_password', type: 'password' },
+    { id: 9, label: 'Enter username', name: 'username', type: 'text' },
+    { id: 10, label: 'Enter Password', name: 'password', type: 'password' },
+    { id: 11, label: 'Confirm Password', name: 'confirm_password', type: 'password' },
+    { id: 12, label: 'Assign Area', name: 'assign_area', type: 'address' },
+    { id: 13, label: 'Assign Area Name', name: 'assign_area_name', type: 'text' },
   ];
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={''}>
       {loading && <Box className="loading"><CircularProgress /></Box> }
 
       {formFields.map(field => (

@@ -303,6 +303,15 @@ export const get_permissions = async () => {
     }
 }
 
+export const get_staff_types = async () => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff-types`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const get_role_employees = async () => {
     try{
         const response = await axios.get(`${admin_roles_api}/employees`);
