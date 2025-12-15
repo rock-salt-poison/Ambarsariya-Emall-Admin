@@ -49,8 +49,8 @@ export default function DashboardTable() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Department</TableCell>
               <TableCell>Role</TableCell>
+              <TableCell>Area Assigned</TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>Age</TableCell>
               <TableCell>Phone No.</TableCell>
@@ -61,8 +61,8 @@ export default function DashboardTable() {
             {employees.length > 0 ? employees.map((emp) => (
               <TableRow key={emp.id} hover>
                 <TableCell>{emp.name}</TableCell>
-                <TableCell>{emp.department_name}</TableCell>
                 <TableCell sx={{textTransform:'capitalize'}}>{emp.staff_type_name}</TableCell>
+                <TableCell>{emp.assign_area_name}</TableCell>
                 <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
                 <TableCell>{emp.age}</TableCell>
                 <TableCell>{emp.phone}</TableCell>
