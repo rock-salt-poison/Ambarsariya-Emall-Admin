@@ -351,3 +351,37 @@ export const post_role_employees = async (data) => {
         throw e;
     }
 } 
+
+export const post_staff_email_otp = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_roles_api}/staff-email-otp`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const post_verify_staff_email_otp = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_roles_api}/verify-staff-email-otp`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const post_create_staff = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.put(`${admin_roles_api}/create-staff`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+

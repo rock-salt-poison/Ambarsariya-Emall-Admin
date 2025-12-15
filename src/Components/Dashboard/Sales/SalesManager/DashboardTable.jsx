@@ -62,7 +62,7 @@ export default function DashboardTable() {
               <TableRow key={emp.id} hover>
                 <TableCell>{emp.name}</TableCell>
                 <TableCell>{emp.department_name}</TableCell>
-                <TableCell sx={{textTransform:'capitalize'}}>{emp.role_name}</TableCell>
+                <TableCell sx={{textTransform:'capitalize'}}>{emp.staff_type_name}</TableCell>
                 <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
                 <TableCell>{emp.age}</TableCell>
                 <TableCell>{emp.phone}</TableCell>
