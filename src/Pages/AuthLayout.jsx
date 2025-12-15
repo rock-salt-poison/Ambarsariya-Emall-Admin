@@ -98,6 +98,11 @@ const AuthLayout = () => {
       { name: "Shop", icon: <PersonOutlineIcon /> },
       { name: "Merchant", icon: <PersonOutlineIcon /> },
     ],
+    "Sales Manager": [
+      { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
+      { name: "Assign Task", icon: <MailIcon /> },
+      { name: "Sales Report", icon: <MailIcon /> },
+    ],
     "IT Manager": [
       { name: "Dashboard", icon: <HomeOutlinedIcon /> },
       { name: "To-Do", icon: <MailIcon /> },
@@ -146,6 +151,9 @@ const AuthLayout = () => {
       case "Sales Dashboard":
         navigate("../sales");
         break;
+      case "Assign Task":
+        navigate("../sales/assign-task");
+        break;
       case "Visitor":
         navigate("../accounts/visitor");
         break;
@@ -177,7 +185,7 @@ const AuthLayout = () => {
   return (
     <Box className="dashboard_wrapper" sx={{ display: "flex" }}>
       {loading && (
-        <Box className="loading" sx={{ position: "absolute", top: "50%", left: "50%" }}>
+        <Box className="loading" >
           <CircularProgress />
         </Box>
       )}
