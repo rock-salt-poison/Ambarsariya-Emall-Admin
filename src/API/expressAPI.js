@@ -329,6 +329,15 @@ export const get_staff = async (token) => {
         throw e;
     }
 }
+export const get_staff_with_type = async (token, staff_type) => {
+    try{
+        console.log(token, staff_type);
+        const response = await axios.get(`${admin_roles_api}/staff-with-type/${token}/${staff_type}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
 
 export const send_otp_to_email = async (data) => {
   try {

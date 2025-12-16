@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../../Form/FormFields';
 import CustomSnackbar from "../../../CustomSnackbar";
-import { get_permissions, get_staff_types, get_userByToken, post_create_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
+import { get_permissions, get_staff_types, get_staff_with_type, get_userByToken, post_create_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from '../../../../store/otpSlice';
 
@@ -10,6 +10,7 @@ const AssignTaskForm = () => {
 
   const [formData, setFormData] = useState({
     staff_type: '',
+    staff_member: '',
     username: '',
     password: '',
     confirm_password: '',
@@ -34,6 +35,31 @@ const AssignTaskForm = () => {
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [staffMembers, setStaffMembers] = useState([]);
+  
+    useEffect(()=>{
+      if(token && formData?.staff_type){
+        const fetchEmployees = async () => {
+          try{
+            setLoading(true);
+            console.log(formData.staff_type);
+            
+            const resp = await get_staff_with_type(token, formData.staff_type);
+            console.log(resp);
+            if(resp){
+              setStaffMembers(resp);
+            }
+          }catch(e){
+            console.log(e);
+            setStaffMembers([])
+          }finally{
+            setLoading(false);
+          }
+        }
+    
+        fetchEmployees();
+      }
+    }, [token, formData?.staff_type]);
   
 
   const dispatch = useDispatch();
@@ -265,7 +291,7 @@ const AssignTaskForm = () => {
   //     setLoading(false);
   //   }
   // };
-  console.log(manager);
+  console.log(formData);
   
 
   const handleSubmit = async (e) => {
@@ -446,13 +472,11 @@ console.log(formData?.assign_area);
   // FIELDS
   const formFields = [
     { id: 1, label: 'Select Staff', name: 'staff_type', type: 'select', options: staffTypes.map(s => s.staff_type_name) },
-    { id: 2, label: 'Select Staff Member', name: 'staff_type', type: 'select', options: staffTypes.map(s => s.staff_type_name) },
+    { id: 2, label: 'Select Staff Member', name: 'staff_member', type: 'select', options: staffMembers.map(s => s.name) },
     { id: 3, label: 'Assign Task', name: 'name', type: 'textarea' },
-    { id: 4, label: 'Task Date', name: 'task_date', type: 'date', cName:'flex-auto'},
-    { id: 5, label: 'Location', name: 'location', type: 'address', cName: 'flex-auto'},
-    
-
-    { id: 6, label: 'Assign area', name: 'assign_area', type: 'address', cName:'flex-auto' },
+    { id: 4, label: 'Task Date', name: 'task_date', type: 'date-range', },
+    { id: 5, label: 'Location', name: 'location', type: 'address',cName:'flex-1'},
+    { id: 6, label: 'Assign area', name: 'assign_area', type: 'address', cName:'w-100', multiple:true },
     { id: 7, label: 'Approx. shops', name: 'approx_shops', type: 'number' },
     { id: 8, label: 'Approx. offices', name: 'approx_offices', type: 'number' },
     { id: 9, label: 'Approx. hawkers or small huts (made up of cane wood)', name: 'approx_hawkers', type: 'number' },
@@ -477,10 +501,12 @@ console.log(formData?.assign_area);
           error={!!errors[field.name]}
           helperText={errors[field.name]}
           optionalCname={field.cName}
+          multiple={field.multiple}
         />
       ))}
-
-      <Button type="submit" variant="contained">Create</Button>
+      <Box sx>
+        <Button type="submit" variant="contained">Create</Button>
+      </Box>
 
       <CustomSnackbar
         open={snackbar.open}

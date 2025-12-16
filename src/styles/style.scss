@@ -519,6 +519,16 @@ a{
               width: auto;
             }
 
+            .flex-1{
+              flex: 1;
+              width: auto;
+            }
+
+            .w-100{
+              flex: auto;
+              width: 100%;
+            }
+
             .form-group{
               @include flex($wrap:wrap);
               gap: 15px;

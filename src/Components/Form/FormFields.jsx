@@ -16,7 +16,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import { TimePicker } from "@mui/x-date-pickers";
-import { DateRangePicker } from 'rsuite';
+import DateRangePicker from 'rsuite/esm/DateRangePicker';
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import ReactQuill from 'react-quill'; // Import ReactQuill for the message2 field
@@ -41,7 +41,8 @@ export default function FormFields({
   optionalCname,
   required,
   file,
-  uploadedFile
+  uploadedFile,
+  multiple
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [open, setOpen] = useState(false);
@@ -193,6 +194,7 @@ export default function FormFields({
           onChange={(value) => onChange({ target: { name, value } })}
           format={"MM/dd/yyyy"}
           placeholder={label}
+          showOneCalendar
           size="lg"
           shouldDisableDate={beforeToday()}
           className={optionalCname}
@@ -255,6 +257,7 @@ export default function FormFields({
               onChange={(data) => {onChange({ target: { name, value: data } });
             }}
             cName={optionalCname}
+            multiple={multiple}
             />
         :  type === 'file' ? uploadedFile ? (
           <>
