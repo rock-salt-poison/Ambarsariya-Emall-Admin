@@ -394,3 +394,13 @@ export const post_create_staff = async (data) => {
     }
 } 
 
+export const post_create_staff_tasks = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_roles_api}/create-staff_task`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 

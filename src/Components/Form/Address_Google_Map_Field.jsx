@@ -15,6 +15,7 @@ export default function AddressGoogleMapField({
   onChange,
   cName,
   required,
+  readOnly,
   multiple = false, // new prop for single/multiple
 }) {
   const [inputValue, setInputValue] = useState("");
@@ -208,6 +209,7 @@ export default function AddressGoogleMapField({
         size="small"
         noOptionsText="No locations"
         className={cName}
+        readOnly={readOnly}
         isOptionEqualToValue={(option, value) => option?.description === value?.description}
         onChange={handlePlaceSelect}
         onInputChange={(event, newInputValue) => setInputValue(newInputValue)}

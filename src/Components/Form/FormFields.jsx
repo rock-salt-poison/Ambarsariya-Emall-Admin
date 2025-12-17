@@ -42,7 +42,7 @@ export default function FormFields({
   required,
   file,
   uploadedFile,
-  multiple
+  multiple,readOnly
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [open, setOpen] = useState(false);
@@ -102,6 +102,7 @@ export default function FormFields({
                   onChange={(e)=> handleSelectChange(e)}
                   label={label}
                   required={required}
+                  readOnly={readOnly}
                 >
                  
                   {options?.map((option, index) => (
@@ -143,6 +144,7 @@ export default function FormFields({
             label={label}
             autoComplete="new-password"
             size="small"
+            readOnly={readOnly}
           />
         </FormControl>
       ) : type === "date" ? (
@@ -258,6 +260,7 @@ export default function FormFields({
             }}
             cName={optionalCname}
             multiple={multiple}
+            readOnly={readOnly}
             />
         :  type === 'file' ? uploadedFile ? (
           <>
@@ -308,6 +311,7 @@ export default function FormFields({
           size="small"
           className={optionalCname}
           required={required}
+          readOnly={readOnly}
         />
       ) : (
         <Box className="label_group">
