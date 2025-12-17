@@ -30,6 +30,8 @@ const AddStaffForm = ({ onClose }) => {
   const [manager, setManager] = useState([]);
   const [loading, setLoading] = useState(false);
   const [staffId, setStaffId] = useState(null);
+    const [credentialsId, setCredentialsId] = useState(null);
+  
   const [showEmailOtp, setShowEmailOtp] = useState(false);
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const token = useSelector((state) => state.auth.token);
@@ -300,7 +302,7 @@ const AddStaffForm = ({ onClose }) => {
 
 
         // If OTP not sent yet -> send it now
-        if (!staffId) {
+        if (!credentialsId) {
           try{
             setLoading(true);
             setSnackbar({
@@ -314,7 +316,6 @@ const AddStaffForm = ({ onClose }) => {
             if (resp?.otp) {
               
               const store_otp_resp = await post_staff_email_otp({
-                manager_id: manager?.id,
                 email: formData?.email,
                 email_otp: resp?.otp
               })
@@ -325,7 +326,7 @@ const AddStaffForm = ({ onClose }) => {
                   message: "OTP sent to email",
                   severity: "success",
                 });
-                setStaffId(store_otp_resp?.staff_id);
+                setCredentialsId(store_otp_resp?.credentialsId);
               }
             }
             otpStepTriggered = true;
@@ -351,11 +352,9 @@ const AddStaffForm = ({ onClose }) => {
       return;
     }
 
-    if (staffId && !emailVerified) {
+    if (credentialsId && !emailVerified) {
 
       const verify_otp_resp = await post_verify_staff_email_otp({
-        staff_id : staffId, 
-        manager_id: manager?.id, 
         email: formData?.email, 
         email_otp: formData?.email_otp
       })
@@ -366,6 +365,8 @@ const AddStaffForm = ({ onClose }) => {
         severity: "success",
       });
       setEmailVerified(true);
+      setCredentialsId(verify_otp_resp?.credentials_id);
+
       }else{
         setSnackbar({
           open: true,
@@ -381,7 +382,7 @@ const AddStaffForm = ({ onClose }) => {
     // -------------------------------
 
     const payload = {
-      staff_id: staffId,
+      credentials_id: credentialsId,
       manager_id: manager?.id,
       staff_type_id: staff_type_id,
       username: formData.username,

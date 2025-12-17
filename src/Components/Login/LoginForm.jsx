@@ -8,9 +8,9 @@ import CustomSnackbar from "../CustomSnackbar";
 import { authenticateUser } from "../../API/expressAPI";
 
 function LoginForm() {
-  const initialData = { email: "", password: "" };
+  const initialData = { username: "", password: "" };
   const formFields = [
-    { id: 1, label: "Email", name: "email", type: "email" },
+    { id: 1, label: "Username", name: "username", type: "text" },
     { id: 2, label: "Password", name: "password", type: "password" },
   ];
 
@@ -35,7 +35,7 @@ function LoginForm() {
 
     // Simple validation
     let formErrors = {};
-    if (!formData.email) formErrors.email = "Email is required";
+    if (!formData.username) formErrors.username = "Username is required";
     if (!formData.password) formErrors.password = "Password is required";
     setErrors(formErrors);
     if (Object.keys(formErrors).length > 0) return;

@@ -51,6 +51,13 @@ const AuthLayout = () => {
           { name: "Sales Report", icon: <MailIcon /> },
         ],
       },
+      {
+        name: "Sales Staff",
+        icon: <HomeOutlinedIcon />,
+        children: [
+          { name: "My Tasks", icon: <PersonOutlineIcon /> },
+        ],
+      },
       { name: "IT Manager", icon: <HomeOutlinedIcon /> },
       { name: "Marketing", icon: <HomeOutlinedIcon /> },
       { name: "Designers", icon: <HomeOutlinedIcon /> },
@@ -102,6 +109,9 @@ const AuthLayout = () => {
       { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
       { name: "Assign Task", icon: <MailIcon /> },
       { name: "Sales Report", icon: <MailIcon /> },
+    ],
+    "Sales Staff": [
+      { name: "My Tasks", icon: <MailIcon /> },
     ],
     "IT Manager": [
       { name: "Dashboard", icon: <HomeOutlinedIcon /> },
@@ -171,6 +181,9 @@ const AuthLayout = () => {
         break;
       case "B2C":
         navigate("../finance/b2c");
+        break;
+      case "My Tasks":
+        navigate("../sales-staff/my-tasks");
         break;
       default:
         break;

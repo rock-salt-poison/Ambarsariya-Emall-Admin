@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../Form/FormFields';
 import CustomSnackbar from "../../CustomSnackbar";
-import { get_departments, get_permissions, post_role_employees, send_otp_to_email } from '../../../API/expressAPI';
+import { get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../store/otpSlice";
 
@@ -31,6 +31,9 @@ const CreateRoleForm = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [showEmailOtp, setShowEmailOtp] = useState(false);
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [credentialsId, setCredentialsId] = useState(null);
+  
 
   const dispatch = useDispatch();
   const reduxEmailOTP = useSelector(state => state.otp.emailOtp) || '';
@@ -276,7 +279,7 @@ const CreateRoleForm = ({ onClose }) => {
 
 
         // If OTP not sent yet -> send it now
-        if (!reduxEmailOTP) {
+        if (!credentialsId) {
           try{
             setLoading(true);
             setSnackbar({
@@ -286,12 +289,19 @@ const CreateRoleForm = ({ onClose }) => {
               });
             const resp = await send_otp_to_email({ username: formData.email });
             if (resp?.otp) {
-              dispatch(setEmailOtp(resp.otp));
-              setSnackbar({
-                open: true,
-                message: "OTP sent to email",
-                severity: "success",
-              });
+              const store_otp_resp = await post_staff_email_otp({
+                email: formData?.email,
+                email_otp: resp?.otp
+              })
+
+              if(store_otp_resp?.success){
+                setSnackbar({
+                  open: true,
+                  message: "OTP sent to email",
+                  severity: "success",
+                });
+                setCredentialsId(store_otp_resp?.credentials_id);
+              }
             }
             otpStepTriggered = true;
   
@@ -303,9 +313,6 @@ const CreateRoleForm = ({ onClose }) => {
           }
         }
       }
-
-    
-
 
     // -------------------------------
     // STEP 3 → VALIDATE BOTH OTPs TOGETHER
@@ -319,12 +326,26 @@ const CreateRoleForm = ({ onClose }) => {
       return;
     }
 
-    if (showEmailOtp && formData.email_otp !== reduxEmailOTP) {
-      setSnackbar({
+    if (credentialsId && !emailVerified) {
+      const verify_otp_resp = await post_verify_staff_email_otp({
+        email: formData?.email, 
+        email_otp: formData?.email_otp
+      })
+      if(verify_otp_resp?.success){
+        setSnackbar({
         open: true,
-        message: "Invalid email OTP",
-        severity: "error",
+        message: verify_otp_resp?.message,
+        severity: "success",
       });
+      setEmailVerified(true);
+      setCredentialsId(verify_otp_resp?.credentials_id);
+      }else{
+        setSnackbar({
+          open: true,
+          message: "Invalid email OTP",
+          severity: "error",
+        });
+      }
       return;
     }
 
@@ -333,6 +354,7 @@ const CreateRoleForm = ({ onClose }) => {
     // -------------------------------
 
     const payload = {
+      credentials_id: credentialsId,
       department: department_id,
       role_name: formData.role_name,
       rights: permission_id,
@@ -357,7 +379,6 @@ const CreateRoleForm = ({ onClose }) => {
           message: "Employee created successfully!",
           severity: "success",
         });
-        dispatch(clearOtp());
 
         onClose();
       }

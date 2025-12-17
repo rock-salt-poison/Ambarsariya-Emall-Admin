@@ -12,6 +12,7 @@ import NoticeDetail from "./Components/Dashboard/ITManager/NoticeDetail";
 import B2B from "./Components/Dashboard/Finance/B2B";
 import SalesDashboard from "./Components/Dashboard/Sales/SalesManager/Dashboard";
 import AssignTask from "./Components/Dashboard/Sales/SalesManager/AssignTask";
+import SalesStaffDashboard from "./Components/Dashboard/Sales/Staff/StaffDashboard";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/todo" element={<ToDo />} />
         <Route path="/sales" element={<SalesDashboard />} />
+        <Route path="/sales-staff/my-tasks" element={<SalesStaffDashboard />} />
         <Route path="/sales/assign-task" element={<AssignTask />} />
         <Route path="/todo/:page" element={<TodoSubpage />} />
         <Route path="/todo/notices/:title/:id" element={<NoticeDetail />} />
