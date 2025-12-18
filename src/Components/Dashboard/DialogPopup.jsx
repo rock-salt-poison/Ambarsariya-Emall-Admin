@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import FormFields from '../Form/FormFields';
 import CreateRoleForm from './Admin/CreateRoleForm';
 
-export default function DialogPopup({open, handleClose, FormComponent, popupHeading}) {
+export default function DialogPopup({open, handleClose, FormComponent, popupHeading, task}) {
   
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -28,7 +28,7 @@ export default function DialogPopup({open, handleClose, FormComponent, popupHead
                 <CloseIcon onClick={handleClose} sx={{cursor:'pointer'}}/>
             </Box>
             <Box className="body">
-               {FormComponent && <FormComponent onClose={handleClose}/>}
+               {FormComponent && <FormComponent onClose={handleClose} selectedTask={task}/>}
             </Box>
         </DialogContent>
       </Dialog>

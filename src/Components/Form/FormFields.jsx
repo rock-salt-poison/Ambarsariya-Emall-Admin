@@ -164,6 +164,7 @@ export default function FormFields({
               ["& .MuiFormLabel-root"]: { top: "-8px" },
             }}
             className={optionalCname}
+            readOnly={readOnly}
             value={timeValue}
             onChange={(newValue) => {
               setTimeValue(newValue);
@@ -184,6 +185,7 @@ export default function FormFields({
             }}
             className={optionalCname}
             value={timeValue}
+            readOnly={readOnly}
             onChange={(newValue) => {
               setTimeValue(newValue);
               onChange({
@@ -316,7 +318,7 @@ export default function FormFields({
           size="small"
           className={optionalCname}
           required={required}
-          readOnly={readOnly}
+          inputProps={{ readOnly: readOnly }} 
         />
       ) : (
         <Box className="label_group">

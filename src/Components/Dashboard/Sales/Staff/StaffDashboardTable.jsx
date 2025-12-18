@@ -11,38 +11,43 @@ import {
 } from "@mui/material";
 import { get_staff_tasks } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
+import DialogPopup from "../../DialogPopup";
+import AssignedTaskForm from "./AssignedTaskForm";
 
 export default function StaffDashboardTable() {
   const token = useSelector((state) => state.auth.token);
-
+  const [open, setOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null); // ← track clicked task
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(()=>{
-    if(token){
+  useEffect(() => {
+    if (token) {
       const fetchEmployees = async () => {
-        try{
+        try {
           setLoading(true);
           const resp = await get_staff_tasks(token);
           console.log(resp);
-          if(resp){
-            setEmployees(resp);
-          }
-        }catch(e){
+          if (resp) setEmployees(resp);
+        } catch (e) {
           console.log(e);
-          setEmployees([])
-        }finally{
+          setEmployees([]);
+        } finally {
           setLoading(false);
         }
-      }
+      };
       fetchEmployees();
     }
   }, [token]);
 
-  
+  const handleRowClick = (task) => {
+    setSelectedTask(task); // store the clicked task
+    setOpen(true);         // open the popup
+  };
+
   return (
     <>
-    {loading && <Box className="loading"><CircularProgress/></Box> }
+      {loading && <Box className="loading"><CircularProgress /></Box>}
       <Box className="col">
         <Table>
           <TableHead>
@@ -55,18 +60,34 @@ export default function StaffDashboardTable() {
           </TableHead>
           <TableBody>
             {employees.length > 0 ? employees.map((emp, index) => (
-              <TableRow key={emp.id} hover>
-                <TableCell>{index +1}</TableCell>
-                <TableCell sx={{textTransform:'capitalize'}}>{emp.assigned_task}</TableCell>
-                <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
-                <TableCell>{(emp.end_date)?.split('T')?.[0]}</TableCell>
+              <TableRow
+                key={emp.id}
+                hover
+                onClick={() => handleRowClick(emp)} // ← add click handler
+                sx={{ cursor: "pointer" }}
+              >
+                <TableCell>{index + 1}</TableCell>
+                <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_task}</TableCell>
+                <TableCell>{emp.start_date?.split("T")?.[0]}</TableCell>
+                <TableCell>{emp.end_date?.split("T")?.[0]}</TableCell>
               </TableRow>
-            )) : <TableRow>
-                <TableCell colSpan={7} sx={{textAlign:'center'}}>No task created</TableCell>
-            </TableRow> }
+            )) : (
+              <TableRow>
+                <TableCell colSpan={7} sx={{ textAlign: "center" }}>No task created</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Box>
+
+      <DialogPopup
+        open={open}
+        handleClose={() => setOpen(false)}
+        FormComponent={AssignedTaskForm} // you may replace this with a TaskDetails component
+        popupHeading="Task Details"
+        task={selectedTask} // pass the clicked task
+      />
     </>
   );
 }
+
