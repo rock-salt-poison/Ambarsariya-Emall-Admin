@@ -56,7 +56,7 @@ function LoginForm() {
       }
     } catch (error) {
       console.error(error);
-      setSnackbar({ open: true, message: "Server error", severity: "error" });
+      setSnackbar({ open: true, message: error.response.data.message, severity: "error" });
     }
   };
 

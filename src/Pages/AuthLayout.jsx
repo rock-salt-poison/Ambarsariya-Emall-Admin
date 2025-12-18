@@ -23,6 +23,8 @@ const AuthLayout = () => {
       const fetchUser = async () => {
         try {
           const resp = await get_userByToken(token);
+          console.log(resp);
+          
           if (resp?.user) {
             setUser(resp.user);
           }
@@ -135,7 +137,7 @@ const AuthLayout = () => {
   // Update menuItems when user changes
   useEffect(() => {
     if (user) {
-      const items = menuMap[user.department_name] || [];
+      const items = user?.user_type === 'staff' ? menuMap['Sales Staff']: menuMap[user.department_name] || [];
       setMenuItems(items);
 
       // Set first leaf as default selected

@@ -1,10 +1,9 @@
 import { Box, Button } from "@mui/material";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import DialogPopup from "../../DialogPopup";
 import BoxHeader from "../../DashboardContent/BoxHeader";
-import DashboardTable from "../SalesManager/DashboardTable";
 import AddStaffForm from "../SalesManager/AddStaffForm";
+import StaffDashboardTable from "./StaffDashboardTable";
 
 function SalesStaffDashboard() {
     const [open, setOpen] = useState(false);
@@ -13,7 +12,7 @@ function SalesStaffDashboard() {
         <Box className="body">
             <Box className="content">
                 <BoxHeader title="Sales Staff" searchField={true}/>
-                <DashboardTable />
+                <StaffDashboardTable />
             </Box>
 
             <DialogPopup

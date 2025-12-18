@@ -9,10 +9,10 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { get_role_employees, get_staff } from "../../../../API/expressAPI";
+import { get_staff_tasks } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
 
-export default function DashboardTable() {
+export default function StaffDashboardTable() {
   const token = useSelector((state) => state.auth.token);
 
   const [employees, setEmployees] = useState([]);
@@ -23,7 +23,7 @@ export default function DashboardTable() {
       const fetchEmployees = async () => {
         try{
           setLoading(true);
-          const resp = await get_staff(token);
+          const resp = await get_staff_tasks(token);
           console.log(resp);
           if(resp){
             setEmployees(resp);
@@ -47,28 +47,22 @@ export default function DashboardTable() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Area Assigned</TableCell>
+              <TableCell>S.No.</TableCell>
+              <TableCell>Tasks</TableCell>
               <TableCell>Start Date</TableCell>
-              <TableCell>Age</TableCell>
-              <TableCell>Phone No.</TableCell>
-              <TableCell>Email</TableCell>
+              <TableCell>End Date</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {employees.length > 0 ? employees.map((emp) => (
               <TableRow key={emp.id} hover>
-                <TableCell>{emp.name}</TableCell>
-                <TableCell sx={{textTransform:'capitalize'}}>{emp.staff_type_name}</TableCell>
-                <TableCell>{emp.assign_area_name}</TableCell>
+                <TableCell>{emp.id}</TableCell>
+                <TableCell sx={{textTransform:'capitalize'}}>{emp.assigned_tasks}</TableCell>
                 <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
-                <TableCell>{emp.age}</TableCell>
-                <TableCell>{emp.phone}</TableCell>
-                <TableCell>{emp.email}</TableCell>
+                <TableCell>{(emp.end_date)?.split('T')?.[0]}</TableCell>
               </TableRow>
             )) : <TableRow>
-                <TableCell colSpan={7} sx={{textAlign:'center'}}>No staff created</TableCell>
+                <TableCell colSpan={7} sx={{textAlign:'center'}}>No task created</TableCell>
             </TableRow> }
           </TableBody>
         </Table>

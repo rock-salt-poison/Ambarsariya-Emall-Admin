@@ -22,6 +22,15 @@ export const get_userByToken = async (token) => {
     }
 }
 
+export const get_staff_tasks = async (token) => {
+    try{
+        const response = await axios.get(`${admin_link}/staff-tasks/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const post_travel_time = async (data) => {
     try{
         const response = await axios.post(`${admin_link}/travel-time`, data);

@@ -42,7 +42,8 @@ export default function FormFields({
   required,
   file,
   uploadedFile,
-  multiple,readOnly
+  multiple,readOnly,
+  disable
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [open, setOpen] = useState(false);
@@ -105,7 +106,11 @@ export default function FormFields({
                   readOnly={readOnly}
                 >
                  
-                  {options?.map((option, index) => (
+                  {disable ? options?.map((option, index) => (
+                    <MenuItem key={index+1} value={option} disabled={disable}>
+                      {option}
+                    </MenuItem>
+                  )) : options?.map((option, index) => (
                     <MenuItem key={index+1} value={option}>
                       {option}
                     </MenuItem>
