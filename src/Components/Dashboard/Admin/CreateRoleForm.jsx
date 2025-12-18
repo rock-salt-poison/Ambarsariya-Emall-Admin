@@ -345,8 +345,8 @@ const CreateRoleForm = ({ onClose }) => {
           message: "Invalid email OTP",
           severity: "error",
         });
+        return;
       }
-      return;
     }
 
     // -------------------------------

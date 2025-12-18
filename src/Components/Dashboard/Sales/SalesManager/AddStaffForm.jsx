@@ -30,7 +30,7 @@ const AddStaffForm = ({ onClose }) => {
   const [manager, setManager] = useState([]);
   const [loading, setLoading] = useState(false);
   const [staffId, setStaffId] = useState(null);
-    const [credentialsId, setCredentialsId] = useState(null);
+  const [credentialsId, setCredentialsId] = useState(null);
   
   const [showEmailOtp, setShowEmailOtp] = useState(false);
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
@@ -326,7 +326,7 @@ const AddStaffForm = ({ onClose }) => {
                   message: "OTP sent to email",
                   severity: "success",
                 });
-                setCredentialsId(store_otp_resp?.credentialsId);
+                setCredentialsId(store_otp_resp?.credentials_id);
               }
             }
             otpStepTriggered = true;
@@ -373,8 +373,8 @@ const AddStaffForm = ({ onClose }) => {
           message: "Invalid email OTP",
           severity: "error",
         });
+        return;
       }
-      return;
     }
 
     // -------------------------------
