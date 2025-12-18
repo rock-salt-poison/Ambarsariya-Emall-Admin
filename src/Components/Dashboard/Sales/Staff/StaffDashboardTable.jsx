@@ -54,10 +54,10 @@ export default function StaffDashboardTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {employees.length > 0 ? employees.map((emp) => (
+            {employees.length > 0 ? employees.map((emp, index) => (
               <TableRow key={emp.id} hover>
-                <TableCell>{emp.id}</TableCell>
-                <TableCell sx={{textTransform:'capitalize'}}>{emp.assigned_tasks}</TableCell>
+                <TableCell>{index +1}</TableCell>
+                <TableCell sx={{textTransform:'capitalize'}}>{emp.assigned_task}</TableCell>
                 <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
                 <TableCell>{(emp.end_date)?.split('T')?.[0]}</TableCell>
               </TableRow>

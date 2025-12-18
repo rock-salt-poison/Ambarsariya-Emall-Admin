@@ -24,7 +24,7 @@ export const get_userByToken = async (token) => {
 
 export const get_staff_tasks = async (token) => {
     try{
-        const response = await axios.get(`${admin_link}/staff-tasks/${token}`);
+        const response = await axios.get(`${admin_roles_api}/staff-tasks/${token}`);
         return response.data;
     }catch(e){
         throw e;
