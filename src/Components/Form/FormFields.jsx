@@ -1,4 +1,4 @@
-import React ,{useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -42,17 +42,17 @@ export default function FormFields({
   required,
   file,
   uploadedFile,
-  multiple,readOnly,
+  multiple, readOnly,
   disable
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { beforeToday } = DateRangePicker;
-  
+
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event) => event.preventDefault();
- 
+
   const handleOpenAutocomplete = () => {
     setOpen(true);
     if (!options.length) {
@@ -92,30 +92,50 @@ export default function FormFields({
     });
   };
 
+  const formatIndianMobile = (val = "") => {
+    // Remove everything except digits
+    let digits = val.replace(/\D/g, "");
+
+    // Remove leading 91 if pasted
+    if (digits.startsWith("91")) {
+      digits = digits.slice(2);
+    }
+
+    // Limit to 10 digits
+    digits = digits.slice(0, 10);
+
+    if (digits.length > 5) {
+      return `+91 ${digits.slice(0, 5)}-${digits.slice(5)}`;
+    }
+
+    return `+91 ${digits}`;
+  };
+
+
   return (
     <>
       {type === "select" ? (
-        <FormControl variant="outlined" fullWidth={width} size="small" >
+        <FormControl variant="outlined" fullWidth={width} size="small" className={optionalCname}>
           <InputLabel>{label}</InputLabel>
           <Select
-                  name={name}
-                  value={value || ''}
-                  onChange={(e)=> handleSelectChange(e)}
-                  label={label}
-                  required={required}
-                  readOnly={readOnly}
-                >
-                 
-                  {disable ? options?.map((option, index) => (
-                    <MenuItem key={index+1} value={option} disabled={disable}>
-                      {option}
-                    </MenuItem>
-                  )) : options?.map((option, index) => (
-                    <MenuItem key={index+1} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
+            name={name}
+            value={value || ''}
+            onChange={(e) => handleSelectChange(e)}
+            label={label}
+            required={required}
+            readOnly={readOnly}
+          >
+
+            {disable ? options?.map((option, index) => (
+              <MenuItem key={index + 1} value={option} disabled={disable}>
+                {option}
+              </MenuItem>
+            )) : options?.map((option, index) => (
+              <MenuItem key={index + 1} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
         </FormControl>
       ) : type === "password" ? (
         <FormControl variant="outlined" fullWidth size="small">
@@ -222,7 +242,7 @@ export default function FormFields({
             }}
             placeholder="Type your message here..."
             theme="snow" // Use 'snow' theme
-            style={{ minHeight: 150, width:'100%' }} // Optional: You can set the height of the editor
+            style={{ minHeight: 150, width: '100%' }} // Optional: You can set the height of the editor
           />
         </Box>
       ) : type === "autocomplete" ? (
@@ -259,37 +279,38 @@ export default function FormFields({
             onChange({ target: { name, value: newValue } });
           }}
         />
-      ) : type === 'address' ? 
-          <Address_Google_Map_Field
-              label = {label}
-              value={value ? value : ""} // Ensure value is set if it exists
-              onChange={(data) => {onChange({ target: { name, value: data } });
-            }}
-            cName={optionalCname}
-            multiple={multiple}
-            readOnly={readOnly}
-            />
-        :  type === 'file' ? uploadedFile ? (
+      ) : type === 'address' ?
+        <Address_Google_Map_Field
+          label={label}
+          value={value ? value : ""} // Ensure value is set if it exists
+          onChange={(data) => {
+            onChange({ target: { name, value: data } });
+          }}
+          cName={optionalCname}
+          multiple={multiple}
+          readOnly={readOnly}
+        />
+        : type === 'file' ? uploadedFile ? (
           <>
             <p>File already uploaded: <a href={uploadedFile} target="_blank" rel="noopener noreferrer">file</a></p>
 
             <TextField
-            label={label}
-            name={name}
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            autoComplete="off"
-            error={error}
-            helperText={helperText}
-            fullWidth={width}
-            type='file'
-            size="small"
-            className={optionalCname}
-            required={false }
-          />
+              label={label}
+              name={name}
+              value={value}
+              onChange={onChange}
+              placeholder={placeholder}
+              autoComplete="off"
+              error={error}
+              helperText={helperText}
+              fullWidth={width}
+              type='file'
+              size="small"
+              className={optionalCname}
+              required={false}
+            />
           </>
-        ) :(<TextField
+        ) : (<TextField
           label={label}
           name={name}
           value={value}
@@ -302,38 +323,72 @@ export default function FormFields({
           type='file'
           size="small"
           className={optionalCname}
-          required={required }
-        />) : type ? (
-        <TextField
-          label={label}
+          required={required}
+        />) : type === 'phone_number' ? (<TextField
+          hiddenLabel
+          variant="outlined"
           name={name}
           value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          autoComplete="off"
-          error={error}
-          helperText={helperText}
-          fullWidth={width}
-          type={type}
-          size="small"
+          placeholder="+91 XXXXX-XXXXX"
           className={optionalCname}
-          required={required}
-          inputProps={{ readOnly: readOnly }} 
+          size="small"
+          error={error}
+          disabled={disable}
+          inputProps={{
+            inputMode: "numeric",
+            maxLength: 15, // +91 12345-67890
+            readOnly,
+          }}
+          onFocus={(e) => {
+            if (!e.target.value) {
+              onChange({
+                target: { name, value: "+91 " },
+              });
+            }
+          }}
+          onChange={(e) => {
+            const formatted = formatIndianMobile(e.target.value);
+
+            onChange({
+              target: {
+                name,
+                value: formatted,
+              },
+            });
+          }}
         />
-      ) : (
-        <Box className="label_group">
-          <Typography className="label">{label}</Typography>
-          {(btn==="Add" || btn==="add") ? (
-            <Link className="btn-link" onClick={handleAddClick}>
-              {btn}
-            </Link>
-          ): (btn==="Remove" || btn==="remove") && (
-            <Link className="btn-link remove" onClick={handleRemoveClick}>
-              {btn}
-            </Link>
+        )
+          : type ? (
+            <TextField
+              label={label}
+              name={name}
+              value={value}
+              onChange={onChange}
+              placeholder={placeholder}
+              autoComplete="off"
+              error={error}
+              helperText={helperText}
+              fullWidth={width}
+              type={type}
+              size="small"
+              className={optionalCname}
+              required={required}
+              inputProps={{ readOnly: readOnly }}
+            />
+          ) : (
+            <Box className="label_group">
+              <Typography className="label">{label}</Typography>
+              {(btn === "Add" || btn === "add") ? (
+                <Link className="btn-link" onClick={handleAddClick}>
+                  {btn}
+                </Link>
+              ) : (btn === "Remove" || btn === "remove") && (
+                <Link className="btn-link remove" onClick={handleRemoveClick}>
+                  {btn}
+                </Link>
+              )}
+            </Box>
           )}
-        </Box>
-      )}
     </>
   );
 }

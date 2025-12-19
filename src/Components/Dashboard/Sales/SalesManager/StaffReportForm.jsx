@@ -16,13 +16,13 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
 
-const AssignTaskForm = () => {
+const StaffReportForm = ({ selectedTask }) => {
+  console.log(selectedTask);
+
   const initialData = {
-    staff_type: "",
-    staff_member: "",
     assigned_task: "",
-    task_date: "",
-    location: "",
+    start_date: "",
+    end_date: "",
     assign_area: "",
     approx_shops: "",
     approx_offices: "",
@@ -30,6 +30,15 @@ const AssignTaskForm = () => {
     assign_daily_task: "",
     daily_task_date: "",
     daily_location: "",
+
+    shops_visited: "",
+    offices_visited: "",
+    hawkers_visited: "",
+    task_reporting_date: "",
+    visited_location: "",
+    remarks: "",
+    client_summary_type:'',
+    client_summary_status:''
   };
   const [formData, setFormData] = useState(initialData);
 
@@ -68,6 +77,24 @@ const AssignTaskForm = () => {
       fetchEmployees();
     }
   }, [token, formData?.staff_type]);
+
+  useEffect(() => {
+    if (selectedTask) {
+      setFormData((prev) => ({
+        ...prev,
+        assigned_task: selectedTask?.assigned_task || "",
+        start_date: selectedTask?.start_date || "",
+        end_date: selectedTask?.end_date || "",
+        assign_area: selectedTask?.assign_area || "",
+        approx_shops: selectedTask?.approx_shops || "",
+        approx_offices: selectedTask?.approx_offices || "",
+        approx_hawkers: selectedTask?.approx_hawkers || "",
+        assign_daily_task: selectedTask?.assign_daily_task || "",
+        daily_task_date: selectedTask?.choose_date || "",
+        daily_location: selectedTask?.daily_location || "",
+      }));
+    }
+  }, [selectedTask]);
 
   useEffect(() => {
     if (!formData.staff_member) return;
@@ -172,8 +199,6 @@ const AssignTaskForm = () => {
       const end_date = formData?.task_date[1];
 
       const data = {
-        assigned_by,
-        assigned_to,
         assigned_task: formData?.assigned_task,
         start_date,
         end_date,
@@ -217,72 +242,198 @@ const AssignTaskForm = () => {
   const formFields = [
     {
       id: 1,
-      label: "Select Staff",
+      label: "Select staff type",
       name: "staff_type",
       type: "select",
       options: staffTypes.map((s) => s.staff_type_name),
-      cName:'w-45',
+      cName: 'flex-auto',
     },
     {
       id: 2,
-      label: "Select Staff Member",
-      name: "staff_member",
+      label: "Select staff",
+      name: "staff",
       type: "select",
-      options: staffMembers.length>0 ?  staffMembers.map((s) => s.name) : ['No staff members'],
-      disable: staffMembers.length>0 ? false : true,
-      cName:'w-45',
+      options:
+      staffMembers.length > 0
+      ? staffMembers.map((s) => s.name)
+      : ["No staff members"],
+      disable: staffMembers.length > 0 ? false : true,
+      cName: 'flex-auto',
     },
-    { id: 3, label: "Assign Task", name: "assigned_task", type: "textarea" },
-    { id: 4, label: "Task Date", name: "task_date", type: "date-range", cName: 'flex-auto'},
+    {
+      id: 3,
+      label: "Date",
+      name: "assigned_date",
+      type: "date-range",
+    },
+    {
+      id: 4,
+      label: "Total number of visits",
+      name: "visits",
+      type: "number",
+      cName: 'flex-auto',
+    },
     {
       id: 5,
-      label: "Location",
-      name: "location",
-      type: "address",
-      cName: "flex-1",
+      label: "Total number of joined",
+      name: "joined",
+      type: "number",
+      cName: 'flex-auto',
       readOnly: true,
     },
     {
       id: 6,
-      label: "Assign area",
-      name: "assign_area",
-      type: "address",
-      cName: "w-100",
-      multiple: true,
+      label: "Total number of clients in pipeline",
+      name: "in_pipeline",
+      type: "number",
+      cName: 'flex-auto',
     },
-    { id: 7, label: "Approx. shops", name: "approx_shops", type: "number", cName: "w-30", },
-    { id: 8, label: "Approx. offices", name: "approx_offices", type: "number" ,  cName: "w-30",},
+    ...[{
+      id: 7,
+      label: "Total Leads",
+      name: "total_leads",
+      type: "number",
+      cName: 'w-45'
+    },
+    {
+      id: 8,
+      label: "Daily Leads",
+      name: "daily_leads",
+      type: "number",
+      cName: 'w-45'
+    },],
     {
       id: 9,
-      label: "Approx. hawkers or small huts (made up of cane wood)",
-      name: "approx_hawkers",
+      label: "Total Capture",
+      name: "total_capture",
       type: "number",
-       cName: "w-30",
+      cName: 'w-45'
     },
     {
       id: 10,
-      label: "Assign Daily Task",
-      name: "assign_daily_task",
-      type: "text",
+      label: "Daily Capture",
+      name: "daily_capture",
+      type: "number",
+      cName: 'w-45'
     },
     {
       id: 11,
-      label: "Choose Date",
-      name: "daily_task_date",
-      type: "date",
-      cName: "flex-auto",
+      label: "Lead Suggestions",
+      name: "lead_suggestions",
+      type: "text",
+      cName: 'w-45',
     },
     {
       id: 12,
-      label: "Daily location",
-      name: "daily_location",
-      type: "address",
-      cName: "flex-auto",
+      label: "Lead Suggestions after confirmation",
+      name: "lead_suggestions_after_confirmation",
+      type: "text",
+      cName: "w-45",
     },
+    {
+      id: 13,
+      label: "Total Confirmation",
+      name: "total_confirmation",
+      type: "text",
+      cName: "w-45",
+    },
+    {
+      id: 14,
+      label: "Daily Confirmation",
+      name: "Daily_confirmation",
+      type: "text",
+      cName: "w-45",
+      readOnly: true,
+    },
+    {
+      id: 15,
+      label: "Summary Type - Status",
+    },
+
+    {
+      id: 16,
+      label: "Type",
+      name: "client_summary_type",
+      type: "select",
+      options: ['Client Summary', 'Lead Summary', 'Capture Summary'],
+      cName: "w-30",
+    },
+    {
+      id: 17,
+      label: "Status",
+      name: "client_summary_status",
+      type: "select",
+      options: ['Pending / Revisit', 'Confirm'],
+      cName: "w-30",
+    },
+    ... formData?.client_summary_type === 'Capture Summary' ? [{
+      id: 18,
+      label: "Shop No",
+      name: "shop_no",
+      type: "text",
+      cName: "w-30",
+    },]: [],
+    {
+      id: 19,
+      label: "Name",
+      name: "client_summary_name",
+      type: "text",
+      cName: "w-30",
+    },
+    {
+      id: 20,
+      label: "Phone",
+      name: "client_summary_phone",
+      type: "phone_number",
+      cName: "w-30",
+    },
+    {
+      id: 21,
+      label: "Email",
+      name: "client_summary_email",
+      type: "email",
+      cName: "w-30",
+    },
+    {
+      id: 22,
+      label: "Shop Name",
+      name: "client_summary_shop",
+      type: "text",
+      cName: "w-30",
+    },
+    {
+      id: 23,
+      label: "Shop Domain",
+      name: "client_summary_shop_domain",
+      type: "text",
+      cName: "w-30",
+    },
+    {
+      id: 24,
+      label: "Shop Sector",
+      name: "client_summary_shop_sector",
+      type: "text",
+      cName: "w-30",
+    },
+    {
+      id: 25,
+      label: "Location",
+      name: "client_summary_location",
+      type: "address",
+      cName: "w-30",
+    },
+    ...formData?.client_summary_type === 'Lead Summary' ? [{
+      id: 26,
+      label: "Select",
+      name: "client_summary_select",
+      type: "select",
+      options: ['Appointment', 'Walkin', 'Form 1', 'Pending / Revisit'],
+      cName: "w-30",
+    },]: []
   ];
 
   return (
-    <Box component="form" onSubmit={handleSubmit} className="form2">
+    <Box component="form" className="form2" >
       {loading && (
         <Box className="loading">
           <CircularProgress />
@@ -306,9 +457,9 @@ const AssignTaskForm = () => {
           disable={field.disable}
         />
       ))}
-      <Box sx={{width:'100%'}}>
+      <Box sx={{width: '100%'}}>
         <Button type="submit" variant="contained">
-          Create
+          Submit
         </Button>
       </Box>
 
@@ -322,4 +473,4 @@ const AssignTaskForm = () => {
   );
 };
 
-export default AssignTaskForm;
+export default StaffReportForm;

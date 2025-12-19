@@ -516,12 +516,22 @@ a{
 
             .flex-auto{
               flex: auto;
-              width: auto;
+              width: auto !important;
             }
 
             .flex-1{
               flex: 1;
               width: auto;
+            }
+
+            .w-45{
+              width: 45%;
+              flex: auto;
+            }
+
+            .w-30{
+              width: 30%;
+              flex: auto;
             }
 
             .w-100{
@@ -549,6 +559,20 @@ a{
 
               span{
                 font-weight: bold;
+              }
+            }
+
+            .rs-picker{
+              @include flex(row,flex-start);
+              width: 100%;
+
+              .rs-picker-input-group{
+                border-radius: 4px;
+                border: 1px solid rgba($black, .23);
+
+                &:hover{
+                  border-color: $black;
+                }
               }
             }
           }
@@ -688,5 +712,14 @@ a{
     svg {
       color: $light-blue;
     }
+  }
+}
+
+.MuiSnackbar-root{
+  .MuiPaper-root{
+    background-color: #303F59;
+    position: static;
+    padding: 6px 16px !important;
+    min-width: auto !important;
   }
 }

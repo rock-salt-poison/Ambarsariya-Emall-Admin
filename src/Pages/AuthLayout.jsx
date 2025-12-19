@@ -50,7 +50,7 @@ const AuthLayout = () => {
         children: [
           { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
           { name: "Assign Task", icon: <MailIcon /> },
-          { name: "Sales Report", icon: <MailIcon /> },
+          { name: "Staff Report", icon: <MailIcon /> },
         ],
       },
       {
@@ -110,7 +110,7 @@ const AuthLayout = () => {
     "Sales Manager": [
       { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
       { name: "Assign Task", icon: <MailIcon /> },
-      { name: "Sales Report", icon: <MailIcon /> },
+      { name: "Staff Report", icon: <MailIcon /> },
     ],
     "Sales Staff": [
       { name: "My Tasks", icon: <MailIcon /> },
@@ -166,6 +166,9 @@ const AuthLayout = () => {
       case "Assign Task":
         navigate("../sales/assign-task");
         break;
+      case "Staff Report":
+        navigate("../sales/staff-report");
+        break;
       case "Visitor":
         navigate("../accounts/visitor");
         break;
@@ -190,7 +193,7 @@ const AuthLayout = () => {
       default:
         break;
     }
-  }, [selectedItem, navigate]);
+  }, [selectedItem]);
 
   // Early return for unauthorized user
   if (!loading && !user) return <Navigate to="/login" replace />;
@@ -206,7 +209,7 @@ const AuthLayout = () => {
       )}
       <SideBar onSelectItem={handleSelectItem} menuItems={menuItems} />
       <Box component="main" className="main">
-        <DashboardHeader user={user?.department_name} />
+        <DashboardHeader user={user?.user_type === 'staff' ? 'Sales Staff': user?.department_name} />
         <Outlet context={{ selectedItem }} />
       </Box>
     </Box>

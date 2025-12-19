@@ -13,12 +13,14 @@ import { get_staff_tasks } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
 import DialogPopup from "../../DialogPopup";
 import AssignedTaskForm from "./AssignedTaskForm";
+import { useNavigate } from "react-router-dom";
 
 export default function StaffDashboardTable() {
   const token = useSelector((state) => state.auth.token);
   const [open, setOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null); // ← track clicked task
+  const [selectedTask, setSelectedTask] = useState(null); // track clicked task
   const [employees, setEmployees] = useState([]);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,8 +43,9 @@ export default function StaffDashboardTable() {
   }, [token]);
 
   const handleRowClick = (task) => {
-    setSelectedTask(task); // store the clicked task
-    setOpen(true);         // open the popup
+    navigate(task?.id)
+    // setSelectedTask(task); // store the clicked task
+    // setOpen(true);         // open the popup
   };
 
   return (
@@ -63,7 +66,7 @@ export default function StaffDashboardTable() {
               <TableRow
                 key={emp.id}
                 hover
-                onClick={() => handleRowClick(emp)} // ← add click handler
+                onClick={() => handleRowClick(emp)} // add click handler
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell>{index + 1}</TableCell>
@@ -90,4 +93,3 @@ export default function StaffDashboardTable() {
     </>
   );
 }
-

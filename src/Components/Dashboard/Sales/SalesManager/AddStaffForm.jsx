@@ -450,7 +450,7 @@ console.log(formData?.assign_area);
     { id: 2, label: 'Enter name', name: 'name', type: 'text' },
     { id: 3, label: 'Enter age', name: 'age', type: 'number' },
     { id: 4, label: 'Start Date', name: 'start_date', type: 'date' },
-    { id: 5, label: 'Enter phone no.', name: 'phone', type: 'text' },
+    { id: 5, label: 'Enter phone no.', name: 'phone', type: 'phone_number' },
 
     ...(showPhoneOtp ? [
       { id: 6, label: "Enter Phone OTP", name: "phone_otp", type: "text" }

@@ -420,7 +420,7 @@ console.log(departments, permissions);
     { id: 4, label: 'Enter name', name: 'name', type: 'text' },
     { id: 5, label: 'Enter age', name: 'age', type: 'number' },
     { id: 6, label: 'Start Date', name: 'start_date', type: 'date' },
-    { id: 7, label: 'Enter phone no.', name: 'phone', type: 'text' },
+    { id: 7, label: 'Enter phone no.', name: 'phone', type: 'phone_number' },
 
     ...(showPhoneOtp ? [
       { id: 8, label: "Enter Phone OTP", name: "phone_otp", type: "text" }
