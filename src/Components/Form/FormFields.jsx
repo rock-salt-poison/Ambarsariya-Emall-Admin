@@ -9,7 +9,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { Box, Typography } from "@mui/material";
+import { Box, Checkbox, Chip, ListItemText, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -110,6 +110,17 @@ export default function FormFields({
 
     return `+91 ${digits}`;
   };
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+
+  const MenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250,
+      },
+    },
+  };
 
 
   return (
@@ -123,6 +134,7 @@ export default function FormFields({
             onChange={(e) => handleSelectChange(e)}
             label={label}
             required={required}
+            multiple={multiple}
             readOnly={readOnly}
           >
 
@@ -137,7 +149,40 @@ export default function FormFields({
             ))}
           </Select>
         </FormControl>
-      ) : type === "password" ? (
+      ) : type === "multi-select-checkbox" ? (
+  <FormControl
+    variant="outlined"
+    sx={{width:'300px'}}
+    size="small"
+    className={optionalCname}
+  >
+    <InputLabel>{label}</InputLabel>
+
+    <Select
+      name={name}
+      multiple
+      value={value || []}
+      onChange={(e) => handleSelectChange(e)}
+      label={label}
+      required={required}
+      readOnly={readOnly}
+      renderValue={(selected) => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map((value) => (
+                <Chip key={value} label={value} />
+              ))}
+            </Box>
+          )}
+      MenuProps={MenuProps}
+    >
+      {options?.map((option, index) => (
+        <MenuItem key={index} value={option} disabled={disable}>
+          <Checkbox checked={value?.indexOf(option) > -1} />
+          <ListItemText primary={option} sx={{whiteSpace:'normal'}}/>
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>): type === "password" ? (
         <FormControl variant="outlined" fullWidth size="small">
           <InputLabel htmlFor="outlined-adornment-password" size="small">
             {label}

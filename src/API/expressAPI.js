@@ -413,3 +413,23 @@ export const post_create_staff_tasks = async (data) => {
         throw e;
     }
 } 
+
+export const get_staff_task_with_token = async (token) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff-task-detail/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const post_task_report_details = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.post(`${admin_roles_api}/task-report-details`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 

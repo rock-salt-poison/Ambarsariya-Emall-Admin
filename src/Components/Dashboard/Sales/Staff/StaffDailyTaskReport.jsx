@@ -16,7 +16,7 @@ function StaffDailyTaskReport() {
     return (
         <Box className="body">
             <Box className="content">
-                <BoxHeader title="Daily Task Report"/>
+                <BoxHeader title="Daily Task Report" backIcon={true} handleBackClick={'../sales-staff/my-tasks'}/>
                 <Box className="body">
                     <StaffReportForm />
                 </Box>

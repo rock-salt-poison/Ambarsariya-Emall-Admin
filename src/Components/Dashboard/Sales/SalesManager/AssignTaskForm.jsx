@@ -6,6 +6,7 @@ import {
   get_permissions,
   get_staff_types,
   get_staff_with_type,
+  get_support_page_famous_areas,
   get_userByToken,
   post_create_staff,
   post_create_staff_tasks,
@@ -15,6 +16,7 @@ import {
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
+import dayjs from "dayjs";
 
 const AssignTaskForm = () => {
   const initialData = {
@@ -44,16 +46,15 @@ const AssignTaskForm = () => {
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [staffMembers, setStaffMembers] = useState([]);
+  const [famousAreas, setFamousAreas] = useState([]);
 
   useEffect(() => {
     if (token && formData?.staff_type) {
       const fetchEmployees = async () => {
         try {
           setLoading(true);
-          console.log(formData.staff_type);
 
           const resp = await get_staff_with_type(token, formData.staff_type);
-          console.log(resp);
           if (resp) {
             setStaffMembers(resp);
           }
@@ -91,7 +92,6 @@ const AssignTaskForm = () => {
         try {
           const resp = await get_userByToken(token);
           if (resp?.user) {
-            console.log(resp?.user);
             setManager(resp.user);
           }
         } catch (e) {
@@ -105,6 +105,8 @@ const AssignTaskForm = () => {
       setLoading(false);
     }
   }, [token]);
+
+  
 
   // Handle Input Change
   const handleOnChange = (e) => {
@@ -153,6 +155,24 @@ const AssignTaskForm = () => {
 
   console.log(errors);
 
+  useEffect(()=>{
+    const fetchFamousAreas = async () => {
+      try{
+        setLoading(true);
+        const resp = await get_support_page_famous_areas();
+        if(resp){
+          setFamousAreas(resp);
+        }
+      }catch(e){
+        console.log(e); 
+      }finally{
+        setLoading(false);
+      }
+    }
+    fetchFamousAreas(); 
+  }, []);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -168,8 +188,20 @@ const AssignTaskForm = () => {
 
       const assigned_by = manager?.id;
 
-      const start_date = formData?.task_date[0];
-      const end_date = formData?.task_date[1];
+      const start_date = dayjs(formData?.task_date?.[0]).format('YYYY-MM-DD');
+      const end_date = dayjs(formData?.task_date?.[1]).format('YYYY-MM-DD');
+      const assign_areas = formData?.assign_area?.map((a) => {
+      const fa = famousAreas?.find(fa => fa.area_address === a);
+
+      return fa
+        ? {
+            latitude: fa.latitude,
+            longitude: fa.longitude,
+            description: fa.area_address,
+            length_in_km: fa.length_in_km,
+          }
+        : null;
+      });
 
       const data = {
         assigned_by,
@@ -177,7 +209,7 @@ const AssignTaskForm = () => {
         assigned_task: formData?.assigned_task,
         start_date,
         end_date,
-        assign_area: formData?.assign_area,
+        assign_area: assign_areas,
         approx_shops: formData?.approx_shops,
         approx_offices: formData?.approx_offices,
         approx_hawkers: formData?.approx_hawkers,
@@ -246,7 +278,8 @@ const AssignTaskForm = () => {
       id: 6,
       label: "Assign area",
       name: "assign_area",
-      type: "address",
+      type: "multi-select-checkbox",
+      options:famousAreas?.map((fa)=>fa.area_address),
       cName: "w-100",
       multiple: true,
     },

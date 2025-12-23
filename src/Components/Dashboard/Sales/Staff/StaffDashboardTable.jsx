@@ -43,7 +43,7 @@ export default function StaffDashboardTable() {
   }, [token]);
 
   const handleRowClick = (task) => {
-    navigate(task?.id)
+    navigate(task?.access_token)
     // setSelectedTask(task); // store the clicked task
     // setOpen(true);         // open the popup
   };

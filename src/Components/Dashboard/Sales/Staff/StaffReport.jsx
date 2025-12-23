@@ -4,7 +4,7 @@ import DialogPopup from "../../DialogPopup";
 import BoxHeader from "../../DashboardContent/BoxHeader";
 import AddStaffForm from "../SalesManager/AddStaffForm";
 import StaffDashboardTable from "./StaffDashboardTable";
-import StaffReportForm from "../Staff/StaffReportForm";
+import StaffReportForm from "../SalesManager/StaffReportForm";
 
 function StaffReport() {
     const [open, setOpen] = useState(false);
