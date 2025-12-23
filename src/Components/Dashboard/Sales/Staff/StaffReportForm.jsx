@@ -108,33 +108,36 @@ const createClientSummaryGroup = (id) => ({
     );
   };
 
-  const handleStageDataChange = (
-    groupIndex,
-    stageIndex,
-    field,
-    value
-  ) => {
-    setClientSummaries((prev) =>
-      prev.map((group, gIdx) =>
-        gIdx !== groupIndex
-          ? group
-          : {
-              ...group,
-              stages: group.stages.map((stage, sIdx) =>
-                sIdx !== stageIndex
-                  ? stage
-                  : {
-                      ...stage,
-                      data: {
-                        ...stage.data,
-                        [field]: value,
-                      },
-                    }
-              ),
-            }
-      )
-    );
-  };
+  const handleStageDataChange = (groupIndex, stageIndex, field, value) => {
+  setClientSummaries((prev) =>
+    prev.map((group, gIdx) =>
+      gIdx !== groupIndex
+        ? group
+        : {
+            ...group,
+            stages: group.stages.map((stage, sIdx) => {
+              if (sIdx !== stageIndex) return stage;
+
+              const updatedStage = {
+                ...stage,
+                data: {
+                  ...stage.data,
+                  [field]: value,
+                },
+              };
+
+              // ✅ Auto-confirm if Lead Summary and lead_select is "Form 1"
+              if (stage.type === "Lead Summary" && field === "lead_select" && value === "Form 1") {
+                updatedStage.status = "Confirm";
+              }
+
+              return updatedStage;
+            }),
+          }
+    )
+  );
+};
+
 
   
   useEffect(() => {
@@ -244,7 +247,7 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   // 1️⃣ Validate all fields first
-  const isValid = validateFields();
+  let isValid = validateFields();
   if (!isValid) {
     setSnackbar({
       open: true,
@@ -273,39 +276,50 @@ const handleSubmit = async (e) => {
     return updated;
   });
 
-  // 3️⃣ Re-validate all fields after adding new group
-  const errorsExist = Object.keys(errors).length > 0;
-  if (errorsExist) {
-    return; // stop API call
-  }
-
-  // 4️⃣ Prepare payload and submit
-  const payload = {
-    formData: { ...formData, task_id: currentTask?.id },
-    clientSummaries,
-  };
-
-  try {
-    setLoading(true);
-    const resp = await post_task_report_details(payload);
-    if (resp?.success) {
+  // 3️⃣ Wait for the new stage to be added and validate again
+  setTimeout(() => {
+    const validAfterAdding = validateFields();
+    if (!validAfterAdding) {
       setSnackbar({
         open: true,
-        message: "Task reported successfully",
-        severity: "success",
+        message: "Please fill all required fields",
+        severity: "error",
       });
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    setSnackbar({
-      open: true,
-      message: "Failed to report the task",
-      severity: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
+
+    // 4️⃣ Prepare payload and submit
+    const payload = {
+      formData: { ...formData, task_id: currentTask?.id },
+      clientSummaries,
+    };
+
+    // 5️⃣ Submit API
+    (async () => {
+      try {
+        setLoading(true);
+        const resp = await post_task_report_details(payload);
+        if (resp?.success) {
+          setSnackbar({
+            open: true,
+            message: "Task reported successfully",
+            severity: "success",
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        setSnackbar({
+          open: true,
+          message: "Failed to report the task",
+          severity: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, 0); // schedule after state update
 };
+
 
 
 
@@ -500,26 +514,6 @@ const handleSubmit = async (e) => {
 );
 
 
-// const handleAddField = () => {
-//   setClientSummaryCount((prev) => prev + 1);
-
-//   setFormData((prev) => ({
-//     ...prev,
-//     [`client_summary_type_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_status_${clientSummaryCount + 1}`]: "",
-//     [`capture_summary_shop_no_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_name_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_phone_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_email_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_shop_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_shop_domain_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_shop_sector_${clientSummaryCount + 1}`]: "",
-//     [`client_summary_location_${clientSummaryCount + 1}`]: "",
-//     [`lead_summary_select_${clientSummaryCount + 1}`]: "",
-//   }));
-// };
-
-
   // FIELDS
   const formFields = [
     {
@@ -655,7 +649,6 @@ const handleSubmit = async (e) => {
       cName: "w-45",
     },
     
-
     ...clientSummaryFields,
   ];
 
