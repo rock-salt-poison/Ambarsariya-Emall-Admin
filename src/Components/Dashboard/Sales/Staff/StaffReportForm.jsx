@@ -644,14 +644,14 @@ const handleSubmit = async (e) => {
       id: 16,
       label: "Total Confirmation",
       name: "total_confirmation",
-      type: "text",
+      type: "number",
       cName: "w-45",
     },
     {
       id: 17,
       label: "Daily Confirmation",
       name: "Daily_confirmation",
-      type: "text",
+      type: "number",
       cName: "w-45",
     },
     
