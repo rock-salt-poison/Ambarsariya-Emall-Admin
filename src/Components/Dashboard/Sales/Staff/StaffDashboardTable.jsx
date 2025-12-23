@@ -57,6 +57,7 @@ export default function StaffDashboardTable() {
             <TableRow>
               <TableCell>S.No.</TableCell>
               <TableCell>Tasks</TableCell>
+              <TableCell>Assigned By</TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>End Date</TableCell>
             </TableRow>
@@ -71,6 +72,7 @@ export default function StaffDashboardTable() {
               >
                 <TableCell>{index + 1}</TableCell>
                 <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_task}</TableCell>
+                <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_by_name}</TableCell>
                 <TableCell>{emp.start_date?.split("T")?.[0]}</TableCell>
                 <TableCell>{emp.end_date?.split("T")?.[0]}</TableCell>
               </TableRow>
