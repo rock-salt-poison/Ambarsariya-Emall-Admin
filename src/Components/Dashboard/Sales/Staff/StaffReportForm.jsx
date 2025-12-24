@@ -7,7 +7,7 @@ import {
   post_task_report_details,
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 
 const StaffReportForm = () => {
@@ -23,12 +23,12 @@ const StaffReportForm = () => {
     visits:'',
     joined:'',
     in_pipeline:'',
-    total_leads:'',
+    total_leads:0,
     daily_leads:'',
     total_capture:'',
     daily_capture:'',
-    lead_suggestions:'',
-    lead_suggestions_after_confirmation:'',
+    total_client:'',
+    daily_client:'',
     total_confirmation:'',
     Daily_confirmation:'',
   };
@@ -65,10 +65,25 @@ const createClientSummaryGroup = (id) => ({
   });
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
+  const navigate=useNavigate();
   const [currentTask, setCurrentTask] = useState(null);
  const [clientSummaries, setClientSummaries] = useState([
     createClientSummaryGroup(1),
   ]);
+
+
+  useEffect(() => {
+  const visits = Number(formData?.visits || 0);
+  const joined = Number(formData?.joined || 0);
+  const inPipeline = Number(formData?.in_pipeline || 0);
+
+  const total_leads_summary = visits + joined + inPipeline;
+
+  setFormData(prev => ({
+    ...prev,
+    total_leads: total_leads_summary,
+  }));
+}, [formData?.visits, formData?.joined, formData?.in_pipeline]);
 
   
 
@@ -86,27 +101,77 @@ const createClientSummaryGroup = (id) => ({
 };
 
 
-  const handleStageChange = (
-    groupIndex,
-    stageIndex,
-    field,
-    value
-  ) => {
-    setClientSummaries((prev) =>
-      prev.map((group, gIdx) =>
-        gIdx !== groupIndex
-          ? group
-          : {
-              ...group,
-              stages: group.stages.map((stage, sIdx) =>
-                sIdx !== stageIndex
-                  ? stage
-                  : { ...stage, [field]: value }
-              ),
-            }
-      )
-    );
-  };
+  // const handleStageChange = (
+  //   groupIndex,
+  //   stageIndex,
+  //   field,
+  //   value
+  // ) => {
+  //   setClientSummaries((prev) =>
+  //     prev.map((group, gIdx) =>
+  //       gIdx !== groupIndex
+  //         ? group
+  //         : {
+  //             ...group,
+  //             stages: group.stages.map((stage, sIdx) =>
+  //               sIdx !== stageIndex
+  //                 ? stage
+  //                 : { ...stage, [field]: value }
+  //             ),
+  //           }
+  //     )
+  //   );
+  // };
+
+
+  const handleStageChange = (groupIndex, stageIndex, field, value) => {
+  setClientSummaries((prev) => {
+    const updated = [...prev];
+
+    const group = { ...updated[groupIndex] };
+    const stages = [...group.stages];
+    const currentStage = { ...stages[stageIndex] };
+
+    const prevStatus = currentStage.status;
+
+    // Update field
+    currentStage[field] = value;
+    stages[stageIndex] = currentStage;
+
+    // 🔴 CONFIRM → PENDING / REVISIT
+    if (prevStatus === "Confirm" && value === "Pending / Revisit") {
+
+      // 1️⃣ Client Summary rollback
+      if (currentStage.type === "Client Summary") {
+        // Remove Capture + Confirm summaries
+        stages.splice(stageIndex + 1);
+      }
+
+      // 2️⃣ Capture Summary rollback
+      if (currentStage.type === "Capture Summary") {
+        // Remove only Confirm Summary
+        const confirmIndex = stages.findIndex(
+          (s) => s.type === "Confirm Summary"
+        );
+
+        if (confirmIndex > -1) {
+          stages.splice(confirmIndex);
+        }
+      }
+
+      // 3️⃣ Confirm Summary → Pending
+      // ❌ Do nothing (explicitly)
+    }
+
+    updated[groupIndex] = {
+      ...group,
+      stages,
+    };
+
+    return updated;
+  });
+};
+
 
   const handleStageDataChange = (groupIndex, stageIndex, field, value) => {
   setClientSummaries((prev) =>
@@ -127,9 +192,9 @@ const createClientSummaryGroup = (id) => ({
               };
 
               // ✅ Auto-confirm if Lead Summary and lead_select is "Form 1"
-              if (stage.type === "Lead Summary" && field === "lead_select" && value === "Form 1") {
-                updatedStage.status = "Confirm";
-              }
+              // if (stage.type === "Capture Summary" && field === "lead_select" && value === "Form 1") {
+              //   updatedStage.status = "Confirm";
+              // }
 
               return updatedStage;
             }),
@@ -195,51 +260,117 @@ const validateFields = () => {
   const newErrors = {};
   let valid = true;
 
-  // 1️⃣ Validate main formData fields
-  Object.entries(formData).forEach(([key, value]) => {
-    if (
-      value === "" ||
-      value === null ||
-      (Array.isArray(value) && value.length === 0)
-    ) {
-      newErrors[key] = `${key.replace(/_/g, " ")} is required`;
+  // 🔹 1️⃣ Validate main formData (skip readonly auto-filled ones if needed)
+  const requiredMainFields = [
+    "task_reporting_date",
+    "visits",
+    "joined",
+    "in_pipeline",
+    "total_leads",
+    "daily_leads",
+    "total_capture",
+    "daily_capture",
+    "total_client",
+    "daily_client",
+    "total_confirmation",
+    "Daily_confirmation",
+  ];
+
+  requiredMainFields.forEach((key) => {
+    const value = formData[key];
+    if (value === "" || value === null) {
+      newErrors[key] = "This field is required";
       valid = false;
     }
   });
 
-  // 2️⃣ Validate clientSummaries stages
+  // 🔹 2️⃣ Validate Client Summary Groups
   clientSummaries.forEach((group, gIdx) => {
     group.stages.forEach((stage, sIdx) => {
+      const baseKey = `cs_${gIdx}_${sIdx}`;
+
+      // ✅ Status is REQUIRED for every stage
       if (!stage.status) {
-        newErrors[`cs_${gIdx}_${sIdx}_status`] = "Status is required";
+        newErrors[`${baseKey}_status`] = "Status is required";
         valid = false;
       }
 
-      Object.entries(stage.data).forEach(([field, value]) => {
-        // Conditional required fields
-        if (
-          (stage.type === "Lead Summary" && field === "lead_select" && !value) ||
-          (stage.type === "Capture Summary" && field === "shop_no" && !value)
-        ) {
-          newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
-          valid = false;
-        } else if (
-          !["lead_select", "shop_no"].includes(field) && // other fields are always required
-          (value === "" || value === null || (typeof value === "object" && value && Object.keys(value).length === 0))
-        ) {
-          newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
-          valid = false;
-        }
-      });
+      // // ✅ Common required fields
+      // const requiredCommonFields = [];
+
+      // requiredCommonFields.forEach((field) => {
+      //   if (!stage.data[field]) {
+      //     newErrors[`${baseKey}_${field}`] = "This field is required";
+      //     valid = false;
+      //   }
+      // });
+
+      // // ✅ Capture Summary specific
+      // if (stage.type === "Capture Summary") {
+      //   if (!stage.data.lead_select) {
+      //     newErrors[`${baseKey}_lead_select`] = "Selection is required";
+      //     valid = false;
+      //   }
+      // }
+
+      // // ✅ Confirm Summary specific
+      // if (stage.type === "Confirm Summary") {
+      //   if (!stage.data.shop_no) {
+      //     newErrors[`${baseKey}_shop_no`] = "Shop No is required";
+      //     valid = false;
+      //   }
+      // }
     });
   });
 
   setErrors(newErrors);
   return valid;
 };
-
-
   
+useEffect(() => {
+  let totalClient = 0;
+  let totalCapture = 0;
+  let totalConfirmation = 0;
+
+  clientSummaries.forEach(group => {
+
+    const clientStage = group.stages.find(
+      stage => stage.type === "Client Summary"
+    );
+
+    const captureStage = group.stages.find(
+      stage => stage.type === "Capture Summary"
+    );
+
+    // 🔹 CLIENT SUMMARY (1 per group)
+    if (clientStage) {
+      if (clientStage.status === "Confirm") {
+        totalCapture += 1;          // ✅ +1 PER GROUP
+      } else if (clientStage.status === "Pending / Revisit") {
+        totalClient += 1;           // ✅ +1 PER GROUP
+      }
+    }
+
+    // 🔹 CAPTURE SUMMARY (1 per group)
+    if (captureStage) {
+      if (captureStage.status === "Confirm") {
+        totalConfirmation += 1;     // ✅ +1 PER GROUP
+      } else if (captureStage.status === "Pending / Revisit") {
+        totalCapture += 1;          // ✅ +1 PER GROUP
+      }
+    }
+
+  });
+
+  setFormData(prev => ({
+    ...prev,
+    total_client: totalClient,
+    total_capture: totalCapture,
+    total_confirmation: totalConfirmation,
+  }));
+
+}, [clientSummaries]);
+
 
   console.log(errors);
 
@@ -265,10 +396,10 @@ const handleSubmit = async (e) => {
 
     if (lastStage.status === "Confirm") {
       if (lastStage.type === "Client Summary") {
-        lastGroup.stages.push(createEmptyStage("Lead Summary"));
-      } else if (lastStage.type === "Lead Summary") {
         lastGroup.stages.push(createEmptyStage("Capture Summary"));
       } else if (lastStage.type === "Capture Summary") {
+        lastGroup.stages.push(createEmptyStage("Confirm Summary"));
+      } else if (lastStage.type === "Confirm Summary") {
         updated.push(createClientSummaryGroup(updated.length + 1));
       }
     }
@@ -280,11 +411,7 @@ const handleSubmit = async (e) => {
   setTimeout(() => {
     const validAfterAdding = validateFields();
     if (!validAfterAdding) {
-      setSnackbar({
-        open: true,
-        message: "Please fill all required fields",
-        severity: "error",
-      });
+      
       return;
     }
 
@@ -305,6 +432,8 @@ const handleSubmit = async (e) => {
             message: "Task reported successfully",
             severity: "success",
           });
+          setFormData(initialData);
+          setTimeout(()=>{navigate('../sales-staff/my-tasks')},[1000]);
         }
       } catch (err) {
         console.error(err);
@@ -464,7 +593,7 @@ const handleSubmit = async (e) => {
             ),
         },
 
-        ...(stage.type === "Lead Summary"
+        ...(stage.type === "Capture Summary"
           ? [
               {
                 id: `${prefix}_lead_select`,
@@ -490,7 +619,7 @@ const handleSubmit = async (e) => {
             ]
           : []),
 
-        ...(stage.type === "Capture Summary"
+        ...(stage.type === "Confirm Summary"
           ? [
               {
                 id: `${prefix}_shop_no`,
@@ -594,44 +723,44 @@ const handleSubmit = async (e) => {
     },
     {
       id: 10,
-      label: "Total Leads",
+      label: "Total Leads Summary",
       name: "total_leads",
       type: "number",
       cName: 'w-45'
     },
     {
       id: 11,
-      label: "Daily Leads",
+      label: "Daily Leads Summary",
       name: "daily_leads",
       type: "number",
       cName: 'w-45'
     },
     {
       id: 12,
-      label: "Total Capture",
-      name: "total_capture",
+      label: "Total Client Summary",
+      name: "total_client",
       type: "number",
       cName: 'w-45'
     },
     {
       id: 13,
-      label: "Daily Capture",
-      name: "daily_capture",
+      label: "Daily Client Summary",
+      name: "daily_client",
       type: "number",
       cName: 'w-45'
     },
     {
       id: 14,
-      label: "Lead Suggestions",
-      name: "lead_suggestions",
-      type: "text",
+      label: "Total Capture Summary",
+      name: "total_capture",
+      type: "number",
       cName: 'w-45',
     },
     {
       id: 15,
-      label: "Lead Suggestions after confirmation",
-      name: "lead_suggestions_after_confirmation",
-      type: "text",
+      label: "Daily Capture Summary",
+      name: "daily_capture",
+      type: "number",
       cName: "w-45",
     },
     {

@@ -433,3 +433,12 @@ export const post_task_report_details = async (data) => {
         throw e;
     }
 } 
+
+export const get_staff_member_tasks = async (assigned_by, assigned_to) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/tasks/${assigned_by}/${assigned_to}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}

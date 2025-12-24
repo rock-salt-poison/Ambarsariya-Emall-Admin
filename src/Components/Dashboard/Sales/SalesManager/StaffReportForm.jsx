@@ -4,6 +4,7 @@ import FormFields from "../../../Form/FormFields";
 import CustomSnackbar from "../../../CustomSnackbar";
 import {
   get_permissions,
+  get_staff_member_tasks,
   get_staff_types,
   get_staff_with_type,
   get_userByToken,
@@ -19,48 +20,49 @@ import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
 const StaffReportForm = () => {
 
   const initialData = {
-    assigned_task: "",
-    assigned_task:'',
-    assigned_date:'',
-    assigned_area:'',
-    approx_shops:'',
-    approx_offices:'',
-    approx_hawkers:'',
-    task_reporting_date:'',
-    visits:'',
-    joined:'',
-    in_pipeline:'',
-    total_leads:'',
-    daily_leads:'',
-    total_capture:'',
-    daily_capture:'',
-    lead_suggestions:'',
-    lead_suggestions_after_confirmation:'',
-    total_confirmation:'',
-    Daily_confirmation:'',
+    staff_type: "",
+    staff:"",
+    assigned_task: '',
+    assigned_date: '',
+    assigned_area: '',
+    approx_shops: '',
+    approx_offices: '',
+    approx_hawkers: '',
+    task_reporting_date: '',
+    visits: '',
+    joined: '',
+    in_pipeline: '',
+    total_leads: '',
+    daily_leads: '',
+    total_capture: '',
+    daily_capture: '',
+    lead_suggestions: '',
+    lead_suggestions_after_confirmation: '',
+    total_confirmation: '',
+    Daily_confirmation: '',
   };
   const [formData, setFormData] = useState(initialData);
 
   const createEmptyStage = (type) => ({
-  type,
-  status: "",
-  data: {
-    name: "",
-    phone: "",
-    email: "",
-    shop: "",
-    domain: "",
-    sector: "",
-    location: "",
-    lead_select: "",
-    shop_no: "",
-  },
-});
+    type,
+    status: "",
+    data: {
+      name: "",
+      phone: "",
+      email: "",
+      shop: "",
+      domain: "",
+      sector: "",
+      location: "",
+      lead_select: "",
+      shop_no: "",
+    },
+  });
 
-const createClientSummaryGroup = (id) => ({
-  id,
-  stages: [createEmptyStage("Client Summary")],
-});
+  const createClientSummaryGroup = (id) => ({
+    id,
+    stages: [createEmptyStage("Client Summary")],
+  });
 
 
   const [errors, setErrors] = useState({});
@@ -70,41 +72,68 @@ const createClientSummaryGroup = (id) => ({
     severity: "success",
   });
   const [staffTypes, setStaffTypes] = useState([]);
-    const [manager, setManager] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const token = useSelector((state) => state.auth.token);
-    const [staffMembers, setStaffMembers] = useState([]);
-  
+  const [tasks, setTasks] = useState([]);
+  const [manager, setManager] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const token = useSelector((state) => state.auth.token);
+  const [staffMembers, setStaffMembers] = useState([]);
+
   const [currentTask, setCurrentTask] = useState(null);
- const [clientSummaries, setClientSummaries] = useState([
+  const [clientSummaries, setClientSummaries] = useState([
     createClientSummaryGroup(1),
   ]);
 
 
-   useEffect(() => {
-      if (token && formData?.staff_type) {
-        const fetchEmployees = async () => {
-          try {
+  useEffect(() => {
+    if (token && formData?.staff_type) {
+      const fetchEmployees = async () => {
+        try {
+          setLoading(true);
+          console.log(formData.staff_type);
+
+          const resp = await get_staff_with_type(token, formData.staff_type);
+          console.log(resp);
+          if (resp) {
+            setStaffMembers(resp);
+          }
+        } catch (e) {
+          console.log(e);
+          setStaffMembers([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchEmployees();
+    }
+  }, [token, formData?.staff_type]);
+
+  useEffect(()=>{
+    if(formData?.staff && manager){
+      const assigned_to = staffMembers?.find((sm)=>sm.name===formData?.staff)?.id
+      const assigned_by = manager?.id;
+
+      if(assigned_to && assigned_by){
+        const fetchTasks = async () => {
+          try{
             setLoading(true);
-            console.log(formData.staff_type);
-  
-            const resp = await get_staff_with_type(token, formData.staff_type);
+            const resp= await get_staff_member_tasks(assigned_by, assigned_to);
             console.log(resp);
-            if (resp) {
-              setStaffMembers(resp);
+            
+            if(resp){
+              setTasks(resp);
             }
-          } catch (e) {
+          }catch(e){
             console.log(e);
-            setStaffMembers([]);
-          } finally {
+          }finally{
             setLoading(false);
           }
-        };
-  
-        fetchEmployees();
+        }
+        fetchTasks();
       }
-    }, [token, formData?.staff_type]);
-  
+    }
+  }, [formData?.staff, manager])
+
 
   const handleAddClientSummary = () => {
     setClientSummaries((prev) => [
@@ -114,10 +143,10 @@ const createClientSummaryGroup = (id) => ({
   };
 
   const handleRemoveClientSummary = (groupIndex) => {
-  setClientSummaries((prev) =>
-    prev.filter((_, idx) => idx !== groupIndex)
-  );
-};
+    setClientSummaries((prev) =>
+      prev.filter((_, idx) => idx !== groupIndex)
+    );
+  };
 
 
 
@@ -132,23 +161,23 @@ const createClientSummaryGroup = (id) => ({
         gIdx !== groupIndex
           ? group
           : {
-              ...group,
-              stages: group.stages.map((stage, sIdx) =>
-                sIdx !== stageIndex
-                  ? stage
-                  : { ...stage, [field]: value }
-              ),
-            }
+            ...group,
+            stages: group.stages.map((stage, sIdx) =>
+              sIdx !== stageIndex
+                ? stage
+                : { ...stage, [field]: value }
+            ),
+          }
       )
     );
   };
 
   const handleStageDataChange = (groupIndex, stageIndex, field, value) => {
-  setClientSummaries((prev) =>
-    prev.map((group, gIdx) =>
-      gIdx !== groupIndex
-        ? group
-        : {
+    setClientSummaries((prev) =>
+      prev.map((group, gIdx) =>
+        gIdx !== groupIndex
+          ? group
+          : {
             ...group,
             stages: group.stages.map((stage, sIdx) => {
               if (sIdx !== stageIndex) return stage;
@@ -169,10 +198,10 @@ const createClientSummaryGroup = (id) => ({
               return updatedStage;
             }),
           }
-    )
-  );
-};
-useEffect(() => {
+      )
+    );
+  };
+  useEffect(() => {
     if (!formData.staff_member) return;
 
     const selectedStaff = staffMembers.find(
@@ -209,8 +238,8 @@ useEffect(() => {
     }
   }, [token]);
 
-  
-  
+
+
 
 
   // Handle Input Change
@@ -224,57 +253,57 @@ useEffect(() => {
   };
 
   // VALIDATION FUNCTION
-const validateFields = () => {
-  const newErrors = {};
-  let valid = true;
+  const validateFields = () => {
+    const newErrors = {};
+    let valid = true;
 
-  // 1️⃣ Validate main formData fields
-  Object.entries(formData).forEach(([key, value]) => {
-    if (
-      value === "" ||
-      value === null ||
-      (Array.isArray(value) && value.length === 0)
-    ) {
-      newErrors[key] = `${key.replace(/_/g, " ")} is required`;
-      valid = false;
-    }
-  });
-
-  // 2️⃣ Validate clientSummaries stages
-  clientSummaries.forEach((group, gIdx) => {
-    group.stages.forEach((stage, sIdx) => {
-      if (!stage.status) {
-        newErrors[`cs_${gIdx}_${sIdx}_status`] = "Status is required";
+    // 1️⃣ Validate main formData fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (
+        value === "" ||
+        value === null ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        newErrors[key] = `${key.replace(/_/g, " ")} is required`;
         valid = false;
       }
+    });
 
-      Object.entries(stage.data).forEach(([field, value]) => {
-        // Conditional required fields
-        if (
-          (stage.type === "Lead Summary" && field === "lead_select" && !value) ||
-          (stage.type === "Capture Summary" && field === "shop_no" && !value)
-        ) {
-          newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
-          valid = false;
-        } else if (
-          !["lead_select", "shop_no"].includes(field) && // other fields are always required
-          (value === "" || value === null || (typeof value === "object" && value && Object.keys(value).length === 0))
-        ) {
-          newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
+    // 2️⃣ Validate clientSummaries stages
+    clientSummaries.forEach((group, gIdx) => {
+      group.stages.forEach((stage, sIdx) => {
+        if (!stage.status) {
+          newErrors[`cs_${gIdx}_${sIdx}_status`] = "Status is required";
           valid = false;
         }
+
+        Object.entries(stage.data).forEach(([field, value]) => {
+          // Conditional required fields
+          if (
+            (stage.type === "Lead Summary" && field === "lead_select" && !value) ||
+            (stage.type === "Capture Summary" && field === "shop_no" && !value)
+          ) {
+            newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
+            valid = false;
+          } else if (
+            !["lead_select", "shop_no"].includes(field) && // other fields are always required
+            (value === "" || value === null || (typeof value === "object" && value && Object.keys(value).length === 0))
+          ) {
+            newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
+            valid = false;
+          }
+        });
       });
     });
-  });
 
-  setErrors(newErrors);
-  return valid;
-};
+    setErrors(newErrors);
+    return valid;
+  };
 
 
-  
 
-// Fetch API data
+
+  // Fetch API data
   const fetchStaffTypes = async () => {
     try {
       setLoading(true);
@@ -292,224 +321,224 @@ const validateFields = () => {
   }, []);
 
   console.log(errors);
-// const handleSubmit = async (e) => {
-//   e.preventDefault();
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
 
-//   // 1️⃣ Validate all fields first
-//   let isValid = validateFields();
-//   if (!isValid) {
-//     setSnackbar({
-//       open: true,
-//       message: "Please fill all required fields",
-//       severity: "error",
-//     });
-//     return; // stop here if fields are not filled
-//   }
+  //   // 1️⃣ Validate all fields first
+  //   let isValid = validateFields();
+  //   if (!isValid) {
+  //     setSnackbar({
+  //       open: true,
+  //       message: "Please fill all required fields",
+  //       severity: "error",
+  //     });
+  //     return; // stop here if fields are not filled
+  //   }
 
-//   // 2️⃣ Add new stage/group if last stage is confirmed
-//   setClientSummaries((prev) => {
-//     const updated = [...prev];
-//     const lastGroup = updated[updated.length - 1];
-//     const lastStage = lastGroup.stages[lastGroup.stages.length - 1];
+  //   // 2️⃣ Add new stage/group if last stage is confirmed
+  //   setClientSummaries((prev) => {
+  //     const updated = [...prev];
+  //     const lastGroup = updated[updated.length - 1];
+  //     const lastStage = lastGroup.stages[lastGroup.stages.length - 1];
 
-//     if (lastStage.status === "Confirm") {
-//       if (lastStage.type === "Client Summary") {
-//         lastGroup.stages.push(createEmptyStage("Lead Summary"));
-//       } else if (lastStage.type === "Lead Summary") {
-//         lastGroup.stages.push(createEmptyStage("Capture Summary"));
-//       } else if (lastStage.type === "Capture Summary") {
-//         updated.push(createClientSummaryGroup(updated.length + 1));
-//       }
-//     }
+  //     if (lastStage.status === "Confirm") {
+  //       if (lastStage.type === "Client Summary") {
+  //         lastGroup.stages.push(createEmptyStage("Lead Summary"));
+  //       } else if (lastStage.type === "Lead Summary") {
+  //         lastGroup.stages.push(createEmptyStage("Capture Summary"));
+  //       } else if (lastStage.type === "Capture Summary") {
+  //         updated.push(createClientSummaryGroup(updated.length + 1));
+  //       }
+  //     }
 
-//     return updated;
-//   });
+  //     return updated;
+  //   });
 
-//   // 3️⃣ Wait for the new stage to be added and validate again
-//   setTimeout(() => {
-//     const validAfterAdding = validateFields();
-//     if (!validAfterAdding) {
-//       setSnackbar({
-//         open: true,
-//         message: "Please fill all required fields",
-//         severity: "error",
-//       });
-//       return;
-//     }
+  //   // 3️⃣ Wait for the new stage to be added and validate again
+  //   setTimeout(() => {
+  //     const validAfterAdding = validateFields();
+  //     if (!validAfterAdding) {
+  //       setSnackbar({
+  //         open: true,
+  //         message: "Please fill all required fields",
+  //         severity: "error",
+  //       });
+  //       return;
+  //     }
 
-//     // 4️⃣ Prepare payload and submit
-//     const payload = {
-//       formData: { ...formData, task_id: currentTask?.id },
-//       clientSummaries,
-//     };
+  //     // 4️⃣ Prepare payload and submit
+  //     const payload = {
+  //       formData: { ...formData, task_id: currentTask?.id },
+  //       clientSummaries,
+  //     };
 
-//     // 5️⃣ Submit API
-//     (async () => {
-//       try {
-//         setLoading(true);
-//         const resp = await post_task_report_details(payload);
-//         if (resp?.success) {
-//           setSnackbar({
-//             open: true,
-//             message: "Task reported successfully",
-//             severity: "success",
-//           });
-//         }
-//       } catch (err) {
-//         console.error(err);
-//         setSnackbar({
-//           open: true,
-//           message: "Failed to report the task",
-//           severity: "error",
-//         });
-//       } finally {
-//         setLoading(false);
-//       }
-//     })();
-//   }, 0); // schedule after state update
-// };
+  //     // 5️⃣ Submit API
+  //     (async () => {
+  //       try {
+  //         setLoading(true);
+  //         const resp = await post_task_report_details(payload);
+  //         if (resp?.success) {
+  //           setSnackbar({
+  //             open: true,
+  //             message: "Task reported successfully",
+  //             severity: "success",
+  //           });
+  //         }
+  //       } catch (err) {
+  //         console.error(err);
+  //         setSnackbar({
+  //           open: true,
+  //           message: "Failed to report the task",
+  //           severity: "error",
+  //         });
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     })();
+  //   }, 0); // schedule after state update
+  // };
 
 
 
 
 
   const clientSummaryFields = clientSummaries.flatMap(
-  (group, groupIndex) =>
-    group.stages.flatMap((stage, stageIndex) => {
-      const prefix = `cs_${groupIndex}_${stageIndex}`;
+    (group, groupIndex) =>
+      group.stages.flatMap((stage, stageIndex) => {
+        const prefix = `cs_${groupIndex}_${stageIndex}`;
 
-      return [
-        {
-          id: `${prefix}_title`,
-          name: `${prefix}_title`,
-          label: `${stage.type} - ${group.id} `,
-        },
+        return [
+          {
+            id: `${prefix}_title`,
+            name: `${prefix}_title`,
+            label: `${stage.type} - ${group.id} `,
+          },
 
-        {
-          id: `${prefix}_status`,
-          name: `${prefix}_status`,
-          label: "Status",
-          type: "select",
-          options: ["Pending / Revisit", "Confirm"],
-          value: stage.status,
-          cName: "w-30",
-          onChange: (e) =>
-            handleStageChange(
-              groupIndex,
-              stageIndex,
-              "status",
-              e.target.value
-            ),
-        },
+          {
+            id: `${prefix}_status`,
+            name: `${prefix}_status`,
+            label: "Status",
+            type: "select",
+            options: ["Pending / Revisit", "Confirm"],
+            value: stage.status,
+            cName: "w-30",
+            onChange: (e) =>
+              handleStageChange(
+                groupIndex,
+                stageIndex,
+                "status",
+                e.target.value
+              ),
+          },
 
-        {
-          id: `${prefix}_name`,
-          name: `${prefix}_name`,
-          label: "Name",
-          type: "text",
-          cName: "w-30",
-          value: stage.data.name,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "name",
-              e.target.value
-            ),
-        },
-        {
-          id: `${prefix}_phone`,
-          name: `${prefix}_phone`,
-          label: "Phone",
-          type: "phone_number",
-          cName: "w-30",
-          value: stage.data.phone,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "phone",
-              e.target.value
-            ),
-        },
-        {
-          id: `${prefix}_email`,
-          name: `${prefix}_email`,
-          label: "Email",
-          type: "email",
-          cName: "w-30",
-          value: stage.data.email,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "email",
-              e.target.value
-            ),
-        },
-        {
-          id: `${prefix}_shop`,
-          name: `${prefix}_shop`,
-          label: "Shop Name",
-          type: "text",
-          cName: "w-30",
-          value: stage.data.shop,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "shop",
-              e.target.value
-            ),
-        },
-        {
-          id: `${prefix}_domain`,
-          name: `${prefix}_domain`,
-          label: "Shop Domain",
-          type: "text",
-          cName: "w-30",
-          value: stage.data.domain,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "domain",
-              e.target.value
-            ),
-        },
-        {
-          id: `${prefix}_sector`,
-          name: `${prefix}_sector`,
-          label: "Shop Sector",
-          type: "text",
-          cName: "w-30",
-          value: stage.data.sector,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "sector",
-              e.target.value
-            ),
-        },
-        {
-          id: `${prefix}_location`,
-          name: `${prefix}_location`,
-          label: "Location",
-          type: "address",
-          cName: "w-30",
-          value: stage.data.location,
-          onChange: (e) =>
-            handleStageDataChange(
-              groupIndex,
-              stageIndex,
-              "location",
-              e.target.value
-            ),
-        },
+          {
+            id: `${prefix}_name`,
+            name: `${prefix}_name`,
+            label: "Name",
+            type: "text",
+            cName: "w-30",
+            value: stage.data.name,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "name",
+                e.target.value
+              ),
+          },
+          {
+            id: `${prefix}_phone`,
+            name: `${prefix}_phone`,
+            label: "Phone",
+            type: "phone_number",
+            cName: "w-30",
+            value: stage.data.phone,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "phone",
+                e.target.value
+              ),
+          },
+          {
+            id: `${prefix}_email`,
+            name: `${prefix}_email`,
+            label: "Email",
+            type: "email",
+            cName: "w-30",
+            value: stage.data.email,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "email",
+                e.target.value
+              ),
+          },
+          {
+            id: `${prefix}_shop`,
+            name: `${prefix}_shop`,
+            label: "Shop Name",
+            type: "text",
+            cName: "w-30",
+            value: stage.data.shop,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "shop",
+                e.target.value
+              ),
+          },
+          {
+            id: `${prefix}_domain`,
+            name: `${prefix}_domain`,
+            label: "Shop Domain",
+            type: "text",
+            cName: "w-30",
+            value: stage.data.domain,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "domain",
+                e.target.value
+              ),
+          },
+          {
+            id: `${prefix}_sector`,
+            name: `${prefix}_sector`,
+            label: "Shop Sector",
+            type: "text",
+            cName: "w-30",
+            value: stage.data.sector,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "sector",
+                e.target.value
+              ),
+          },
+          {
+            id: `${prefix}_location`,
+            name: `${prefix}_location`,
+            label: "Location",
+            type: "address",
+            cName: "w-30",
+            value: stage.data.location,
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "location",
+                e.target.value
+              ),
+          },
 
-        ...(stage.type === "Lead Summary"
-          ? [
+          ...(stage.type === "Lead Summary"
+            ? [
               {
                 id: `${prefix}_lead_select`,
                 name: `${prefix}_lead_select`,
@@ -532,10 +561,10 @@ const validateFields = () => {
                   ),
               },
             ]
-          : []),
+            : []),
 
-        ...(stage.type === "Capture Summary"
-          ? [
+          ...(stage.type === "Capture Summary"
+            ? [
               {
                 id: `${prefix}_shop_no`,
                 name: `${prefix}_shop_no`,
@@ -552,10 +581,10 @@ const validateFields = () => {
                   ),
               },
             ]
-          : []),
-      ];
-    })
-);
+            : []),
+        ];
+      })
+  );
 
 
   // FIELDS
@@ -574,9 +603,9 @@ const validateFields = () => {
       name: "staff",
       type: "select",
       options:
-      staffMembers.length > 0
-      ? staffMembers.map((s) => s.name)
-      : ["No staff members"],
+        staffMembers.length > 0
+          ? staffMembers.map((s) => s.name)
+          : ["No staff members"],
       disable: staffMembers.length > 0 ? false : true,
       cName: 'w-45',
     },
@@ -585,35 +614,35 @@ const validateFields = () => {
       label: "Assigned Task",
       name: "assigned_task",
       type: "select",
-      options:[],
-      readOnly: true,
-      cName:'w-45',
-    },
-    {
-      id: 3,
-      label: "Date",
-      name: "assigned_date",
-      type: "date-range",
-      readOnly:true,
-      cName: 'flex-auto',
+      options: tasks?.map((t)=> t?.assigned_task) ,
+      disable: tasks?.length == 0 ? true: false,
+      cName: 'w-45',
     },
     {
       id: 4,
+      label: "Date",
+      name: "assigned_date",
+      type: "date-range",
+      readOnly: true,
+      cName: 'flex-auto',
+    },
+    {
+      id: 5,
       label: "Date",
       name: "task_reporting_date",
       type: "date",
       cName: 'flex-auto',
     },
     {
-      id: 5,
+      id: 6,
       label: "Assigned area",
       name: "assigned_area",
       type: "multi-select-checkbox",
       readOnly: true,
-      cName:'w-100'
+      cName: 'w-100'
     },
     {
-      id: 6,
+      id: 7,
       label: "Approx. Shops",
       name: "approx_shops",
       type: "number",
@@ -621,7 +650,7 @@ const validateFields = () => {
       readOnly: true,
     },
     {
-      id: 7,
+      id: 8,
       label: "Approx. Offices",
       name: "approx_offices",
       type: "number",
@@ -629,7 +658,7 @@ const validateFields = () => {
       readOnly: true,
     },
     {
-      id: 8,
+      id: 9,
       label: "Approx. hawkers or small huts",
       name: "approx_hawkers",
       type: "number",
@@ -637,83 +666,83 @@ const validateFields = () => {
       readOnly: true,
     },
     {
-      id: 9,
+      id: 10,
       label: "Total number of visits",
       name: "visits",
       type: "number",
       cName: 'w-30',
     },
     {
-      id: 10,
+      id: 11,
       label: "Total number of joined",
       name: "joined",
       type: "number",
       cName: 'w-30',
     },
     {
-      id: 11,
+      id: 12,
       label: "Total number of clients in pipeline",
       name: "in_pipeline",
       type: "number",
       cName: 'w-30',
     },
     {
-      id: 12,
-      label: "Total Leads",
+      id: 13,
+      label: "Total Leads Summary",
       name: "total_leads",
       type: "number",
       cName: 'w-45'
     },
     {
-      id: 13,
-      label: "Daily Leads",
+      id: 14,
+      label: "Daily Leads Summary",
       name: "daily_leads",
       type: "number",
       cName: 'w-45'
     },
     {
-      id: 14,
-      label: "Total Capture",
+      id: 15,
+      label: "Total Client Summary",
       name: "total_capture",
       type: "number",
       cName: 'w-45'
     },
     {
-      id: 15,
-      label: "Daily Capture",
+      id: 16,
+      label: "Daily Client Summary",
       name: "daily_capture",
       type: "number",
       cName: 'w-45'
     },
     {
-      id: 16,
-      label: "Lead Suggestions",
+      id: 17,
+      label: "Total Capture  Summary",
       name: "lead_suggestions",
       type: "text",
       cName: 'w-45',
     },
     {
-      id: 17,
-      label: "Lead Suggestions after confirmation",
+      id: 18,
+      label: "Daily Capture Summary",
       name: "lead_suggestions_after_confirmation",
       type: "text",
       cName: "w-45",
     },
     {
-      id: 18,
+      id: 19,
       label: "Total Confirmation",
       name: "total_confirmation",
       type: "number",
       cName: "w-45",
     },
     {
-      id: 19,
+      id: 20,
       label: "Daily Confirmation",
       name: "Daily_confirmation",
       type: "number",
       cName: "w-45",
     },
-    
+
     ...clientSummaryFields,
   ];
 
@@ -745,7 +774,7 @@ const validateFields = () => {
           handleRemoveClick={field.handleRemoveClick}
         />
       ))}
-      
+
 
       <CustomSnackbar
         open={snackbar.open}
