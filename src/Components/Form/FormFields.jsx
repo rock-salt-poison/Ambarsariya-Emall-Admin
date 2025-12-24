@@ -138,15 +138,28 @@ const ITEM_PADDING_TOP = 8;
             readOnly={readOnly}
           >
 
-            {disable ? options?.map((option, index) => (
-              <MenuItem key={index + 1} value={option} disabled={disable}>
-                {option}
-              </MenuItem>
-            )) : options?.map((option, index) => (
-              <MenuItem key={index + 1} value={option}>
-                {option}
-              </MenuItem>
-            ))}
+            {disable ? options?.map((option, index) => {
+                const isObject = typeof option === 'object' && option !== null;
+                const optionValue = isObject ? option.value : option;
+                const optionLabel = isObject ? option.label : option;
+
+                return (
+                  <MenuItem key={index + 1} value={optionValue} disabled={disable}>
+                    {optionLabel}
+                  </MenuItem>
+                );
+
+            }) : options?.map((option, index) =>{
+              const isObject = typeof option === 'object' && option !== null;
+                const optionValue = isObject ? option.value : option;
+                const optionLabel = isObject ? option.label : option;
+
+                return (
+                  <MenuItem key={index + 1} value={optionValue} >
+                    {optionLabel}
+                  </MenuItem>
+                );
+            })}
           </Select>
         </FormControl>
       ) : type === "multi-select-checkbox" ? (

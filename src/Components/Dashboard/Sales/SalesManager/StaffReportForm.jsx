@@ -16,12 +16,13 @@ import {
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
+import dayjs from "dayjs";
 
 const StaffReportForm = () => {
 
   const initialData = {
     staff_type: "",
-    staff:"",
+    staff: "",
     assigned_task: '',
     assigned_date: '',
     assigned_area: '',
@@ -108,24 +109,24 @@ const StaffReportForm = () => {
     }
   }, [token, formData?.staff_type]);
 
-  useEffect(()=>{
-    if(formData?.staff && manager){
-      const assigned_to = staffMembers?.find((sm)=>sm.name===formData?.staff)?.id
+  useEffect(() => {
+    if (formData?.staff && manager) {
+      const assigned_to = staffMembers?.find((sm) => sm.name === formData?.staff)?.id
       const assigned_by = manager?.id;
 
-      if(assigned_to && assigned_by){
+      if (assigned_to && assigned_by) {
         const fetchTasks = async () => {
-          try{
+          try {
             setLoading(true);
-            const resp= await get_staff_member_tasks(assigned_by, assigned_to);
+            const resp = await get_staff_member_tasks(assigned_by, assigned_to);
             console.log(resp);
-            
-            if(resp){
+
+            if (resp) {
               setTasks(resp);
             }
-          }catch(e){
+          } catch (e) {
             console.log(e);
-          }finally{
+          } finally {
             setLoading(false);
           }
         }
@@ -133,6 +134,23 @@ const StaffReportForm = () => {
       }
     }
   }, [formData?.staff, manager])
+
+  useEffect(() => {
+    if (formData?.assigned_task) {
+      const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
+
+      const date_range = fetch_selected_task && [
+        dayjs(fetch_selected_task.start_date).toDate(),
+        dayjs(fetch_selected_task.end_date).toDate()
+      ];
+      console.log(date_range);
+
+      setFormData((prev) => ({
+        ...prev,
+        assigned_date: date_range
+      }))
+    }
+  }, [formData?.assigned_task]);
 
 
   const handleAddClientSummary = () => {
@@ -614,8 +632,8 @@ const StaffReportForm = () => {
       label: "Assigned Task",
       name: "assigned_task",
       type: "select",
-      options: tasks?.map((t)=> t?.assigned_task) ,
-      disable: tasks?.length == 0 ? true: false,
+      options: tasks?.map((t) => ({ label: t?.assigned_task, value: t?.access_token })),
+      disable: tasks?.length == 0 ? true : false,
       cName: 'w-45',
     },
     {
