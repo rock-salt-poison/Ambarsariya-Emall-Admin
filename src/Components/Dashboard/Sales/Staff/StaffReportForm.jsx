@@ -25,11 +25,11 @@ const StaffReportForm = () => {
     in_pipeline:'',
     total_leads:0,
     daily_leads:'',
-    total_capture:'',
+    total_capture:0,
     daily_capture:'',
-    total_client:'',
+    total_client:0,
     daily_client:'',
-    total_confirmation:'',
+    total_confirmation:0,
     Daily_confirmation:'',
   };
   const [formData, setFormData] = useState(initialData);
@@ -417,7 +417,8 @@ const handleSubmit = async (e) => {
 
     // 4️⃣ Prepare payload and submit
     const payload = {
-      formData: { ...formData, task_id: currentTask?.id },
+      formData: { ...formData, task_id: currentTask?.id, task_reporting_date: dayjs(formData.task_reporting_date).format("YYYY-MM-DD"),
+ },
       clientSummaries,
     };
 

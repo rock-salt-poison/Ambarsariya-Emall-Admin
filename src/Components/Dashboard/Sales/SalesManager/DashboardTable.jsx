@@ -24,7 +24,7 @@ export default function DashboardTable() {
         try{
           setLoading(true);
           const resp = await get_staff(token);
-          console.log(resp);
+          // console.log(resp);
           if(resp){
             setEmployees(resp);
           }
@@ -58,8 +58,8 @@ export default function DashboardTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {employees.length > 0 ? employees.map((emp) => (
-              <TableRow key={emp.id} hover>
+            {employees.length > 0 ? employees.map((emp, index) => (
+              <TableRow key={index} hover>
                 <TableCell>{emp.name}</TableCell>
                 <TableCell sx={{textTransform:'capitalize'}}>{emp.staff_type_name}</TableCell>
                 <TableCell>{emp.assign_area_name}</TableCell>

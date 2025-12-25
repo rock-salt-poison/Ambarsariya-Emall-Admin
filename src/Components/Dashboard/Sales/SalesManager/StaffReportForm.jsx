@@ -5,6 +5,7 @@ import CustomSnackbar from "../../../CustomSnackbar";
 import {
   get_permissions,
   get_staff_member_tasks,
+  get_staff_task_report_details,
   get_staff_types,
   get_staff_with_type,
   get_userByToken,
@@ -30,17 +31,17 @@ const StaffReportForm = () => {
     approx_offices: '',
     approx_hawkers: '',
     task_reporting_date: '',
-    visits: '',
-    joined: '',
-    in_pipeline: '',
-    total_leads: '',
-    daily_leads: '',
-    total_capture: '',
-    daily_capture: '',
-    lead_suggestions: '',
-    lead_suggestions_after_confirmation: '',
-    total_confirmation: '',
-    Daily_confirmation: '',
+    visits: 0,
+    joined: 0,
+    in_pipeline: 0,
+    total_leads: 0,
+    daily_leads: 0,
+    total_capture: 0,
+    daily_capture: 0,
+    total_client: 0,
+    daily_client: 0,
+    total_confirmation: 0,
+    Daily_confirmation: 0,
   };
   const [formData, setFormData] = useState(initialData);
 
@@ -77,6 +78,7 @@ const StaffReportForm = () => {
   const [manager, setManager] = useState([]);
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
+  const [taskReport, setTaskReport] = useState(null);
   const [staffMembers, setStaffMembers] = useState([]);
 
   const [currentTask, setCurrentTask] = useState(null);
@@ -147,10 +149,152 @@ const StaffReportForm = () => {
 
       setFormData((prev) => ({
         ...prev,
-        assigned_date: date_range
+        assigned_date: date_range,
+        assigned_area: fetch_selected_task?.assign_area?.map((a)=>a?.formatted_address),
+        approx_shops: fetch_selected_task?.approx_shops, 
+        approx_offices: fetch_selected_task?.approx_offices, 
+        approx_hawkers: fetch_selected_task?.approx_hawkers, 
       }))
     }
   }, [formData?.assigned_task]);
+
+const mapApiSummariesToClientSummaries = (summaries = []) => {
+  if (!Array.isArray(summaries)) return [];
+
+  // 1️⃣ Index summaries by id
+  const byId = {};
+  summaries.forEach((s) => {
+    byId[s.id] = {
+      id: s.id,
+      parent_summary_id: s.parent_summary_id || null,
+      type: s.summary_type,
+      status: s.status || "",
+      data: {
+        name: s.name || "",
+        phone: s.phone || "",
+        email: s.email || "",
+        shop: s.shop_name || "",
+        domain: s.shop_domain || "",
+        sector: s.shop_sector || "",
+        location: s.location || "",
+        lead_select: s.lead_select || "",
+        shop_no: s.shop_no || "",
+      },
+      children: [],
+    };
+  });
+
+  // 2️⃣ Build tree
+  const roots = [];
+  Object.values(byId).forEach((node) => {
+    if (node.parent_summary_id && byId[node.parent_summary_id]) {
+      byId[node.parent_summary_id].children.push(node);
+    } else {
+      roots.push(node); // Client Summary
+    }
+  });
+
+  // 3️⃣ Build UI groups with SAME index
+  const groups = [];
+  let clientIndex = 1;
+
+  const buildStages = (node, index, stages = []) => {
+    stages.push({
+      type: `${node.type} - ${index}`,
+      status: node.status,
+      data: node.data,
+    });
+
+    node.children.forEach((child) =>
+      buildStages(child, index, stages)
+    );
+
+    return stages;
+  };
+
+  roots.forEach((root) => {
+    groups.push({
+      id: clientIndex,
+      stages: buildStages(root, clientIndex, []),
+    });
+    clientIndex++;
+  });
+
+  return groups;
+};
+
+
+
+
+  useEffect(()=>{
+    if(formData?.assigned_task && formData?.task_reporting_date){
+      try{
+        setLoading(true);
+        const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
+
+        if(fetch_selected_task){
+          const fetchTaskReport = async () =>{
+            const resp = (await get_staff_task_report_details(fetch_selected_task?.id, dayjs(formData?.task_reporting_date).format('YYYY-MM-DD')))?.[0];
+            console.log(resp);
+            
+            if(resp){
+              setFormData((prev)=>({
+                ...prev, 
+                visits: resp?.visits,
+                joined: resp?.joined,
+                in_pipeline: resp?.in_pipeline,
+                total_leads: resp?.total_leads_summary,
+                daily_leads: resp?.daily_leads_summary,
+                total_client: resp?.total_client_summary,
+                daily_client: resp?.daily_client_summary,
+                total_capture: resp?.total_capture_summary,
+                daily_capture: resp?.daily_capture_summary,
+                total_confirmation: resp?.total_confirmation,
+                Daily_confirmation: resp?.daily_confirmation,
+              }));
+
+               if (Array.isArray(resp.summaries) && resp.summaries.length > 0) {
+                const mappedSummaries = mapApiSummariesToClientSummaries(resp.summaries);
+                setClientSummaries(mappedSummaries);
+              }else {
+              setClientSummaries([createClientSummaryGroup(1)]);
+            }
+            }else {
+              setSnackbar({
+                open: true,
+                message: "No record exists for the selected date",
+                severity: "error",
+              });
+               setFormData((prev)=>({
+                ...prev, 
+                visits: 0,
+                joined: 0,
+                in_pipeline: 0,
+                total_leads: 0,
+                daily_leads: 0,
+                total_client: 0,
+                daily_client: 0,
+                total_capture: 0,
+                daily_capture: 0,
+                total_confirmation: 0,
+                Daily_confirmation: 0,
+              }));
+
+              setClientSummaries([createClientSummaryGroup(1)]);
+
+            }
+          }
+
+          fetchTaskReport();
+        }
+        
+      }catch(e){
+        console.log(e);
+      }finally{
+        setLoading(false);
+      }
+    }
+  }, [tasks && formData?.assigned_task, formData?.task_reporting_date]);
 
 
   const handleAddClientSummary = () => {
@@ -209,9 +353,9 @@ const StaffReportForm = () => {
               };
 
               // ✅ Auto-confirm if Lead Summary and lead_select is "Form 1"
-              if (stage.type === "Lead Summary" && field === "lead_select" && value === "Form 1") {
-                updatedStage.status = "Confirm";
-              }
+              // if (stage.type === "Lead Summary" && field === "lead_select" && value === "Form 1") {
+              //   updatedStage.status = "Confirm";
+              // }
 
               return updatedStage;
             }),
@@ -429,7 +573,7 @@ const StaffReportForm = () => {
           {
             id: `${prefix}_title`,
             name: `${prefix}_title`,
-            label: `${stage.type} - ${group.id} `,
+            label: `${stage.type}`,
           },
 
           {
@@ -555,7 +699,7 @@ const StaffReportForm = () => {
               ),
           },
 
-          ...(stage.type === "Lead Summary"
+          ...(stage.type === "Capture Summary"
             ? [
               {
                 id: `${prefix}_lead_select`,
@@ -581,7 +725,7 @@ const StaffReportForm = () => {
             ]
             : []),
 
-          ...(stage.type === "Capture Summary"
+          ...(stage.type === "Confirm Summary"
             ? [
               {
                 id: `${prefix}_shop_no`,
@@ -721,28 +865,28 @@ const StaffReportForm = () => {
     {
       id: 15,
       label: "Total Client Summary",
-      name: "total_capture",
+      name: "total_client",
       type: "number",
       cName: 'w-45'
     },
     {
       id: 16,
       label: "Daily Client Summary",
-      name: "daily_capture",
+      name: "daily_client",
       type: "number",
       cName: 'w-45'
     },
     {
       id: 17,
       label: "Total Capture  Summary",
-      name: "lead_suggestions",
+      name: "total_capture",
       type: "text",
       cName: 'w-45',
     },
     {
       id: 18,
       label: "Daily Capture Summary",
-      name: "lead_suggestions_after_confirmation",
+      name: "daily_capture",
       type: "text",
       cName: "w-45",
     },

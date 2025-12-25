@@ -442,3 +442,12 @@ export const get_staff_member_tasks = async (assigned_by, assigned_to) => {
         throw e;
     }
 }
+
+export const get_staff_task_report_details = async (task_id, task_reporting_date) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff-task-report/${task_id}/${task_reporting_date}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
