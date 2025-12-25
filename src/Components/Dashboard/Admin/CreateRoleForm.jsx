@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../Form/FormFields';
 import CustomSnackbar from "../../CustomSnackbar";
-import { get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../API/expressAPI';
+import { check_email_exists, get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../store/otpSlice";
 
@@ -63,6 +63,8 @@ const CreateRoleForm = ({ onClose }) => {
     if (!formData.role_name) { newErrors.role_name = "Role name is required"; valid = false; }
     if (!formData.rights) { newErrors.rights = "Rights is required"; valid = false; }
     if (!formData.username) { newErrors.username = "Username is required"; valid = false; }
+    if (!formData.email) { newErrors.email = "Email is required"; valid = false; }
+    if (!formData.phone) { newErrors.phone = "Phone is required"; valid = false; }
     if (!formData.name) { newErrors.name = "Name is required"; valid = false; }
     if (!formData.age) { newErrors.age = "Age is required"; valid = false; }
     if (!formData.start_date) { newErrors.start_date = "Start date is required"; valid = false; }
@@ -243,7 +245,6 @@ const CreateRoleForm = ({ onClose }) => {
   //     setLoading(false);
   //   }
   // };
-  console.log(formData);
   
 
   const handleSubmit = async (e) => {
@@ -282,6 +283,18 @@ const CreateRoleForm = ({ onClose }) => {
         if (!credentialsId) {
           try{
             setLoading(true);
+
+            const check_email = await check_email_exists(formData?.email);
+            console.log(check_email);
+            
+            if(check_email){
+              setSnackbar({
+                open: true,
+                message: "Email already exists. Try with different one.",
+                severity: "error",
+              });
+              return
+            }
             setSnackbar({
                 open: true,
                 message: "Sending OTP to email",
@@ -308,6 +321,11 @@ const CreateRoleForm = ({ onClose }) => {
             return; // stop here until user enters OTP
           }catch(e){
             console.log(e);
+            setSnackbar({
+                open: true,
+                message: e?.response?.data?.message,
+                severity: "success",
+              });
           }finally{
             setLoading(false);
           }
@@ -400,7 +418,6 @@ const CreateRoleForm = ({ onClose }) => {
     setLoading(false);
   }
 };
-console.log(departments, permissions);
 
 
 

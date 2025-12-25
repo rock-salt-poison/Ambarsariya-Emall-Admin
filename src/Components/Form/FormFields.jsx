@@ -135,6 +135,8 @@ const ITEM_PADDING_TOP = 8;
             label={label}
             required={required}
             multiple={multiple}
+            error={error}
+            helperText={helperText}
             readOnly={readOnly}
           >
 
@@ -196,40 +198,34 @@ const ITEM_PADDING_TOP = 8;
       ))}
     </Select>
   </FormControl>): type === "password" ? (
-        <FormControl variant="outlined" fullWidth size="small">
-          <InputLabel htmlFor="outlined-adornment-password" size="small">
-            {label}
-          </InputLabel>
-          <OutlinedInput
-            id="outlined-adornment-password"
-            type={showPassword ? "text" : "password"}
-            value={value}
-            name={name}
-            onChange={onChange}
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={
-                    showPassword ? "hide the password" : "display the password"
-                  }
-                  onClick={handleClickShowPassword}
-                  onMouseDown={handleMouseDownPassword}
-                  edge="end"
-                >
-                  {showPassword ? (
-                    <VisibilityOff fontSize="small" />
-                  ) : (
-                    <Visibility fontSize="small" />
-                  )}
-                </IconButton>
-              </InputAdornment>
-            }
-            label={label}
-            autoComplete="new-password"
-            size="small"
-            readOnly={readOnly}
-          />
-        </FormControl>
+       <TextField
+  label={label}
+  name={name}
+  type={showPassword ? "text" : "password"}
+  value={value}
+  onChange={onChange}
+  error={error}
+  helperText={helperText}
+  size="small"
+  fullWidth
+  required={required}
+  className={optionalCname}
+  InputProps={{
+    readOnly,
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          onClick={handleClickShowPassword}
+          onMouseDown={handleMouseDownPassword}
+          edge="end"
+        >
+          {showPassword ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  }}
+/>
+
       ) : type === "date" ? (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
@@ -391,6 +387,7 @@ const ITEM_PADDING_TOP = 8;
           className={optionalCname}
           size="small"
           error={error}
+          helperText={helperText}
           disabled={disable}
           inputProps={{
             inputMode: "numeric",

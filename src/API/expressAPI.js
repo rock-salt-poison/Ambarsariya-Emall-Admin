@@ -359,6 +359,17 @@ export const send_otp_to_email = async (data) => {
   }
 }
 
+export const check_email_exists = async (email) => {
+  try {
+    if (email) {
+      const response = await axios.get(`${admin_roles_api}/check-email/${email}`);
+      return response.data;
+    }
+  } catch (e) {
+    throw e;
+  }
+}
+
 export const post_role_employees = async (data) => {
     try{
         if(data){
@@ -446,6 +457,15 @@ export const get_staff_member_tasks = async (assigned_by, assigned_to) => {
 export const get_staff_task_report_details = async (task_id, task_reporting_date) => {
     try{
         const response = await axios.get(`${admin_roles_api}/staff-task-report/${task_id}/${task_reporting_date}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const delete_auth_credentials = async (credentials_id) => {
+    try{
+        const response = await axios.delete(`${admin_roles_api}/delete-credentials/${credentials_id}`);
         return response.data;
     }catch(e){
         throw e;
