@@ -18,6 +18,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
 import dayjs from "dayjs";
+import StaffReportTable from "./StaffReportTable";
 
 const StaffReportForm = () => {
 
@@ -235,6 +236,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         if(fetch_selected_task){
           const fetchTaskReport = async () =>{
             const resp = (await get_staff_task_report_details(fetch_selected_task?.id, dayjs(formData?.task_reporting_date).format('YYYY-MM-DD')))?.[0];
+            setTaskReport(resp);
             console.log(resp);
             
             if(resp){
@@ -265,6 +267,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
                 message: "No record exists for the selected date",
                 severity: "error",
               });
+              setTaskReport(null);
                setFormData((prev)=>({
                 ...prev, 
                 visits: 0,
@@ -290,6 +293,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         
       }catch(e){
         console.log(e);
+        setTaskReport(null);
       }finally{
         setLoading(false);
       }
@@ -415,52 +419,52 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
   };
 
   // VALIDATION FUNCTION
-  const validateFields = () => {
-    const newErrors = {};
-    let valid = true;
+  // const validateFields = () => {
+  //   const newErrors = {};
+  //   let valid = true;
 
-    // 1️⃣ Validate main formData fields
-    Object.entries(formData).forEach(([key, value]) => {
-      if (
-        value === "" ||
-        value === null ||
-        (Array.isArray(value) && value.length === 0)
-      ) {
-        newErrors[key] = `${key.replace(/_/g, " ")} is required`;
-        valid = false;
-      }
-    });
+  //   // 1️⃣ Validate main formData fields
+  //   Object.entries(formData).forEach(([key, value]) => {
+  //     if (
+  //       value === "" ||
+  //       value === null ||
+  //       (Array.isArray(value) && value.length === 0)
+  //     ) {
+  //       newErrors[key] = `${key.replace(/_/g, " ")} is required`;
+  //       valid = false;
+  //     }
+  //   });
 
-    // 2️⃣ Validate clientSummaries stages
-    clientSummaries.forEach((group, gIdx) => {
-      group.stages.forEach((stage, sIdx) => {
-        if (!stage.status) {
-          newErrors[`cs_${gIdx}_${sIdx}_status`] = "Status is required";
-          valid = false;
-        }
+  //   // 2️⃣ Validate clientSummaries stages
+  //   clientSummaries.forEach((group, gIdx) => {
+  //     group.stages.forEach((stage, sIdx) => {
+  //       if (!stage.status) {
+  //         newErrors[`cs_${gIdx}_${sIdx}_status`] = "Status is required";
+  //         valid = false;
+  //       }
 
-        Object.entries(stage.data).forEach(([field, value]) => {
-          // Conditional required fields
-          if (
-            (stage.type === "Lead Summary" && field === "lead_select" && !value) ||
-            (stage.type === "Capture Summary" && field === "shop_no" && !value)
-          ) {
-            newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
-            valid = false;
-          } else if (
-            !["lead_select", "shop_no"].includes(field) && // other fields are always required
-            (value === "" || value === null || (typeof value === "object" && value && Object.keys(value).length === 0))
-          ) {
-            newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
-            valid = false;
-          }
-        });
-      });
-    });
+  //       Object.entries(stage.data).forEach(([field, value]) => {
+  //         // Conditional required fields
+  //         if (
+  //           (stage.type === "Lead Summary" && field === "lead_select" && !value) ||
+  //           (stage.type === "Capture Summary" && field === "shop_no" && !value)
+  //         ) {
+  //           newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
+  //           valid = false;
+  //         } else if (
+  //           !["lead_select", "shop_no"].includes(field) && // other fields are always required
+  //           (value === "" || value === null || (typeof value === "object" && value && Object.keys(value).length === 0))
+  //         ) {
+  //           newErrors[`cs_${gIdx}_${sIdx}_${field}`] = `${field.replace(/_/g, " ")} is required`;
+  //           valid = false;
+  //         }
+  //       });
+  //     });
+  //   });
 
-    setErrors(newErrors);
-    return valid;
-  };
+  //   setErrors(newErrors);
+  //   return valid;
+  // };
 
 
 
@@ -789,13 +793,6 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
       cName: 'flex-auto',
     },
     {
-      id: 5,
-      label: "Date",
-      name: "task_reporting_date",
-      type: "date",
-      cName: 'flex-auto',
-    },
-    {
       id: 6,
       label: "Assigned area",
       name: "assigned_area",
@@ -828,87 +825,95 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
       readOnly: true,
     },
     {
-      id: 10,
-      label: "Total number of visits",
-      name: "visits",
-      type: "number",
-      cName: 'w-30',
+      id: 5,
+      label: "Date",
+      name: "task_reporting_date",
+      type: "date",
+      cName: 'flex-auto',
     },
-    {
-      id: 11,
-      label: "Total number of joined",
-      name: "joined",
-      type: "number",
-      cName: 'w-30',
-    },
-    {
-      id: 12,
-      label: "Total number of clients in pipeline",
-      name: "in_pipeline",
-      type: "number",
-      cName: 'w-30',
-    },
-    {
-      id: 13,
-      label: "Total Leads Summary",
-      name: "total_leads",
-      type: "number",
-      cName: 'w-45'
-    },
-    {
-      id: 14,
-      label: "Daily Leads Summary",
-      name: "daily_leads",
-      type: "number",
-      cName: 'w-45'
-    },
-    {
-      id: 15,
-      label: "Total Client Summary",
-      name: "total_client",
-      type: "number",
-      cName: 'w-45'
-    },
-    {
-      id: 16,
-      label: "Daily Client Summary",
-      name: "daily_client",
-      type: "number",
-      cName: 'w-45'
-    },
-    {
-      id: 17,
-      label: "Total Capture  Summary",
-      name: "total_capture",
-      type: "text",
-      cName: 'w-45',
-    },
-    {
-      id: 18,
-      label: "Daily Capture Summary",
-      name: "daily_capture",
-      type: "text",
-      cName: "w-45",
-    },
-    {
-      id: 19,
-      label: "Total Confirmation",
-      name: "total_confirmation",
-      type: "number",
-      cName: "w-45",
-    },
-    {
-      id: 20,
-      label: "Daily Confirmation",
-      name: "Daily_confirmation",
-      type: "number",
-      cName: "w-45",
-    },
+    // {
+    //   id: 10,
+    //   label: "Total number of visits",
+    //   name: "visits",
+    //   type: "number",
+    //   cName: 'w-30',
+    // },
+    // {
+    //   id: 11,
+    //   label: "Total number of joined",
+    //   name: "joined",
+    //   type: "number",
+    //   cName: 'w-30',
+    // },
+    // {
+    //   id: 12,
+    //   label: "Total number of clients in pipeline",
+    //   name: "in_pipeline",
+    //   type: "number",
+    //   cName: 'w-30',
+    // },
+    // {
+    //   id: 13,
+    //   label: "Total Leads Summary",
+    //   name: "total_leads",
+    //   type: "number",
+    //   cName: 'w-45'
+    // },
+    // {
+    //   id: 14,
+    //   label: "Daily Leads Summary",
+    //   name: "daily_leads",
+    //   type: "number",
+    //   cName: 'w-45'
+    // },
+    // {
+    //   id: 15,
+    //   label: "Total Client Summary",
+    //   name: "total_client",
+    //   type: "number",
+    //   cName: 'w-45'
+    // },
+    // {
+    //   id: 16,
+    //   label: "Daily Client Summary",
+    //   name: "daily_client",
+    //   type: "number",
+    //   cName: 'w-45'
+    // },
+    // {
+    //   id: 17,
+    //   label: "Total Capture  Summary",
+    //   name: "total_capture",
+    //   type: "text",
+    //   cName: 'w-45',
+    // },
+    // {
+    //   id: 18,
+    //   label: "Daily Capture Summary",
+    //   name: "daily_capture",
+    //   type: "text",
+    //   cName: "w-45",
+    // },
+    // {
+    //   id: 19,
+    //   label: "Total Confirmation",
+    //   name: "total_confirmation",
+    //   type: "number",
+    //   cName: "w-45",
+    // },
+    // {
+    //   id: 20,
+    //   label: "Daily Confirmation",
+    //   name: "Daily_confirmation",
+    //   type: "number",
+    //   cName: "w-45",
+    // },
 
-    ...clientSummaryFields,
+    // ...clientSummaryFields,
   ];
 
   return (
+    <>
     <Box component="form" className="form2" >
       {loading && (
         <Box className="loading">
@@ -937,14 +942,15 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         />
       ))}
 
-
       <CustomSnackbar
         open={snackbar.open}
         handleClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
         message={snackbar.message}
         severity={snackbar.severity}
-      />
+        />
     </Box>
+        <StaffReportTable data={taskReport}/>
+        </>
   );
 };
 
