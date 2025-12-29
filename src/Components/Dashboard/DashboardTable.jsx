@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { get_role_employees } from "../../API/expressAPI";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function DashboardTable() {
 
@@ -39,7 +40,8 @@ export default function DashboardTable() {
   return (
     <>
     {loading && <Box className="loading"><CircularProgress/></Box> }
-      <Box className="col">
+      <Box className="container">
+        <Box className="col">
         <Table>
           <TableHead>
             <TableRow>
@@ -50,6 +52,7 @@ export default function DashboardTable() {
               <TableCell>Age</TableCell>
               <TableCell>Phone No.</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -62,12 +65,14 @@ export default function DashboardTable() {
                 <TableCell>{emp.age}</TableCell>
                 <TableCell>{emp.phone}</TableCell>
                 <TableCell>{emp.email}</TableCell>
+                <TableCell><DeleteIcon className="deleteIcon"/></TableCell>
               </TableRow>
             )) : <TableRow>
                 <TableCell colSpan={7} sx={{textAlign:'center'}}>No employee created</TableCell>
             </TableRow> }
           </TableBody>
         </Table>
+        </Box>
       </Box>
     </>
   );

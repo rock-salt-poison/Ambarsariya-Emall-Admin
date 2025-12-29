@@ -51,7 +51,8 @@ export default function StaffDashboardTable() {
   return (
     <>
       {loading && <Box className="loading"><CircularProgress /></Box>}
-      <Box className="col">
+      <Box className="container">
+        <Box className="col">
         <Table>
           <TableHead>
             <TableRow>
@@ -83,6 +84,7 @@ export default function StaffDashboardTable() {
             )}
           </TableBody>
         </Table>
+        </Box>
       </Box>
 
       <DialogPopup

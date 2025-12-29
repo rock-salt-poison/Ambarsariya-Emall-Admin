@@ -20,19 +20,20 @@ const StaffReportForm = () => {
     approx_offices:'',
     approx_hawkers:'',
     task_reporting_date:'',
-    visits:'',
-    joined:'',
-    in_pipeline:'',
+    visits:0,
+    joined:0,
+    in_pipeline:0,
     total_leads:0,
-    daily_leads:'',
+    daily_leads:0,
     total_capture:0,
-    daily_capture:'',
+    daily_capture:0,
     total_client:0,
-    daily_client:'',
+    daily_client:0,
     total_confirmation:0,
-    Daily_confirmation:'',
+    Daily_confirmation:0,
   };
   const [formData, setFormData] = useState(initialData);
+  const [viewReport, setViewReport] = useState(false);
 
   const createEmptyStage = (type) => ({
   type,
@@ -332,34 +333,50 @@ useEffect(() => {
   let totalCapture = 0;
   let totalConfirmation = 0;
 
-  clientSummaries.forEach(group => {
+  let visits = 0;
+  let joined = 0;
+  let inPipeline = 0;
 
-    const clientStage = group.stages.find(
-      stage => stage.type === "Client Summary"
-    );
+  clientSummaries.forEach((group) => {
+    const client = group.stages.find(s => s.type === "Client Summary");
+    const capture = group.stages.find(s => s.type === "Capture Summary");
+    const confirm = group.stages.find(s => s.type === "Confirm Summary");
 
-    const captureStage = group.stages.find(
-      stage => stage.type === "Capture Summary"
-    );
+    // CLIENT SUMMARY
+    if (client) {
+      if (client.status === "Pending / Revisit") {
+        totalClient += 1;
+        visits += 1;
+        return;
+      }
 
-    // 🔹 CLIENT SUMMARY (1 per group)
-    if (clientStage) {
-      if (clientStage.status === "Confirm") {
-        totalCapture += 1;          // ✅ +1 PER GROUP
-      } else if (clientStage.status === "Pending / Revisit") {
-        totalClient += 1;           // ✅ +1 PER GROUP
+      if (client.status === "Confirm") {
+        totalCapture += 1;
+        inPipeline += 1;
+        return;
       }
     }
 
-    // 🔹 CAPTURE SUMMARY (1 per group)
-    if (captureStage) {
-      if (captureStage.status === "Confirm") {
-        totalConfirmation += 1;     // ✅ +1 PER GROUP
-      } else if (captureStage.status === "Pending / Revisit") {
-        totalCapture += 1;          // ✅ +1 PER GROUP
+    // CAPTURE SUMMARY
+    if (capture) {
+      if (capture.status === "Pending / Revisit") {
+        totalCapture += 1;
+        inPipeline += 1;
+        return;
+      }
+
+      if (capture.status === "Confirm") {
+        totalConfirmation += 1;
+        joined += 1;
+        return;
       }
     }
 
+    // CONFIRM SUMMARY
+    if (confirm && confirm.status === "Confirm") {
+      totalConfirmation += 1;
+      joined += 1;
+    }
   });
 
   setFormData(prev => ({
@@ -367,9 +384,13 @@ useEffect(() => {
     total_client: totalClient,
     total_capture: totalCapture,
     total_confirmation: totalConfirmation,
+    visits,
+    joined,
+    in_pipeline: inPipeline,
   }));
 
 }, [clientSummaries]);
+
 
 
   console.log(errors);
@@ -583,7 +604,7 @@ const handleSubmit = async (e) => {
           name: `${prefix}_location`,
           label: "Location",
           type: "address",
-          cName: "w-30",
+          cName: stage.type === "Client Summary" ? "w-45": 'w-30',
           value: stage.data.location,
           onChange: (e) =>
             handleStageDataChange(
@@ -701,85 +722,89 @@ const handleSubmit = async (e) => {
       type: "date",
       cName: 'w-100',
     },
+    ...clientSummaryFields,
+    ...viewReport ? [{
+      id: 31,
+      label: 'Report'
+    }]:[],
     {
       id: 7,
       label: "Total number of visits",
       name: "visits",
       type: "number",
-      cName: 'w-30',
+      cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 8,
       label: "Total number of joined",
       name: "joined",
       type: "number",
-      cName: 'w-30',
+      cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 9,
       label: "Total number of clients in pipeline",
       name: "in_pipeline",
       type: "number",
-      cName: 'w-30',
+      cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 10,
       label: "Total Leads Summary",
       name: "total_leads",
       type: "number",
-      cName: 'w-45'
+      cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
       id: 11,
       label: "Daily Leads Summary",
       name: "daily_leads",
       type: "number",
-      cName: 'w-45'
+      cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
       id: 12,
       label: "Total Client Summary",
       name: "total_client",
       type: "number",
-      cName: 'w-45'
+      cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
       id: 13,
       label: "Daily Client Summary",
       name: "daily_client",
       type: "number",
-      cName: 'w-45'
+      cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
       id: 14,
       label: "Total Capture Summary",
       name: "total_capture",
       type: "number",
-      cName: 'w-45',
+      cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {
       id: 15,
       label: "Daily Capture Summary",
       name: "daily_capture",
       type: "number",
-      cName: "w-45",
+      cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {
       id: 16,
       label: "Total Confirmation",
       name: "total_confirmation",
       type: "number",
-      cName: "w-45",
+      cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {
       id: 17,
       label: "Daily Confirmation",
       name: "Daily_confirmation",
       type: "number",
-      cName: "w-45",
+      cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     
-    ...clientSummaryFields,
   ];
 
   return (
@@ -810,10 +835,15 @@ const handleSubmit = async (e) => {
           handleRemoveClick={field.handleRemoveClick}
         />
       ))}
-      <Box sx={{ width: '100%' }}>
+      <Box className="submit_button_container">
         <Button type="submit" variant="contained">
           Submit
         </Button>
+        {viewReport ? <Button type="button" variant="contained" onClick={()=>setViewReport(false)}>
+          Hide Report
+        </Button> : <Button type="button" variant="contained" onClick={()=>setViewReport(true)}>
+          View Report
+        </Button>}
       </Box>
 
       <CustomSnackbar

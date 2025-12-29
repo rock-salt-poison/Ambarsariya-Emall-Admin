@@ -43,8 +43,8 @@ export default function DashboardTable() {
   return (
     <>
     {loading && <Box className="loading"><CircularProgress/></Box> }
-        <Box className="col">
-      <Box className="container" sx={{overflowX:'auto',width:'100%'}}>
+        <Box className="container">
+      <Box className="col">
         <Table>
           <TableHead>
             <TableRow>

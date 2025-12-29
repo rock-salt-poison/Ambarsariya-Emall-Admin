@@ -400,9 +400,12 @@ a{
           border-top-right-radius: 8px;
         }
 
+        .container{
+          padding: 15px 15px;
+        }
+
         .col {
           overflow-x: auto;
-          padding: 15px 15px;
 
           table {
             thead {
@@ -691,6 +694,7 @@ a{
 
 ::-webkit-scrollbar-thumb{
   background-color: $blue;
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar{
@@ -698,6 +702,15 @@ a{
   height: 8px;
 }
 
+.deleteIcon{
+  color: $error;
+}
+
+.submit_button_container{
+  @include flex(row, flex-start);
+  gap: 10px;
+  width: 100%;
+}
 
 .loading {
   @include full-absolute(0px, 0px, 0px, 0px);
@@ -722,4 +735,12 @@ a{
     padding: 6px 16px !important;
     min-width: auto !important;
   }
+}
+
+.d_none{
+  display: none !important;
+}
+
+.d-flex{
+  display: flex;
 }

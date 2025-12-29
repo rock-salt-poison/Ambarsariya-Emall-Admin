@@ -341,7 +341,8 @@ export default function AccountsTable({ data, tab }) {
       {loading && <Box className="loading">
         <CircularProgress/>
       </Box>}
-      <TableContainer component={Paper}>
+      <Box className="container">
+      <Box className="col">
         <Table>
           <TableHead>
             <TableRow>
@@ -495,7 +496,8 @@ export default function AccountsTable({ data, tab }) {
               }
           </TableBody>
         </Table>
-      </TableContainer>
+      </Box>
+      </Box>
 
       <ConfirmationDialog
               open={dialogOpen}
