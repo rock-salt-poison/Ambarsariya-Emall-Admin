@@ -471,3 +471,13 @@ export const delete_auth_credentials = async (credentials_id) => {
         throw e;
     }
 }
+
+export const fetchDomains = async () => {
+  const response = await axios.get(`${link}/domains`);
+  return response.data;
+};
+
+export const fetchDomainSectors = async (domain_id) => {
+  const response = await axios.get(`${link}/domain-sectors/${domain_id}`);
+  return response.data;
+};

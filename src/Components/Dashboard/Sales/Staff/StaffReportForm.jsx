@@ -3,6 +3,8 @@ import { Button, Box, CircularProgress } from "@mui/material";
 import FormFields from "../../../Form/FormFields";
 import CustomSnackbar from "../../../CustomSnackbar";
 import {
+  fetchDomains,
+  fetchDomainSectors,
   get_staff_task_with_token,
   post_task_report_details,
 } from "../../../../API/expressAPI";
@@ -66,11 +68,23 @@ const createClientSummaryGroup = (id) => ({
   });
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
+  const [domains, setDomains] = useState([]);
+  const [sectorMap, setSectorMap] = useState({});
   const navigate=useNavigate();
   const [currentTask, setCurrentTask] = useState(null);
  const [clientSummaries, setClientSummaries] = useState([
     createClientSummaryGroup(1),
   ]);
+
+  const copyCommonData = (fromData) => ({
+    name: fromData.name,
+    phone: fromData.phone,
+    email: fromData.email,
+    shop: fromData.shop,
+    domain: fromData.domain,
+    sector: fromData.sector,
+    location: fromData.location,
+  });
 
 
   useEffect(() => {
@@ -86,7 +100,27 @@ const createClientSummaryGroup = (id) => ({
   }));
 }, [formData?.visits, formData?.joined, formData?.in_pipeline]);
 
-  
+  useEffect(()=>{
+    const getDomains= async () => {
+      try{
+        setLoading(true);
+        const resp = await fetchDomains();
+        console.log(resp);
+        
+        if(resp){
+          setDomains(resp);
+        }else{
+          setDomains([]);
+        }
+      }catch(e){
+        setDomains([]);
+        console.log(e);
+      }finally{
+        setLoading(false);
+      }
+    }
+    getDomains();
+  }, []);
 
   const handleAddClientSummary = () => {
     setClientSummaries((prev) => [
@@ -123,85 +157,179 @@ const createClientSummaryGroup = (id) => ({
   //     )
   //   );
   // };
+const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
+  if (!domainName) return;
+
+  const selectedDomain = domains.find(
+    (d) => d.domain_name === domainName
+  );
+  if (!selectedDomain) return;
+
+  try {
+    const resp = await fetchDomainSectors(selectedDomain.domain_id);
+
+    setSectorMap((prev) => ({
+      ...prev,
+      [`${groupIndex}_${stageIndex}`]: resp || [],
+    }));
+  } catch (err) {
+    console.error(err);
+    setSectorMap((prev) => ({
+      ...prev,
+      [`${groupIndex}_${stageIndex}`]: [],
+    }));
+  }
+};
 
 
-  const handleStageChange = (groupIndex, stageIndex, field, value) => {
+const handleStageChange = (groupIndex, stageIndex, field, value) => {
   setClientSummaries((prev) => {
     const updated = [...prev];
-
     const group = { ...updated[groupIndex] };
     const stages = [...group.stages];
     const currentStage = { ...stages[stageIndex] };
 
     const prevStatus = currentStage.status;
-
-    // Update field
     currentStage[field] = value;
     stages[stageIndex] = currentStage;
 
-    // 🔴 CONFIRM → PENDING / REVISIT
-    if (prevStatus === "Confirm" && value === "Pending / Revisit") {
+    /* CLIENT → CAPTURE */
+    if (
+      currentStage.type === "Client Summary" &&
+      prevStatus !== "Confirm" &&
+      value === "Confirm"
+    ) {
+      const hasCapture = stages.some(
+        (s) => s.type === "Capture Summary"
+      );
 
-      // 1️⃣ Client Summary rollback
+      if (!hasCapture) {
+        const captureIndex = stages.length;
+
+        const newStage = {
+          ...createEmptyStage("Capture Summary"),
+          data: {
+            ...createEmptyStage("Capture Summary").data,
+            ...copyCommonData(currentStage.data),
+          },
+        };
+
+        stages.push(newStage);
+
+        loadSectorsForStage(
+          currentStage.data.domain,
+          groupIndex,
+          captureIndex
+        );
+      }
+    }
+
+    /* CAPTURE → CONFIRM */
+    if (
+      currentStage.type === "Capture Summary" &&
+      prevStatus !== "Confirm" &&
+      value === "Confirm"
+    ) {
+      const hasConfirm = stages.some(
+        (s) => s.type === "Confirm Summary"
+      );
+
+      if (!hasConfirm) {
+        const confirmIndex = stages.length;
+
+        const newStage = {
+          ...createEmptyStage("Confirm Summary"),
+          data: {
+            ...createEmptyStage("Confirm Summary").data,
+            ...copyCommonData(currentStage.data),
+          },
+        };
+
+        stages.push(newStage);
+
+        loadSectorsForStage(
+          currentStage.data.domain,
+          groupIndex,
+          confirmIndex
+        );
+      }
+    }
+
+    /* ROLLBACK */
+    if (prevStatus === "Confirm" && value === "Pending / Revisit") {
       if (currentStage.type === "Client Summary") {
-        // Remove Capture + Confirm summaries
         stages.splice(stageIndex + 1);
       }
 
-      // 2️⃣ Capture Summary rollback
       if (currentStage.type === "Capture Summary") {
-        // Remove only Confirm Summary
         const confirmIndex = stages.findIndex(
           (s) => s.type === "Confirm Summary"
         );
-
-        if (confirmIndex > -1) {
-          stages.splice(confirmIndex);
-        }
+        if (confirmIndex > -1) stages.splice(confirmIndex);
       }
-
-      // 3️⃣ Confirm Summary → Pending
-      // ❌ Do nothing (explicitly)
     }
 
-    updated[groupIndex] = {
-      ...group,
-      stages,
-    };
-
+    updated[groupIndex] = { ...group, stages };
     return updated;
   });
 };
 
 
-  const handleStageDataChange = (groupIndex, stageIndex, field, value) => {
+
+
+ const handleStageDataChange = async (
+  groupIndex,
+  stageIndex,
+  field,
+  value
+) => {
   setClientSummaries((prev) =>
     prev.map((group, gIdx) =>
       gIdx !== groupIndex
         ? group
         : {
             ...group,
-            stages: group.stages.map((stage, sIdx) => {
-              if (sIdx !== stageIndex) return stage;
-
-              const updatedStage = {
-                ...stage,
-                data: {
-                  ...stage.data,
-                  [field]: value,
-                },
-              };
-
-              // ✅ Auto-confirm if Lead Summary and lead_select is "Form 1"
-              // if (stage.type === "Capture Summary" && field === "lead_select" && value === "Form 1") {
-              //   updatedStage.status = "Confirm";
-              // }
-
-              return updatedStage;
-            }),
+            stages: group.stages.map((stage, sIdx) =>
+              sIdx !== stageIndex
+                ? stage
+                : {
+                    ...stage,
+                    data: {
+                      ...stage.data,
+                      [field]: value,
+                      ...(field === "domain" ? { sector: "" } : {}),
+                    },
+                  }
+            ),
           }
     )
   );
+
+  // ✅ FETCH SECTORS ONLY WHEN DOMAIN CHANGES
+  if (field === "domain" && value) {
+    try {
+      const selectedDomain = domains.find(
+        (d) => d.domain_name === value
+      );
+
+      if (!selectedDomain) return;
+
+      const resp = await fetchDomainSectors(
+        selectedDomain.domain_id
+      );
+
+      setSectorMap((prev) => ({
+        ...prev,
+        [`${groupIndex}_${stageIndex}`]: resp || [],
+      }));
+    } catch (err) {
+      console.error(err);
+      setSectorMap((prev) => ({
+        ...prev,
+        [`${groupIndex}_${stageIndex}`]: [],
+      }));
+    }
+  }
 };
 
 
@@ -573,8 +701,10 @@ const handleSubmit = async (e) => {
           id: `${prefix}_domain`,
           name: `${prefix}_domain`,
           label: "Shop Domain",
-          type: "text",
+          type: "select",
           cName: "w-30",
+          options: domains?.map(d=>d?.domain_name) || ['No domain exists'],
+          disable: domains?.length> 0 ? false : true,
           value: stage.data.domain,
           onChange: (e) =>
             handleStageDataChange(
@@ -588,8 +718,13 @@ const handleSubmit = async (e) => {
           id: `${prefix}_sector`,
           name: `${prefix}_sector`,
           label: "Shop Sector",
-          type: "text",
-          cName: "w-30",
+          type: "select",
+          options:
+    sectorMap[`${groupIndex}_${stageIndex}`]?.map(
+      (s) => s.sector_name
+    ) || [],
+  disable:
+    !sectorMap[`${groupIndex}_${stageIndex}`]?.length,
           value: stage.data.sector,
           onChange: (e) =>
             handleStageDataChange(

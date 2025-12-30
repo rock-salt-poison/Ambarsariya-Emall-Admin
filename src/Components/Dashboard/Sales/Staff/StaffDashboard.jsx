@@ -38,7 +38,7 @@ function SalesStaffDashboard() {
     return (
         <Box className="body">
             <Box className="content">
-                <BoxHeader title={`${user?.role_name} - ${user?.name}`} searchField={true} />
+                <BoxHeader title={user ? `${user?.role_name} - ${user?.name}`: ''} searchField={true} />
                 <StaffDashboardTable />
             </Box>
 

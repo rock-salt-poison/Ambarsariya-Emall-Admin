@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../../Form/FormFields';
 import CustomSnackbar from "../../../CustomSnackbar";
-import { get_permissions, get_staff_types, get_userByToken, post_create_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
+import { check_email_exists, get_permissions, get_staff_types, get_userByToken, post_create_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from '../../../../store/otpSlice';
 
@@ -305,6 +305,17 @@ const AddStaffForm = ({ onClose }) => {
         if (!credentialsId) {
           try{
             setLoading(true);
+            const check_email = await check_email_exists(formData?.email);
+            console.log(check_email);
+            
+            if(check_email?.exists){
+              setSnackbar({
+                open: true,
+                message: "Email already exists. Try with different one.",
+                severity: "error",
+              });
+              return
+            }
             setSnackbar({
                 open: true,
                 message: "Sending OTP to email",
@@ -334,6 +345,11 @@ const AddStaffForm = ({ onClose }) => {
             return; // stop here until user enters OTP
           }catch(e){
             console.log(e);
+            setSnackbar({
+                open: true,
+                message: e?.response?.data?.message,
+                severity: "success",
+              });
           }finally{
             setLoading(false);
           }
@@ -408,9 +424,9 @@ const AddStaffForm = ({ onClose }) => {
           message: "Staff created successfully!",
           severity: "success",
         });
-        dispatch(clearOtp());
-
-        onClose();
+        setTimeout(()=>{
+          onClose();
+        }, 1000);
       }
     }catch(e){
       console.log(e);

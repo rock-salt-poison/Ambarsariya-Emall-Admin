@@ -287,7 +287,7 @@ const CreateRoleForm = ({ onClose }) => {
             const check_email = await check_email_exists(formData?.email);
             console.log(check_email);
             
-            if(check_email){
+            if(check_email?.exists){
               setSnackbar({
                 open: true,
                 message: "Email already exists. Try with different one.",
@@ -397,8 +397,9 @@ const CreateRoleForm = ({ onClose }) => {
           message: "Employee created successfully!",
           severity: "success",
         });
-
-        onClose();
+        setTimeout(()=>{
+          onClose();
+        }, 1000);
       }
     }catch(e){
       console.log(e);
