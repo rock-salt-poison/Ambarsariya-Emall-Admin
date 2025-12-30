@@ -3,8 +3,6 @@ import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../Form/FormFields';
 import CustomSnackbar from "../../CustomSnackbar";
 import { check_email_exists, get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../API/expressAPI';
-import { useDispatch, useSelector } from "react-redux";
-import { clearOtp, setEmailOtp } from "../../../store/otpSlice";
 
 const CreateRoleForm = ({ onClose }) => {
 
@@ -34,10 +32,6 @@ const CreateRoleForm = ({ onClose }) => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [credentialsId, setCredentialsId] = useState(null);
   
-
-  const dispatch = useDispatch();
-  const reduxEmailOTP = useSelector(state => state.otp.emailOtp) || '';
-
   // Patterns
   const gmailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
   const passwordPattern = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
@@ -92,17 +86,6 @@ const CreateRoleForm = ({ onClose }) => {
       valid = false;
     }
 
-    // IF OTP IS SENT, VALIDATE EMAIL OTP
-    if (reduxEmailOTP && formData.email) {
-      if (showEmailOtp && !formData.email_otp) {
-        newErrors.email_otp = "Enter Email OTP";
-        valid = false;
-      } else if (showEmailOtp && formData.email_otp !== reduxEmailOTP) {
-        newErrors.email_otp = "Invalid Email OTP";
-        valid = false;
-      }
-    }
-
     // PHONE VALIDATION
     if (formData.phone && !phonePattern.test(formData.phone)) {
       newErrors.phone = "Phone must be +91 12345-12345";
@@ -153,226 +136,290 @@ const CreateRoleForm = ({ onClose }) => {
   }, []);
 
   console.log(errors);
+    
+
+//   const handleSubmit = async (e) => {
+//   e.preventDefault();
+
+//   const isValid = validateFields();
+//   if (!isValid) return;
+
+//   try {
+//     setLoading(true);
+
+//     const department_id = departments?.find(d => d.department_name === formData.department)?.id;
+//     const permission_id = permissions?.find(p => p.permission_name === formData.rights)?.id;
+//     console.log(department_id, permission_id);
+    
+
+//     let otpStepTriggered = false;
+
+//     // -------------------------------
+//     // STEP 1 → SHOW PHONE OTP (if valid)
+//     // -------------------------------
+//     if (formData.phone && phonePattern.test(formData.phone)) {
+//       if (!showPhoneOtp) {
+//         setShowPhoneOtp(true);
+//         otpStepTriggered = true;
+//       }
+//     }
+
+//     // SHOW EMAIL OTP ONLY IF EMAIL IS VALID
+//       if (formData.email && gmailPattern.test(formData.email)) {
+//         setShowEmailOtp(true);
+//         otpStepTriggered = true;
+
+
+//         // If OTP not sent yet -> send it now
+//         if (!credentialsId) {
+//           try{
+//             setLoading(true);
+
+//             const check_email = await check_email_exists(formData?.email);
+//             console.log(check_email);
+            
+//             if(check_email?.exists){
+//               setSnackbar({
+//                 open: true,
+//                 message: "Email already exists. Try with different one.",
+//                 severity: "error",
+//               });
+//               return
+//             }
+//             setSnackbar({
+//                 open: true,
+//                 message: "Sending OTP to email",
+//                 severity: "success",
+//               });
+//             const resp = await send_otp_to_email({ username: formData.email });
+//             if (resp?.otp) {
+//               const store_otp_resp = await post_staff_email_otp({
+//                 email: formData?.email,
+//                 email_otp: resp?.otp
+//               })
+
+//               if(store_otp_resp?.success){
+//                 setSnackbar({
+//                   open: true,
+//                   message: "OTP sent to email",
+//                   severity: "success",
+//                 });
+//                 setCredentialsId(store_otp_resp?.credentials_id);
+//               }
+//             }
+//             otpStepTriggered = true;
   
+//             return; // stop here until user enters OTP
+//           }catch(e){
+//             console.log(e);
+//             setSnackbar({
+//                 open: true,
+//                 message: e?.response?.data?.message,
+//                 severity: "success",
+//               });
+//           }finally{
+//             setLoading(false);
+//           }
+//         }
+//       }
 
-  // SUBMIT HANDLER
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
+//     // -------------------------------
+//     // STEP 3 → VALIDATE BOTH OTPs TOGETHER
+//     // -------------------------------
+//     if (showPhoneOtp && formData.phone_otp !== "123456") {
+//       setSnackbar({
+//         open: true,
+//         message: "Invalid phone OTP",
+//         severity: "error",
+//       });
+//       return;
+//     }
 
-  //   const isValid = validateFields();
-  //   if (!isValid) return;
+//     if (credentialsId && !emailVerified) {
+//       const verify_otp_resp = await post_verify_staff_email_otp({
+//         email: formData?.email, 
+//         email_otp: formData?.email_otp
+//       })
+//       if(verify_otp_resp?.success){
+//         setSnackbar({
+//         open: true,
+//         message: verify_otp_resp?.message,
+//         severity: "success",
+//       });
+//       setEmailVerified(true);
+//       setCredentialsId(verify_otp_resp?.credentials_id);
+//       }else{
+//         setSnackbar({
+//           open: true,
+//           message: "Invalid email OTP",
+//           severity: "error",
+//         });
+//         return;
+//       }
+//     }
 
-  //   try {
-  //     setLoading(true);
-  //     const department_id = departments?.filter(d => d.department_name === formData?.department)?.[0].department_id;
-  //     const permission_id = permissions?.filter(p => p.permission_name === formData?.rights)?.[0].permission_id;
+//     // -------------------------------
+//     // STEP 4 → FINAL API CALL (ONLY NOW)
+//     // -------------------------------
 
-  //     // SHOW PHONE OTP ONLY IF PHONE IS VALID
-  //     if (formData.phone && phonePattern.test(formData.phone)) {
-  //       setShowPhoneOtp(true);
-  //     }
+//     const payload = {
+//       credentials_id: credentialsId,
+//       department: department_id,
+//       role_name: formData.role_name,
+//       rights: permission_id,
+//       username: formData.username,
+//       password: formData.password,
+//       name: formData.name,
+//       phone: formData.phone,
+//       email: formData.email,
+//       age: formData.age,
+//       start_date: formData.start_date,
+//     };
 
-  //     // SHOW EMAIL OTP ONLY IF EMAIL IS VALID
-  //     if (formData.email && gmailPattern.test(formData.email)) {
-  //       setShowEmailOtp(true);
+//     try{
+//       setLoading(true);
 
-  //       // If OTP not sent yet -> send it now
-  //       if (!reduxEmailOTP) {
-  //         const resp = await send_otp_to_email({ username: formData.email });
+//       const response = await post_role_employees(payload);
+//       console.log(response);
+      
+//       if (response) {
+//         setSnackbar({
+//           open: true,
+//           message: "Employee created successfully!",
+//           severity: "success",
+//         });
+//         setTimeout(()=>{
+//           onClose();
+//         }, 1000);
+//       }
+//     }catch(e){
+//       console.log(e);
+//     }
+//     finally{
+//       setLoading(false);
+//     }
 
-  //         if (resp?.otp) {
-  //           dispatch(setEmailOtp(resp.otp));
-  //           setSnackbar({
-  //             open: true,
-  //             message: "OTP sent to email",
-  //             severity: "success",
-  //           });
-  //         }
-  //         return; // stop here until user enters OTP
-  //       }
-  //     }
+//   } catch (err) {
+//     console.log(err);
+//     setSnackbar({
+//       open: true,
+//       message: "Something went wrong",
+//       severity: "error",
+//     });
+//   } finally {
+//     setLoading(false);
+//   }
+// };
 
-  //     if (showPhoneOtp && formData.phone_otp !== "123456") {
-  //     setSnackbar({
-  //       open: true,
-  //       message: "Invalid phone OTP",
-  //       severity: "error",
-  //     });
-  //     return;
-  //   }
 
-  //   if (showEmailOtp && formData.email_otp !== reduxEmailOTP) {
-  //     setSnackbar({
-  //       open: true,
-  //       message: "Invalid email OTP",
-  //       severity: "error",
-  //     });
-  //     return;
-  //   }
-
-  //     const data = {
-  //       department: department_id,
-  //       role_name: formData?.role_name,
-  //       rights: permission_id,
-  //       username: formData?.username,
-  //       password: formData?.password,
-  //       name: formData?.name,
-  //       phone: formData?.phone,
-  //       email: formData?.email,
-  //       age: formData?.age,
-  //       start_date: formData?.start_date,
-  //     }
-  //     const response = await post_role_employees(data);
-  //     if(response){
-  //       console.log(response);
-  //       setSnackbar({
-  //         open: true,
-  //         message: "Employee created successfully!",
-  //         severity: "success",
-  //       });
-  //     }
-
-  //     // call your final insert API here
-  //     onClose();
-  //   } catch (err) {
-  //     console.log(err);
-  //     setSnackbar({
-  //       open: true,
-  //       message: "Something went wrong",
-  //       severity: "error",
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  // FIELDS
   
-
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
-
-  const isValid = validateFields();
-  if (!isValid) return;
+  if (!validateFields()) return;
 
   try {
     setLoading(true);
 
-    const department_id = departments?.find(d => d.department_name === formData.department)?.id;
-    const permission_id = permissions?.find(p => p.permission_name === formData.rights)?.id;
-    console.log(department_id, permission_id);
-    
+    const department_id = departments?.find(
+      d => d.department_name === formData.department
+    )?.id;
 
-    let otpStepTriggered = false;
+    const permission_id = permissions?.find(
+      p => p.permission_name === formData.rights
+    )?.id;
 
-    // -------------------------------
-    // STEP 1 → SHOW PHONE OTP (if valid)
-    // -------------------------------
-    if (formData.phone && phonePattern.test(formData.phone)) {
-      if (!showPhoneOtp) {
-        setShowPhoneOtp(true);
-        otpStepTriggered = true;
-      }
-    }
-
-    // SHOW EMAIL OTP ONLY IF EMAIL IS VALID
-      if (formData.email && gmailPattern.test(formData.email)) {
-        setShowEmailOtp(true);
-        otpStepTriggered = true;
-
-
-        // If OTP not sent yet -> send it now
-        if (!credentialsId) {
-          try{
-            setLoading(true);
-
-            const check_email = await check_email_exists(formData?.email);
-            console.log(check_email);
-            
-            if(check_email?.exists){
-              setSnackbar({
-                open: true,
-                message: "Email already exists. Try with different one.",
-                severity: "error",
-              });
-              return
-            }
-            setSnackbar({
-                open: true,
-                message: "Sending OTP to email",
-                severity: "success",
-              });
-            const resp = await send_otp_to_email({ username: formData.email });
-            if (resp?.otp) {
-              const store_otp_resp = await post_staff_email_otp({
-                email: formData?.email,
-                email_otp: resp?.otp
-              })
-
-              if(store_otp_resp?.success){
-                setSnackbar({
-                  open: true,
-                  message: "OTP sent to email",
-                  severity: "success",
-                });
-                setCredentialsId(store_otp_resp?.credentials_id);
-              }
-            }
-            otpStepTriggered = true;
-  
-            return; // stop here until user enters OTP
-          }catch(e){
-            console.log(e);
-            setSnackbar({
-                open: true,
-                message: e?.response?.data?.message,
-                severity: "success",
-              });
-          }finally{
-            setLoading(false);
-          }
-        }
-      }
-
-    // -------------------------------
-    // STEP 3 → VALIDATE BOTH OTPs TOGETHER
-    // -------------------------------
-    if (showPhoneOtp && formData.phone_otp !== "123456") {
-      setSnackbar({
-        open: true,
-        message: "Invalid phone OTP",
-        severity: "error",
-      });
+    /* -------------------------
+       PHONE OTP UI
+    ------------------------- */
+    if (formData.phone && phonePattern.test(formData.phone) && !showPhoneOtp) {
+      setShowPhoneOtp(true);
+      setLoading(false);
       return;
     }
 
-    if (credentialsId && !emailVerified) {
-      const verify_otp_resp = await post_verify_staff_email_otp({
-        email: formData?.email, 
-        email_otp: formData?.email_otp
-      })
-      if(verify_otp_resp?.success){
-        setSnackbar({
-        open: true,
-        message: verify_otp_resp?.message,
-        severity: "success",
-      });
-      setEmailVerified(true);
-      setCredentialsId(verify_otp_resp?.credentials_id);
-      }else{
-        setSnackbar({
-          open: true,
-          message: "Invalid email OTP",
-          severity: "error",
-        });
+    let verifiedNow = emailVerified;
+    let finalCredentialsId = credentialsId;
+
+    /* -------------------------
+       EMAIL OTP FLOW
+    ------------------------- */
+    if (!verifiedNow) {
+
+      // SEND OTP (only once)
+      if (!finalCredentialsId) {
+        const check = await check_email_exists(formData.email);
+        if (check?.email_is_registered) {
+          setSnackbar({
+            open: true,
+            message: "Email already registered",
+            severity: "error",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const otpResp = await post_staff_email_otp({ email: formData.email });
+
+        if (otpResp?.success) {
+          setShowEmailOtp(true);
+          setCredentialsId(otpResp.credentials_id);
+          setSnackbar({
+            open: true,
+            message: otpResp.message,
+            severity: "success",
+          });
+        }
+
+        setLoading(false);
         return;
       }
+
+      // VERIFY OTP
+      if (!formData.email_otp) {
+        setLoading(false);
+        return;
+      }
+
+      const verifyResp = await post_verify_staff_email_otp({
+        email: formData.email,
+        email_otp: formData.email_otp,
+      });
+
+      if (!verifyResp?.success) {
+        setSnackbar({
+          open: true,
+          message: verifyResp.message,
+          severity: "error",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Mark verified locally + in state
+      verifiedNow = true;
+      finalCredentialsId = verifyResp.credentials_id;
+
+      setEmailVerified(true);
+      setCredentialsId(verifyResp.credentials_id);
+
+      setSnackbar({
+        open: true,
+        message: "Email verified successfully",
+        severity: "success",
+      });
     }
 
-    // -------------------------------
-    // STEP 4 → FINAL API CALL (ONLY NOW)
-    // -------------------------------
+    /* -------------------------
+       CREATE EMPLOYEE (same click)
+    ------------------------- */
+    if (!verifiedNow || !finalCredentialsId) {
+      setLoading(false);
+      return;
+    }
 
     const payload = {
-      credentials_id: credentialsId,
+      credentials_id: finalCredentialsId,
       department: department_id,
       role_name: formData.role_name,
       rights: permission_id,
@@ -385,34 +432,22 @@ const CreateRoleForm = ({ onClose }) => {
       start_date: formData.start_date,
     };
 
-    try{
-      setLoading(true);
+    const response = await post_role_employees(payload);
 
-      const response = await post_role_employees(payload);
-      console.log(response);
-      
-      if (response) {
-        setSnackbar({
-          open: true,
-          message: "Employee created successfully!",
-          severity: "success",
-        });
-        setTimeout(()=>{
-          onClose();
-        }, 1000);
-      }
-    }catch(e){
-      console.log(e);
-    }
-    finally{
-      setLoading(false);
+    if (response?.success) {
+      setSnackbar({
+        open: true,
+        message: "Employee created successfully!",
+        severity: "success",
+      });
+      setTimeout(() => onClose(), 1000);
     }
 
   } catch (err) {
-    console.log(err);
+    console.error(err);
     setSnackbar({
       open: true,
-      message: "Something went wrong",
+      message: err.response.data.message,
       severity: "error",
     });
   } finally {
@@ -422,15 +457,7 @@ const CreateRoleForm = ({ onClose }) => {
 
 
 
-
-  // // SHOW OTP ONLY WHEN EMAIL IS VALID AND OTP WAS SENT
-  // const showEmailOtp = reduxEmailOTP && formData.email && !errors.email;
-
-  // // PHONE OTP only if phone valid
-  // const showPhoneOtp = formData.phone && !errors.phone;
-
-
-  // FIELDS
+  
   const formFields = [
     { id: 1, label: 'Select Department', name: 'department', type: 'select', options: departments.map(d => d.department_name) },
     { id: 2, label: 'Enter name of role', name: 'role_name', type: 'text' },

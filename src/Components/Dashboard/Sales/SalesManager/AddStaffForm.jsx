@@ -270,137 +270,108 @@ const AddStaffForm = ({ onClose }) => {
   console.log(manager);
   
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
-  const isValid = validateFields();
-  if (!isValid) return;
+  if (!validateFields()) return;
 
   try {
     setLoading(true);
 
-    const staff_type_id = staffTypes?.find(s => s.staff_type_name === formData.staff_type)?.id;
-    console.log(staff_type_id);
-    
+    const staff_type_id = staffTypes?.find(
+      s => s.staff_type_name === formData.staff_type
+    )?.id;
 
-    let otpStepTriggered = false;
-
-    // -------------------------------
-    // STEP 1 → SHOW PHONE OTP (if valid)
-    // -------------------------------
-    if (formData.phone && phonePattern.test(formData.phone)) {
-      if (!showPhoneOtp) {
-        setShowPhoneOtp(true);
-        otpStepTriggered = true;
-      }
-    }
-
-    // SHOW EMAIL OTP ONLY IF EMAIL IS VALID
-      if (formData.email && gmailPattern.test(formData.email)) {
-        setShowEmailOtp(true);
-        otpStepTriggered = true;
-
-
-        // If OTP not sent yet -> send it now
-        if (!credentialsId) {
-          try{
-            setLoading(true);
-            const check_email = await check_email_exists(formData?.email);
-            console.log(check_email);
-            
-            if(check_email?.exists){
-              setSnackbar({
-                open: true,
-                message: "Email already exists. Try with different one.",
-                severity: "error",
-              });
-              return
-            }
-            setSnackbar({
-                open: true,
-                message: "Sending OTP to email",
-                severity: "success",
-              });
-            const resp = await send_otp_to_email({ username: formData.email });
-            console.log(resp);
-            
-            if (resp?.otp) {
-              
-              const store_otp_resp = await post_staff_email_otp({
-                email: formData?.email,
-                email_otp: resp?.otp
-              })
-
-              if(store_otp_resp?.success){
-                setSnackbar({
-                  open: true,
-                  message: "OTP sent to email",
-                  severity: "success",
-                });
-                setCredentialsId(store_otp_resp?.credentials_id);
-              }
-            }
-            otpStepTriggered = true;
-  
-            return; // stop here until user enters OTP
-          }catch(e){
-            console.log(e);
-            setSnackbar({
-                open: true,
-                message: e?.response?.data?.message,
-                severity: "success",
-              });
-          }finally{
-            setLoading(false);
-          }
-        }
-      }
-
-    // -------------------------------
-    // STEP 3 → VALIDATE BOTH OTPs TOGETHER
-    // -------------------------------
-    if (showPhoneOtp && formData.phone_otp !== "123456") {
-      setSnackbar({
-        open: true,
-        message: "Invalid phone OTP",
-        severity: "error",
-      });
+    /* ---------------- PHONE OTP ---------------- */
+    if (formData.phone && phonePattern.test(formData.phone) && !showPhoneOtp) {
+      setShowPhoneOtp(true);
+      setLoading(false);
       return;
     }
 
-    if (credentialsId && !emailVerified) {
+    let verifiedNow = emailVerified;
+    let finalCredentialsId = credentialsId;
 
-      const verify_otp_resp = await post_verify_staff_email_otp({
-        email: formData?.email, 
-        email_otp: formData?.email_otp
-      })
-      if(verify_otp_resp?.success){
-        setSnackbar({
-        open: true,
-        message: verify_otp_resp?.message,
-        severity: "success",
-      });
-      setEmailVerified(true);
-      setCredentialsId(verify_otp_resp?.credentials_id);
+    /* ---------------- EMAIL FLOW ---------------- */
+    if (!verifiedNow && gmailPattern.test(formData.email)) {
 
-      }else{
-        setSnackbar({
-          open: true,
-          message: "Invalid email OTP",
-          severity: "error",
+      // UX check only
+      if (!finalCredentialsId) {
+        const check = await check_email_exists(formData.email);
+
+        if (check?.email_is_registered) {
+          setSnackbar({
+            open: true,
+            message: "Email already registered",
+            severity: "error",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Request OTP (backend handles everything)
+        const otpResp = await post_staff_email_otp({
+          email: formData.email
         });
+
+        if (otpResp?.success) {
+          setShowEmailOtp(true);
+          setCredentialsId(otpResp.credentials_id);
+          setSnackbar({
+            open: true,
+            message: otpResp.message,
+            severity: "success",
+          });
+        }
+
+        setLoading(false);
         return;
       }
+
+      // Verify OTP
+      if (!formData.email_otp) {
+        setLoading(false);
+        return;
+      }
+
+      const verifyResp = await post_verify_staff_email_otp({
+        email: formData.email,
+        email_otp: formData.email_otp,
+      });
+
+      if (!verifyResp?.success) {
+        setSnackbar({
+          open: true,
+          message: verifyResp.message || "Invalid or expired OTP",
+          severity: "error",
+        });
+        setLoading(false);
+        return;
+      }
+
+      verifiedNow = true;
+      finalCredentialsId = verifyResp.credentials_id;
+
+      setEmailVerified(true);
+      setCredentialsId(finalCredentialsId);
+
+      setSnackbar({
+        open: true,
+        message: verifyResp.message,
+        severity: "success",
+      });
     }
 
-    // -------------------------------
-    // STEP 4 → FINAL API CALL (ONLY NOW)
-    // -------------------------------
+    /* ---------------- FINAL CREATE ---------------- */
+    if (!verifiedNow || !finalCredentialsId) {
+      setLoading(false);
+      return;
+    }
 
     const payload = {
-      credentials_id: credentialsId,
+      credentials_id: finalCredentialsId,
       manager_id: manager?.id,
-      staff_type_id: staff_type_id,
+      staff_type_id,
       username: formData.username,
       password: formData.password,
       name: formData.name,
@@ -412,31 +383,19 @@ const AddStaffForm = ({ onClose }) => {
       assign_area_name: formData.assign_area_name,
     };
 
-    try{
-      setLoading(true);
+    const response = await post_create_staff(payload);
 
-      const response = await post_create_staff(payload);
-      console.log(response);
-      
-      if (response) {
-        setSnackbar({
-          open: true,
-          message: "Staff created successfully!",
-          severity: "success",
-        });
-        setTimeout(()=>{
-          onClose();
-        }, 1000);
-      }
-    }catch(e){
-      console.log(e);
-    }
-    finally{
-      setLoading(false);
+    if (response?.success) {
+      setSnackbar({
+        open: true,
+        message: "Staff created successfully!",
+        severity: "success",
+      });
+      setTimeout(() => onClose(), 1000);
     }
 
   } catch (err) {
-    console.log(err);
+    console.error(err);
     setSnackbar({
       open: true,
       message: "Something went wrong",
@@ -446,6 +405,7 @@ const AddStaffForm = ({ onClose }) => {
     setLoading(false);
   }
 };
+
 
 console.log(staffTypes);
 
