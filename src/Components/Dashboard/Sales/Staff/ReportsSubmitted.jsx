@@ -1,11 +1,11 @@
 import { Box, Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import BoxHeader from "../../DashboardContent/BoxHeader";
-import StaffDashboardTable from "./StaffDashboardTable";
 import { useSelector } from "react-redux";
 import { get_userByToken } from "../../../../API/expressAPI";
+import StaffReportSubmitted from "./StaffReportSubmitted";
 
-function SalesStaffDashboard() {
+function ReportsSubmitted() {
     const token = useSelector((state) => state.auth.token);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -36,10 +36,12 @@ function SalesStaffDashboard() {
         <Box className="body">
             <Box className="content">
                 <BoxHeader title={user ? `${user?.role_name} - ${user?.name}`: ''} searchField={false} />
-                <StaffDashboardTable />
+                <Box className="body">
+                    <StaffReportSubmitted />
+                </Box>
             </Box>
         </Box>
     );
 }
 
-export default SalesStaffDashboard;
+export default ReportsSubmitted;

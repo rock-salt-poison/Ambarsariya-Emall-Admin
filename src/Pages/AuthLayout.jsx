@@ -4,10 +4,11 @@ import { useSelector } from "react-redux";
 import SideBar from "../Components/SideBar";
 import DashboardHeader from "../Components/Dashboard/DashboardHeader";
 import { Box, CircularProgress } from "@mui/material";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+// import HomeOutlined from "@mui/icons-material/HomeOutlined";
+// import PersonOutline from '@mui/icons-material/PersonOutline';
 import MailIcon from "@mui/icons-material/Mail";
 import { get_userByToken } from "../API/expressAPI";
+import { AssignmentOutlined, AssessmentOutlined, PersonOutline, HomeOutlined } from '@mui/icons-material';
 
 const AuthLayout = () => {
   const token = useSelector((state) => state.auth.token);
@@ -43,80 +44,82 @@ const AuthLayout = () => {
   // Menu items mapping
   const menuMap = {
     Admin: [
-      { name: "Dashboard", icon: <HomeOutlinedIcon /> },
-      { name: "Admin", icon: <HomeOutlinedIcon /> },
+      { name: "Dashboard", icon: <HomeOutlined /> },
+      { name: "Admin", icon: <HomeOutlined /> },
       {
-        name: "Sales", icon: <HomeOutlinedIcon />,
+        name: "Sales", icon: <HomeOutlined />,
         children: [
-          { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
-          { name: "Assign Task", icon: <MailIcon /> },
-          { name: "Staff Report", icon: <MailIcon /> },
+          { name: "Sales Dashboard", icon: <HomeOutlined /> },
+          { name: "Assign Task", icon: <AssignmentOutlined /> },
+          { name: "Staff Report", icon: <AssessmentOutlined /> },
         ],
       },
       {
         name: "Sales Staff",
-        icon: <HomeOutlinedIcon />,
+        icon: <HomeOutlined />,
         children: [
-          { name: "My Tasks", icon: <PersonOutlineIcon /> },
+          { name: "My Tasks", icon: <AssignmentOutlined /> },
+          { name: "Reports Submitted", icon: <AssessmentOutlined /> },
         ],
       },
-      { name: "IT Manager", icon: <HomeOutlinedIcon /> },
-      { name: "Marketing", icon: <HomeOutlinedIcon /> },
-      { name: "Designers", icon: <HomeOutlinedIcon /> },
+      { name: "IT Manager", icon: <HomeOutlined /> },
+      { name: "Marketing", icon: <HomeOutlined /> },
+      { name: "Designers", icon: <HomeOutlined /> },
       {
         name: "Accounts",
-        icon: <HomeOutlinedIcon />,
+        icon: <HomeOutlined />,
         children: [
-          { name: "Visitor", icon: <PersonOutlineIcon /> },
-          { name: "Member", icon: <PersonOutlineIcon /> },
-          { name: "Shop", icon: <PersonOutlineIcon /> },
-          { name: "Merchant", icon: <PersonOutlineIcon /> },
+          { name: "Visitor", icon: <PersonOutline /> },
+          { name: "Member", icon: <PersonOutline /> },
+          { name: "Shop", icon: <PersonOutline /> },
+          { name: "Merchant", icon: <PersonOutline /> },
         ],
       },
       {
         name: "Services",
-        icon: <HomeOutlinedIcon />,
+        icon: <HomeOutlined />,
         children: [
-          { name: "MoU", icon: <PersonOutlineIcon /> },
-          { name: "Co-Helpers", icon: <PersonOutlineIcon /> },
-          { name: "Pre-Paid / Post-Paid", icon: <PersonOutlineIcon /> },
-          { name: "Discount Coupons", icon: <PersonOutlineIcon /> },
-          { name: "Delivery", icon: <PersonOutlineIcon /> },
-          { name: "Home Visit", icon: <PersonOutlineIcon /> },
-          { name: "Pickup", icon: <PersonOutlineIcon /> },
-          { name: "Take Away", icon: <PersonOutlineIcon /> },
+          { name: "MoU", icon: <PersonOutline /> },
+          { name: "Co-Helpers", icon: <PersonOutline /> },
+          { name: "Pre-Paid / Post-Paid", icon: <PersonOutline /> },
+          { name: "Discount Coupons", icon: <PersonOutline /> },
+          { name: "Delivery", icon: <PersonOutline /> },
+          { name: "Home Visit", icon: <PersonOutline /> },
+          { name: "Pickup", icon: <PersonOutline /> },
+          { name: "Take Away", icon: <PersonOutline /> },
         ],
       },
       {
         name: "Finance",
-        icon: <HomeOutlinedIcon />,
+        icon: <HomeOutlined />,
         children: [
-          { name: "B2B", icon: <PersonOutlineIcon /> },
-          { name: "B2C", icon: <PersonOutlineIcon /> },
-          { name: "C2C", icon: <PersonOutlineIcon /> },
-          { name: "MoU", icon: <PersonOutlineIcon /> },
-          { name: "Services", icon: <PersonOutlineIcon /> },
-          { name: "Shops", icon: <PersonOutlineIcon /> },
+          { name: "B2B", icon: <PersonOutline /> },
+          { name: "B2C", icon: <PersonOutline /> },
+          { name: "C2C", icon: <PersonOutline /> },
+          { name: "MoU", icon: <PersonOutline /> },
+          { name: "Services", icon: <PersonOutline /> },
+          { name: "Shops", icon: <PersonOutline /> },
         ],
       },
-      { name: "Log Activity", icon: <HomeOutlinedIcon /> },
+      { name: "Log Activity", icon: <HomeOutlined /> },
     ],
     Accounts: [
-      { name: "Visitor", icon: <PersonOutlineIcon /> },
-      { name: "Member", icon: <PersonOutlineIcon /> },
-      { name: "Shop", icon: <PersonOutlineIcon /> },
-      { name: "Merchant", icon: <PersonOutlineIcon /> },
+      { name: "Visitor", icon: <PersonOutline /> },
+      { name: "Member", icon: <PersonOutline /> },
+      { name: "Shop", icon: <PersonOutline /> },
+      { name: "Merchant", icon: <PersonOutline /> },
     ],
     "Sales Manager": [
-      { name: "Sales Dashboard", icon: <HomeOutlinedIcon /> },
-      { name: "Assign Task", icon: <MailIcon /> },
-      { name: "Staff Report", icon: <MailIcon /> },
+      { name: "Sales Dashboard", icon: <HomeOutlined /> },
+      { name: "Assign Task", icon: <AssignmentOutlined /> },
+      { name: "Staff Report", icon: <AssessmentOutlined /> },
     ],
     "Sales Staff": [
-      { name: "My Tasks", icon: <MailIcon /> },
+      { name: "My Tasks", icon: <AssignmentOutlined /> },
+      { name: "Reports Submitted", icon: <AssessmentOutlined /> },
     ],
     "IT Manager": [
-      { name: "Dashboard", icon: <HomeOutlinedIcon /> },
+      { name: "Dashboard", icon: <HomeOutlined /> },
       { name: "To-Do", icon: <MailIcon /> },
     ],
   };
@@ -189,6 +192,9 @@ const AuthLayout = () => {
         break;
       case "My Tasks":
         navigate("../sales-staff/my-tasks");
+        break;
+      case "Reports Submitted":
+        navigate("../sales-staff/reports-submitted");
         break;
       default:
         break;

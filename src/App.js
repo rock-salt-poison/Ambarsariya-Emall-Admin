@@ -15,6 +15,7 @@ import AssignTask from "./Components/Dashboard/Sales/SalesManager/AssignTask";
 import SalesStaffDashboard from "./Components/Dashboard/Sales/Staff/StaffDashboard";
 import StaffReport from "./Components/Dashboard/Sales/Staff/StaffReport";
 import StaffDailyTaskReport from "./Components/Dashboard/Sales/Staff/StaffDailyTaskReport";
+import ReportsSubmitted from "./Components/Dashboard/Sales/Staff/ReportsSubmitted";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/sales-staff/my-tasks/:token" element={<StaffDailyTaskReport />} />
         <Route path="/sales/assign-task" element={<AssignTask />} />
         <Route path="/sales/staff-report" element={<StaffReport />} />
+        <Route path="/sales-staff/reports-submitted" element={<ReportsSubmitted />} />
         <Route path="/todo/:page" element={<TodoSubpage />} />
         <Route path="/todo/notices/:title/:id" element={<NoticeDetail />} />
         <Route path="/accounts/:user_type" element={<Account />} />
