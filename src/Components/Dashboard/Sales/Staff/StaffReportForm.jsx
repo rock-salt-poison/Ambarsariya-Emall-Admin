@@ -48,7 +48,9 @@ const StaffReportForm = () => {
     domain: "",
     sector: "",
     location: "",
-    lead_select: "",
+    client_action: "",
+    confirm_action: "",
+    capture_action: "",
     shop_no: "",
   },
 });
@@ -193,11 +195,15 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
     currentStage[field] = value;
     stages[stageIndex] = currentStage;
 
+    const clientActionValue = currentStage.data.client_action;
+    const captureActionValue = currentStage.data.capture_action;
+    const confirmActionValue = currentStage.data.confirm_action;
+
+
     /* CLIENT → CAPTURE */
     if (
       currentStage.type === "Client Summary" &&
-      prevStatus !== "Confirm" &&
-      value === "Confirm"
+      value === "Confirm" && clientActionValue === "Completed"
     ) {
       const hasCapture = stages.some(
         (s) => s.type === "Capture Summary"
@@ -227,8 +233,7 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
     /* CAPTURE → CONFIRM */
     if (
       currentStage.type === "Capture Summary" &&
-      prevStatus !== "Confirm" &&
-      value === "Confirm"
+      value === "Confirm" && captureActionValue === "Captured"
     ) {
       const hasConfirm = stages.some(
         (s) => s.type === "Confirm Summary"
@@ -256,7 +261,7 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
     }
 
     /* ROLLBACK */
-    if (prevStatus === "Confirm" && value === "Pending / Revisit") {
+    if (prevStatus === "Confirm" && value === "Pending") {
       if (currentStage.type === "Client Summary") {
         stages.splice(stageIndex + 1);
       }
@@ -277,35 +282,206 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
 
 
 
- const handleStageDataChange = async (
+//  const handleStageDataChange = async (
+//   groupIndex,
+//   stageIndex,
+//   field,
+//   value
+// ) => {
+//   setClientSummaries((prev) =>
+//     prev.map((group, gIdx) =>
+//       gIdx !== groupIndex
+//         ? group
+//         : {
+//             ...group,
+//             stages: group.stages.map((stage, sIdx) =>
+//               sIdx !== stageIndex
+//                 ? stage
+//                 : {
+//                     ...stage,
+//                     data: {
+//                       ...stage.data,
+//                       [field]: value,
+//                       ...(field === "domain" ? { sector: "" } : {}),
+//                     },
+//                   }
+//             ),
+//           }
+//     )
+//   );
+
+//   // ✅ FETCH SECTORS ONLY WHEN DOMAIN CHANGES
+//   if (field === "domain" && value) {
+//     try {
+//       const selectedDomain = domains.find(
+//         (d) => d.domain_name === value
+//       );
+
+//       if (!selectedDomain) return;
+
+//       const resp = await fetchDomainSectors(
+//         selectedDomain.domain_id
+//       );
+
+//       setSectorMap((prev) => ({
+//         ...prev,
+//         [`${groupIndex}_${stageIndex}`]: resp || [],
+//       }));
+//     } catch (err) {
+//       console.error(err);
+//       setSectorMap((prev) => ({
+//         ...prev,
+//         [`${groupIndex}_${stageIndex}`]: [],
+//       }));
+//     }
+//   }
+// };
+
+const handleStageDataChange = async (
   groupIndex,
   stageIndex,
   field,
   value
 ) => {
-  setClientSummaries((prev) =>
-    prev.map((group, gIdx) =>
-      gIdx !== groupIndex
-        ? group
-        : {
-            ...group,
-            stages: group.stages.map((stage, sIdx) =>
-              sIdx !== stageIndex
-                ? stage
-                : {
-                    ...stage,
-                    data: {
-                      ...stage.data,
-                      [field]: value,
-                      ...(field === "domain" ? { sector: "" } : {}),
-                    },
-                  }
-            ),
-          }
-    )
+  setClientSummaries((prev) => {
+    const updated = [...prev];
+    const group = { ...updated[groupIndex] };
+    const stages = [...group.stages];
+    const currentStage = { ...stages[stageIndex] };
+
+    currentStage.data = {
+      ...currentStage.data,
+      [field]: value,
+      ...(field === "domain" ? { sector: "" } : {}),
+    };
+
+    stages[stageIndex] = currentStage;
+
+    /* ✅ ADD ONLY THIS BLOCK */
+    if (
+  field === "client_action" &&
+  currentStage.type === "Client Summary" &&
+  currentStage.status === "Confirm"
+) {
+  const captureIndex = stages.findIndex(
+    (s) => s.type === "Capture Summary"
   );
 
-  // ✅ FETCH SECTORS ONLY WHEN DOMAIN CHANGES
+  // ✅ ADD Capture when Completed
+  if (value === "Completed") {
+    if (captureIndex === -1) {
+      const newIndex = stages.length;
+
+      const newStage = {
+        ...createEmptyStage("Capture Summary"),
+        data: {
+          ...createEmptyStage("Capture Summary").data,
+          ...copyCommonData(currentStage.data),
+        },
+      };
+
+      stages.push(newStage);
+
+      loadSectorsForStage(
+        currentStage.data.domain,
+        groupIndex,
+        newIndex
+      );
+    }
+  }
+  // ❌ REMOVE Capture when NOT Completed
+  else {
+    if (captureIndex !== -1) {
+      stages.splice(captureIndex);
+    }
+  }
+}
+
+if (
+  field === "capture_action" &&
+  currentStage.type === "Capture Summary" &&
+  currentStage.status === "Confirm"
+) {
+  const confirmIndex = stages.findIndex(
+    (s) => s.type === "Confirm Summary"
+  );
+
+  // ✅ ADD Capture when Completed
+  if (value === "Captured") {
+    if (confirmIndex === -1) {
+      const newIndex = stages.length;
+
+      const newStage = {
+        ...createEmptyStage("Confirm Summary"),
+        data: {
+          ...createEmptyStage("Confirm Summary").data,
+          ...copyCommonData(currentStage.data),
+        },
+      };
+
+      stages.push(newStage);
+
+      loadSectorsForStage(
+        currentStage.data.domain,
+        groupIndex,
+        newIndex
+      );
+    }
+  }
+  // ❌ REMOVE Capture when NOT Completed
+  else {
+    if (confirmIndex !== -1) {
+      stages.splice(confirmIndex);
+    }
+  }
+}
+
+// if (
+//   field === "confirm_action" &&
+//   currentStage.type === "Confirm Summary" &&
+//   currentStage.status === "Joined"
+// ) {
+//   const confirmIndex = stages.findIndex(
+//     (s) => s.type === "Confirm Summary"
+//   );
+
+//   // ✅ ADD Capture when Completed
+//   if (value === "Captured") {
+//     if (confirmIndex === -1) {
+//       const newIndex = stages.length;
+
+//       const newStage = {
+//         ...createEmptyStage("Confirm Summary"),
+//         data: {
+//           ...createEmptyStage("Confirm Summary").data,
+//           ...copyCommonData(currentStage.data),
+//         },
+//       };
+
+//       stages.push(newStage);
+
+//       loadSectorsForStage(
+//         currentStage.data.domain,
+//         groupIndex,
+//         newIndex
+//       );
+//     }
+//   }
+//   // ❌ REMOVE Capture when NOT Completed
+//   else {
+//     if (confirmIndex !== -1) {
+//       stages.splice(confirmIndex);
+//     }
+//   }
+// }
+
+    /* ✅ END ADD */
+
+    updated[groupIndex] = { ...group, stages };
+    return updated;
+  });
+
+  // 🔁 keep your existing domain → sector fetch exactly as-is
   if (field === "domain" && value) {
     try {
       const selectedDomain = domains.find(
@@ -331,7 +507,6 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
     }
   }
 };
-
 
   
   useEffect(() => {
@@ -460,64 +635,76 @@ useEffect(() => {
   let totalClient = 0;
   let totalCapture = 0;
   let totalConfirmation = 0;
+  let totaljoinee = 0;
 
   let visits = 0;
-  let joined = 0;
   let inPipeline = 0;
+  let joined = 0;
 
   clientSummaries.forEach((group) => {
-    const client = group.stages.find(s => s.type === "Client Summary");
-    const capture = group.stages.find(s => s.type === "Capture Summary");
-    const confirm = group.stages.find(s => s.type === "Confirm Summary");
+    const client = group.stages.find(
+      (s) => s.type === "Client Summary"
+    );
+    const capture = group.stages.find(
+      (s) => s.type === "Capture Summary"
+    );
+    const confirm = group.stages.find(
+      (s) => s.type === "Confirm Summary"
+    );
 
-    // CLIENT SUMMARY
-    if (client) {
-      if (client.status === "Pending / Revisit") {
-        totalClient += 1;
-        visits += 1;
-        return;
-      }
-
-      if (client.status === "Confirm") {
-        totalCapture += 1;
-        inPipeline += 1;
-        return;
-      }
-    }
-
-    // CAPTURE SUMMARY
-    if (capture) {
-      if (capture.status === "Pending / Revisit") {
-        totalCapture += 1;
-        inPipeline += 1;
-        return;
-      }
-
-      if (capture.status === "Confirm") {
-        totalConfirmation += 1;
-        joined += 1;
-        return;
-      }
-    }
-
-    // CONFIRM SUMMARY
-    if (confirm && confirm.status === "Confirm") {
+    /* 🥇 PRIORITY 1: CONFIRMATION */
+    if (
+      confirm?.status === "Confirm" ||
+      (confirm?.status !== "Joined" )
+    ) {
       totalConfirmation += 1;
       joined += 1;
+      return;
+    }
+
+    if (
+      confirm?.status === "Confirm" ||
+      (confirm?.status === "Joined" &&
+        capture.data.capture_action === "Captured")
+    ) {
+      totalConfirmation += 1;
+      inPipeline += 1;
+      return;
+    }
+
+    /* 🥈 PRIORITY 2: CAPTURE */
+    if (
+      capture &&
+      (
+        capture.status === "Pending" ||
+        capture.status === "Re-Action" ||
+        (capture.status === "Confirm" &&
+          capture.data.capture_action !== "Captured")
+      )
+    ) {
+      totalCapture += 1;
+      inPipeline += 1;
+      return;
+    }
+
+    /* 🥉 PRIORITY 3: CLIENT */
+    if (client) {
+      totalClient += 1;
+      visits += 1;
     }
   });
 
-  setFormData(prev => ({
+  setFormData((prev) => ({
     ...prev,
     total_client: totalClient,
     total_capture: totalCapture,
     total_confirmation: totalConfirmation,
     visits,
-    joined,
     in_pipeline: inPipeline,
+    joined,
   }));
-
 }, [clientSummaries]);
+
 
 
 
@@ -625,7 +812,7 @@ const handleSubmit = async (e) => {
           name: `${prefix}_status`,
           label: "Status",
           type: "select",
-          options: ["Pending / Revisit", "Confirm"],
+          options: stage.type === "Client Summary" ? ["Pending", "Contact", "Confirm"] : stage.type === "Capture Summary" ? ["Pending", "Re-Action", "Confirm"] : stage.type === "Confirm Summary" ? ["Joined", "Hold", "Revisit"] : [],
           value: stage.status,
           cName: "w-30",
           onChange: (e) =>
@@ -719,6 +906,7 @@ const handleSubmit = async (e) => {
           name: `${prefix}_sector`,
           label: "Shop Sector",
           type: "select",
+          cName:'w-30',
           options:
     sectorMap[`${groupIndex}_${stageIndex}`]?.map(
       (s) => s.sector_name
@@ -739,7 +927,7 @@ const handleSubmit = async (e) => {
           name: `${prefix}_location`,
           label: "Location",
           type: "address",
-          cName: stage.type === "Client Summary" ? "w-45": 'w-30',
+          cName: 'w-30',
           value: stage.data.location,
           onChange: (e) =>
             handleStageDataChange(
@@ -749,27 +937,54 @@ const handleSubmit = async (e) => {
               e.target.value
             ),
         },
-
-        ...(stage.type === "Capture Summary"
+        ...(stage.type === "Client Summary" && stage.status === "Confirm"
           ? [
               {
-                id: `${prefix}_lead_select`,
-                name: `${prefix}_lead_select`,
+                id: `${prefix}_client_action`,
+                name: `${prefix}_client_action`,
                 label: "Select",
                 type: "select",
                 options: [
-                  "Appointment",
-                  "Walkin",
-                  "Form 1",
-                  "Pending / Revisit",
+                  "Completed",
+                  "Incomplete",
+                  "Recollect",
+                  "Discard",
                 ],
                 cName: "w-30",
-                value: stage.data.lead_select,
+                value: stage.data.client_action,
                 onChange: (e) =>
                   handleStageDataChange(
                     groupIndex,
                     stageIndex,
-                    "lead_select",
+                    "client_action",
+                    e.target.value
+                  ),
+              },
+            ]
+          : []),
+
+        ...(stage.type === "Capture Summary" &&  stage.status === "Confirm"
+          ? [
+              {
+                id: `${prefix}_capture_action`,
+                name: `${prefix}_capture_action`,
+                label: "Select",
+                type: "select",
+                options: [
+                  "Form 1",
+                  "Send URL",
+                  "Visit",
+                  "Feedback",
+                  "Re-Visit",
+                  "Captured"
+                ],
+                cName: "w-30",
+                value: stage.data.capture_action,
+                onChange: (e) =>
+                  handleStageDataChange(
+                    groupIndex,
+                    stageIndex,
+                    "capture_action",
                     e.target.value
                   ),
               },
@@ -790,6 +1005,38 @@ const handleSubmit = async (e) => {
                     groupIndex,
                     stageIndex,
                     "shop_no",
+                    e.target.value
+                  ),
+              },
+              {
+                id: `${prefix}_confirm_action`,
+                name: `${prefix}_confirm_action`,
+                label: "Select",
+                type: "select",
+                options: stage.status === 'Joined' ? [
+                  "Self Creation",
+                  "Staff Visit",
+                  "Support"
+                ] : stage.status === 'Hold' ? [
+                  "Self Creation",
+                  "Staff Visit",
+                  "Hold",
+                  "Pending",
+                  "Support"
+                ] : stage.status === 'Revisit' ? [
+                  "Self Creation",
+                  "Staff Visit",
+                  "Hold",
+                  "Pending",
+                  "Support"
+                ] : [],
+                cName: "w-30",
+                value: stage.data.capture_action,
+                onChange: (e) =>
+                  handleStageDataChange(
+                    groupIndex,
+                    stageIndex,
+                    "capture_action",
                     e.target.value
                   ),
               },
