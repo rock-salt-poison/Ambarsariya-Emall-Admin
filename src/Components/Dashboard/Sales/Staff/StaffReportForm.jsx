@@ -654,8 +654,8 @@ useEffect(() => {
 
     /* 🥇 PRIORITY 1: CONFIRMATION */
     if (
-      confirm?.status === "Confirm" ||
-      (confirm?.status !== "Joined" )
+      confirm && (confirm?.status === "Confirm" ||
+      confirm?.status === "Joined" )
     ) {
       totalConfirmation += 1;
       joined += 1;
@@ -673,6 +673,20 @@ useEffect(() => {
     }
 
     /* 🥈 PRIORITY 2: CAPTURE */
+   if (
+      capture &&
+      (
+        capture.status === "Pending" ||
+        capture.status === "Re-Action" ||
+        (capture.status === "Confirm" &&
+          capture.data.capture_action === "Captured")
+      )
+    ) {
+      totalConfirmation += 1;
+      inPipeline += 1;
+      return;
+    }
+
     if (
       capture &&
       (
@@ -687,8 +701,21 @@ useEffect(() => {
       return;
     }
 
-    /* 🥉 PRIORITY 3: CLIENT */
-    if (client) {
+    /* 🥈 PRIORITY 3: CLIENT */
+
+     if (
+      client &&
+      (client.status === "Confirm" &&
+          client.data.client_action === "Completed")
+    ) {
+      totalCapture += 1;
+      inPipeline += 1;
+      return;
+    }
+    
+
+    /* 🥉 PRIORITY 4: CLIENT */
+    if (client && client?.status ) {
       totalClient += 1;
       visits += 1;
     }
