@@ -163,7 +163,7 @@ const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
   if (!domainName) return;
 
   const selectedDomain = domains.find(
-    (d) => d.domain_name === domainName
+    (d) => d.domain_id === domainName
   );
   if (!selectedDomain) return;
 
@@ -184,100 +184,100 @@ const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
 };
 
 
-const handleStageChange = (groupIndex, stageIndex, field, value) => {
-  setClientSummaries((prev) => {
-    const updated = [...prev];
-    const group = { ...updated[groupIndex] };
-    const stages = [...group.stages];
-    const currentStage = { ...stages[stageIndex] };
+// const handleStageChange = (groupIndex, stageIndex, field, value) => {
+//   setClientSummaries((prev) => {
+//     const updated = [...prev];
+//     const group = { ...updated[groupIndex] };
+//     const stages = [...group.stages];
+//     const currentStage = { ...stages[stageIndex] };
 
-    const prevStatus = currentStage.status;
-    currentStage[field] = value;
-    stages[stageIndex] = currentStage;
+//     const prevStatus = currentStage.status;
+//     currentStage[field] = value;
+//     stages[stageIndex] = currentStage;
 
-    const clientActionValue = currentStage.data.client_action;
-    const captureActionValue = currentStage.data.capture_action;
-    const confirmActionValue = currentStage.data.confirm_action;
+//     const clientActionValue = currentStage.data.client_action;
+//     const captureActionValue = currentStage.data.capture_action;
+//     const confirmActionValue = currentStage.data.confirm_action;
 
 
-    /* CLIENT → CAPTURE */
-    if (
-      currentStage.type === "Client Summary" &&
-      value === "Confirm" && clientActionValue === "Completed"
-    ) {
-      const hasCapture = stages.some(
-        (s) => s.type === "Capture Summary"
-      );
+//     /* CLIENT → CAPTURE */
+//     if (
+//       currentStage.type === "Client Summary" &&
+//       value === "Confirm" && clientActionValue === "Completed"
+//     ) {
+//       const hasCapture = stages.some(
+//         (s) => s.type === "Capture Summary"
+//       );
 
-      if (!hasCapture) {
-        const captureIndex = stages.length;
+//       if (!hasCapture) {
+//         const captureIndex = stages.length;
 
-        const newStage = {
-          ...createEmptyStage("Capture Summary"),
-          data: {
-            ...createEmptyStage("Capture Summary").data,
-            ...copyCommonData(currentStage.data),
-          },
-        };
+//         const newStage = {
+//           ...createEmptyStage("Capture Summary"),
+//           data: {
+//             ...createEmptyStage("Capture Summary").data,
+//             ...copyCommonData(currentStage.data),
+//           },
+//         };
 
-        stages.push(newStage);
+//         stages.push(newStage);
 
-        loadSectorsForStage(
-          currentStage.data.domain,
-          groupIndex,
-          captureIndex
-        );
-      }
-    }
+//         loadSectorsForStage(
+//           currentStage.data.domain,
+//           groupIndex,
+//           captureIndex
+//         );
+//       }
+//     }
 
-    /* CAPTURE → CONFIRM */
-    if (
-      currentStage.type === "Capture Summary" &&
-      value === "Confirm" && captureActionValue === "Captured"
-    ) {
-      const hasConfirm = stages.some(
-        (s) => s.type === "Confirm Summary"
-      );
+//     /* CAPTURE → CONFIRM */
+//     if (
+//       currentStage.type === "Capture Summary" &&
+//       value === "Confirm" && captureActionValue === "Captured"
+//     ) {
+//       const hasConfirm = stages.some(
+//         (s) => s.type === "Confirm Summary"
+//       );
 
-      if (!hasConfirm) {
-        const confirmIndex = stages.length;
+//       if (!hasConfirm) {
+//         const confirmIndex = stages.length;
 
-        const newStage = {
-          ...createEmptyStage("Confirm Summary"),
-          data: {
-            ...createEmptyStage("Confirm Summary").data,
-            ...copyCommonData(currentStage.data),
-          },
-        };
+//         const newStage = {
+//           ...createEmptyStage("Confirm Summary"),
+//           data: {
+//             ...createEmptyStage("Confirm Summary").data,
+//             ...copyCommonData(currentStage.data),
+//           },
+//         };
 
-        stages.push(newStage);
+//         stages.push(newStage);
 
-        loadSectorsForStage(
-          currentStage.data.domain,
-          groupIndex,
-          confirmIndex
-        );
-      }
-    }
+//         loadSectorsForStage(
+//           currentStage.data.domain,
+//           groupIndex,
+//           confirmIndex
+//         );
+//       }
+//     }
 
-    /* ROLLBACK */
-    if (prevStatus === "Confirm" && value === "Pending") {
-      if (currentStage.type === "Client Summary") {
-        stages.splice(stageIndex + 1);
-      }
+//     /* ROLLBACK */
+//     if (prevStatus === "Confirm" && value === "Pending") {
+//       if (currentStage.type === "Client Summary") {
+//         stages.splice(stageIndex + 1);
+//       }
 
-      if (currentStage.type === "Capture Summary") {
-        const confirmIndex = stages.findIndex(
-          (s) => s.type === "Confirm Summary"
-        );
-        if (confirmIndex > -1) stages.splice(confirmIndex);
-      }
-    }
+//       if (currentStage.type === "Capture Summary") {
+//         const confirmIndex = stages.findIndex(
+//           (s) => s.type === "Confirm Summary"
+//         );
+//         if (confirmIndex > -1) stages.splice(confirmIndex);
+//       }
+//     }
 
-    updated[groupIndex] = { ...group, stages };
-    return updated;
-  });
-};
+//     updated[groupIndex] = { ...group, stages };
+//     return updated;
+//   });
+// };
 
 
 
@@ -336,6 +336,58 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
 //     }
 //   }
 // };
+
+const handleStageChange = (groupIndex, stageIndex, field, value) => {
+  setClientSummaries((prev) => {
+    const updated = [...prev];
+    const stages = [...updated[groupIndex].stages];
+    const currentStage = { ...stages[stageIndex] };
+
+    // 1️⃣ Update status
+    currentStage[field] = value;
+    stages[stageIndex] = currentStage;
+
+    /**
+     * 2️⃣ ROLLBACK LOGIC
+     * If a parent stage is moved backward,
+     * remove all dependent stages after it
+     */
+
+    // CLIENT → rollback CAPTURE + CONFIRM
+    if (
+      currentStage.type === "Client Summary" &&
+      value !== "Confirm"
+    ) {
+      const captureIndex = stages.findIndex(
+        (s) => s.type === "Capture Summary"
+      );
+      if (captureIndex !== -1) {
+        stages.splice(captureIndex);
+      }
+    }
+
+    // CAPTURE → rollback CONFIRM
+    if (
+      currentStage.type === "Capture Summary" &&
+      value !== "Confirm"
+    ) {
+      const confirmIndex = stages.findIndex(
+        (s) => s.type === "Confirm Summary"
+      );
+      if (confirmIndex !== -1) {
+        stages.splice(confirmIndex);
+      }
+    }
+
+    updated[groupIndex] = {
+      ...updated[groupIndex],
+      stages,
+    };
+
+    return updated;
+  });
+};
+
 
 const handleStageDataChange = async (
   groupIndex,
@@ -485,7 +537,7 @@ if (
   if (field === "domain" && value) {
     try {
       const selectedDomain = domains.find(
-        (d) => d.domain_name === value
+        (d) => d.domain_id === value
       );
 
       if (!selectedDomain) return;
@@ -596,6 +648,26 @@ const validateFields = () => {
       // ✅ Status is REQUIRED for every stage
       if (!stage.status) {
         newErrors[`${baseKey}_status`] = "Status is required";
+        valid = false;
+      }
+
+      if (stage.status === "Confirm" &&
+  stage.type === "Client Summary" &&
+  !stage.data?.client_action) {
+        newErrors[`${baseKey}_client_action`] = "Action is required";
+        valid = false;
+      }
+
+      if (stage.status === "Confirm" &&
+  stage.type === "Capture Summary" &&
+  !stage.data?.capture_action) {
+        newErrors[`${baseKey}_capture_action`] = "Action is required";
+        valid = false;
+      }
+
+      if (stage.type === "Confirm Summary" &&
+  !stage.data?.confirm_action) {
+        newErrors[`${baseKey}_confirm_action`] = "Action is required";
         valid = false;
       }
 
@@ -752,23 +824,23 @@ const handleSubmit = async (e) => {
   }
 
   // 2️⃣ Add new stage/group if last stage is confirmed
-  setClientSummaries((prev) => {
-    const updated = [...prev];
-    const lastGroup = updated[updated.length - 1];
-    const lastStage = lastGroup.stages[lastGroup.stages.length - 1];
+  // setClientSummaries((prev) => {
+  //   const updated = [...prev];
+  //   const lastGroup = updated[updated.length - 1];
+  //   const lastStage = lastGroup.stages[lastGroup.stages.length - 1];
 
-    if (lastStage.status === "Confirm") {
-      if (lastStage.type === "Client Summary") {
-        lastGroup.stages.push(createEmptyStage("Capture Summary"));
-      } else if (lastStage.type === "Capture Summary") {
-        lastGroup.stages.push(createEmptyStage("Confirm Summary"));
-      } else if (lastStage.type === "Confirm Summary") {
-        updated.push(createClientSummaryGroup(updated.length + 1));
-      }
-    }
+  //   if (lastStage.status === "Confirm") {
+  //     if (lastStage.type === "Client Summary") {
+  //       lastGroup.stages.push(createEmptyStage("Capture Summary"));
+  //     } else if (lastStage.type === "Capture Summary") {
+  //       lastGroup.stages.push(createEmptyStage("Confirm Summary"));
+  //     } else if (lastStage.type === "Confirm Summary") {
+  //       updated.push(createClientSummaryGroup(updated.length + 1));
+  //     }
+  //   }
 
-    return updated;
-  });
+  //   return updated;
+  // });
 
   // 3️⃣ Wait for the new stage to be added and validate again
   setTimeout(() => {
@@ -827,10 +899,14 @@ const handleSubmit = async (e) => {
           id: `${prefix}_title`,
           name: `${prefix}_title`,
           label: `${stage.type} - ${group.id} `,
-          btn: stageIndex === 0 ? "Add" : null,
+          btn: stage.type === "Client Summary"
+    ? groupIndex === 0
+      ? "Add"
+      : "Remove"
+    : null,
           handleAddClick: handleAddClientSummary,
 
-          btn: groupIndex > 0 ? "Remove" : stageIndex === 0 ? "Add" : null,
+          // btn: groupIndex > 0 ? "Remove" : stageIndex === 0 ? "Add" : null,
           handleRemoveClick: () => handleRemoveClientSummary(groupIndex),
         },
 
@@ -917,7 +993,7 @@ const handleSubmit = async (e) => {
           label: "Shop Domain",
           type: "select",
           cName: "w-30",
-          options: domains?.map(d=>d?.domain_name) || ['No domain exists'],
+          options: domains?.map(d=>({label: d?.domain_name, value:d?.domain_id})) || ['No domain exists'],
           disable: domains?.length> 0 ? false : true,
           value: stage.data.domain,
           onChange: (e) =>
@@ -936,7 +1012,7 @@ const handleSubmit = async (e) => {
           cName:'w-30',
           options:
     sectorMap[`${groupIndex}_${stageIndex}`]?.map(
-      (s) => s.sector_name
+      (s) => ({ label: s.sector_name, value: s.sector_id })
     ) || [],
   disable:
     !sectorMap[`${groupIndex}_${stageIndex}`]?.length,
@@ -1058,12 +1134,12 @@ const handleSubmit = async (e) => {
                   "Support"
                 ] : [],
                 cName: "w-30",
-                value: stage.data.capture_action,
+                value: stage.data.confirm_action,
                 onChange: (e) =>
                   handleStageDataChange(
                     groupIndex,
                     stageIndex,
-                    "capture_action",
+                    "confirm_action",
                     e.target.value
                   ),
               },
@@ -1130,6 +1206,8 @@ const handleSubmit = async (e) => {
       name: "task_reporting_date",
       type: "date",
       cName: 'w-100',
+      minDate: currentTask?.start_date, 
+      maxDate: currentTask?.end_date, 
     },
     ...clientSummaryFields,
     ...viewReport ? [{
@@ -1240,6 +1318,8 @@ const handleSubmit = async (e) => {
           readOnly={field.readOnly}
           disable={field.disable}
           btn={field.btn}
+          minDate={field.minDate}
+          maxDate={field.maxDate}
           handleAddClick={field.handleAddClick}
           handleRemoveClick={field.handleRemoveClick}
         />

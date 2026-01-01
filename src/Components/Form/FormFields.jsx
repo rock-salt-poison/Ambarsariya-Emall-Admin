@@ -9,7 +9,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { Box, Checkbox, Chip, ListItemText, Typography } from "@mui/material";
+import { Box, Checkbox, Chip, FormHelperText, ListItemText, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -43,7 +43,9 @@ export default function FormFields({
   file,
   uploadedFile,
   multiple, readOnly,
-  disable
+  disable,
+  minDate,
+  maxDate
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [open, setOpen] = useState(false);
@@ -126,7 +128,7 @@ const ITEM_PADDING_TOP = 8;
   return (
     <>
       {type === "select" ? (
-        <FormControl variant="outlined" fullWidth={width} size="small" className={optionalCname}>
+        <FormControl variant="outlined" fullWidth={width} size="small" className={optionalCname} error={error}>
           <InputLabel>{label}</InputLabel>
           <Select
             name={name}
@@ -163,6 +165,7 @@ const ITEM_PADDING_TOP = 8;
                 );
             })}
           </Select>
+          <FormHelperText>{helperText}</FormHelperText>
         </FormControl>
       ) : type === "multi-select-checkbox" ? (
   <FormControl
@@ -228,24 +231,52 @@ const ITEM_PADDING_TOP = 8;
 
       ) : type === "date" ? (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label={label}
-            name={name}
-            sx={{
-              [`& .MuiInputBase-input`]: {
-                padding: "8px 14px",
-              },
-              ["& .MuiFormLabel-root"]: { top: "-8px" },
-            }}
-            className={optionalCname}
-            readOnly={readOnly}
-            value={timeValue}
-            onChange={(newValue) => {
-              setTimeValue(newValue);
-              onChange({ target: { name, value: newValue?.toISOString() } });
-            }}
-          />
-        </LocalizationProvider>
+    <DatePicker
+      label={label}
+      value={timeValue}
+      readOnly={readOnly}
+
+      /* ✅ MIN & MAX DATE */
+      minDate={minDate ? dayjs(minDate) : undefined}
+      maxDate={maxDate ? dayjs(maxDate) : undefined}
+
+      /* ✅ DISABLE DATES OUTSIDE RANGE */
+      shouldDisableDate={(date) => {
+        if (minDate && date.isBefore(dayjs(minDate), "day")) return true;
+        if (maxDate && date.isAfter(dayjs(maxDate), "day")) return true;
+        return false;
+      }}
+
+      onChange={(newValue) => {
+        setTimeValue(newValue);
+        onChange({
+          target: {
+            name,
+            value: newValue ? newValue.toISOString() : null,
+          },
+        });
+      }}
+
+      /* ✅ ERROR + HELPER TEXT */
+      slotProps={{
+        textField: {
+          size: "small",
+          error: Boolean(error),
+          helperText: helperText,
+          required,
+          fullWidth: width,
+          className: optionalCname,
+        },
+      }}
+
+      sx={{
+        [`& .MuiInputBase-input`]: {
+          padding: "8px 14px",
+        },
+        ["& .MuiFormLabel-root"]: { top: "0px" },
+      }}
+    />
+  </LocalizationProvider>
       ) : type === "time" ? (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <TimePicker
