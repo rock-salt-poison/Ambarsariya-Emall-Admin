@@ -34,12 +34,13 @@ const StaffReportSubmitted = () => {
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [taskReport, setTaskReport] = useState(null);
+  const [currentTask, setCurrentTask] = useState(null);
 
 
   useEffect(() => {
     if (formData?.assigned_task) {
       const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
-
+      setCurrentTask(fetch_selected_task);
       const date_range = fetch_selected_task && [
         dayjs(fetch_selected_task.start_date).toDate(),
         dayjs(fetch_selected_task.end_date).toDate()
@@ -183,6 +184,8 @@ const StaffReportSubmitted = () => {
       name: "task_reporting_date",
       type: "date",
       cName: 'flex-auto',
+      minDate: currentTask?.start_date, 
+      maxDate: currentTask?.end_date, 
     },
   ];
 
@@ -213,6 +216,8 @@ const StaffReportSubmitted = () => {
           btn={field.btn}
           handleAddClick={field.handleAddClick}
           handleRemoveClick={field.handleRemoveClick}
+          minDate= {field.minDate}
+          maxDate= {field.maxDate}
         />
       ))}
 
