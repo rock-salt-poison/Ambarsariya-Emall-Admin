@@ -59,7 +59,7 @@ export default function StaffReportTable({ data }) {
                   <TableCell sx={{ textTransform: "capitalize" }}>
                     {r.status}
                   </TableCell>
-                  <TableCell>{r.lead_select || "-"}</TableCell>
+                  <TableCell>{r.action || "-"}</TableCell>
                 </TableRow>
               ))
             ) : (
