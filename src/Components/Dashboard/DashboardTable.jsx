@@ -52,7 +52,7 @@ export default function DashboardTable() {
               <TableCell>Age</TableCell>
               <TableCell>Phone No.</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell></TableCell>
+              <TableCell>Remove</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

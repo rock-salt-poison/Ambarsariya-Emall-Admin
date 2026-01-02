@@ -146,9 +146,7 @@ const StaffReportSubmitted = () => {
       label: "Reporting Date",
       name: "task_reporting_date",
       type: "date",
-      cName: 'w-45',
-      minDate: currentTask?.start_date, 
-      maxDate: currentTask?.end_date, 
+      cName: 'w-45', 
     },
     {
       id: 2,
