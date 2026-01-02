@@ -21,18 +21,18 @@ export default function DashboardTable() {
   const [open, setOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
 
-  useEffect(()=>{
+  useEffect(() => {
     const fetchEmployees = async () => {
-      try{
+      try {
         setLoading(true);
         const resp = await get_role_employees();
         console.log(resp);
-        if(resp){
+        if (resp) {
           setEmployees(resp);
         }
-      }catch(e){
+      } catch (e) {
         console.log(e);
-      }finally{
+      } finally {
         setLoading(false);
       }
     }
@@ -46,52 +46,52 @@ export default function DashboardTable() {
   };
 
 
-  
+
   return (
     <>
-    {loading && <Box className="loading"><CircularProgress/></Box> }
+      {loading && <Box className="loading"><CircularProgress /></Box>}
       <Box className="container">
         <Box className="col">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Department</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Start Date</TableCell>
-              <TableCell>Age</TableCell>
-              <TableCell>Phone No.</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Remove</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {employees.length > 0 ? employees.map((emp) => (
-              <TableRow key={emp.id} hover>
-                <TableCell>{emp.name}</TableCell>
-                <TableCell>{emp.department_name}</TableCell>
-                <TableCell sx={{textTransform:'capitalize'}}>{emp.role_name}</TableCell>
-                <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
-                <TableCell>{emp.age}</TableCell>
-                <TableCell>{emp.phone}</TableCell>
-                <TableCell>{emp.email}</TableCell>
-                <TableCell><DeleteIcon className="deleteIcon" onClick={() => handleDeleteClick(emp.id)}
-/></TableCell>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Department</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Start Date</TableCell>
+                <TableCell>Age</TableCell>
+                <TableCell>Phone No.</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Remove</TableCell>
               </TableRow>
-            )) : <TableRow>
-                <TableCell colSpan={7} sx={{textAlign:'center'}}>No employee created</TableCell>
-            </TableRow> }
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {employees.length > 0 ? employees.map((emp) => (
+                <TableRow key={emp.id} hover>
+                  <TableCell>{emp.name}</TableCell>
+                  <TableCell>{emp.department_name}</TableCell>
+                  <TableCell sx={{ textTransform: 'capitalize' }}>{emp.role_name}</TableCell>
+                  <TableCell>{(emp.start_date)?.split('T')?.[0]}</TableCell>
+                  <TableCell>{emp.age}</TableCell>
+                  <TableCell>{emp.phone}</TableCell>
+                  <TableCell>{emp.email}</TableCell>
+                  <TableCell><DeleteIcon className="deleteIcon" onClick={() => handleDeleteClick(emp.id)}
+                  /></TableCell>
+                </TableRow>
+              )) : <TableRow>
+                <TableCell colSpan={7} sx={{ textAlign: 'center' }}>No employee created</TableCell>
+              </TableRow>}
+            </TableBody>
+          </Table>
         </Box>
       </Box>
       <DialogPopup
-          open={open}
-          handleClose={() => setOpen(false)}
-          FormComponent= {AssignStaffAnEmployeeForm}
-          popupHeading="Assign Employee"
-          task={selectedEmployeeId}
-       />
+        open={open}
+        handleClose={() => setOpen(false)}
+        FormComponent={AssignStaffAnEmployeeForm}
+        popupHeading="Assign Employee"
+        task={selectedEmployeeId}
+      />
     </>
   );
 }
