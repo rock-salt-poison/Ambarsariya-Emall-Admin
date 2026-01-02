@@ -463,6 +463,15 @@ export const get_staff_task_report_details = async (task_id, task_reporting_date
     }
 }
 
+export const get_staff_member_task_report_details = async (task_id, task_reporting_date) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff-member-task-report-details/${task_id}/${task_reporting_date}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const delete_auth_credentials = async (credentials_id) => {
     try{
         const response = await axios.delete(`${admin_roles_api}/delete-credentials/${credentials_id}`);

@@ -5,7 +5,6 @@ import CustomSnackbar from "../../../CustomSnackbar";
 import {
   fetchDomains,
   fetchDomainSectors,
-  get_staff_member_task_report_details,
   get_staff_task_with_token,
   post_task_report_details,
 } from "../../../../API/expressAPI";
@@ -37,9 +36,6 @@ const StaffReportForm = () => {
   };
   const [formData, setFormData] = useState(initialData);
   const [viewReport, setViewReport] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [existingReportId, setExistingReportId] = useState(null);
-
 
   const createEmptyStage = (type) => ({
   type,
@@ -82,9 +78,6 @@ const createClientSummaryGroup = (id) => ({
     createClientSummaryGroup(1),
   ]);
 
-  console.log(currentTask);
-  
-
   const copyCommonData = (fromData) => ({
     name: fromData.name,
     phone: fromData.phone,
@@ -114,6 +107,7 @@ const createClientSummaryGroup = (id) => ({
       try{
         setLoading(true);
         const resp = await fetchDomains();
+        console.log(resp);
         
         if(resp){
           setDomains(resp);
@@ -129,144 +123,6 @@ const createClientSummaryGroup = (id) => ({
     }
     getDomains();
   }, []);
-
-  const resetToCreateMode = () => {
-  setIsEditMode(false);
-  setExistingReportId(null);
-  setClientSummaries([createClientSummaryGroup(1)]);
-};
-
-
-  useEffect(() => {
-  if (!formData.task_reporting_date || !currentTask?.id) return;
-
-  const fetchExistingReport = async () => {
-    try {
-      setLoading(true);
-      console.log(currentTask?.id, dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD'));
-      
-
-      const resp = await get_staff_member_task_report_details(
-        currentTask.id,
-        dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD')
-      );
-      console.log('------------ previously submitted----------- ', resp);
-      
-
-      if (resp?.[0]) {
-        setIsEditMode(true);
-        setExistingReportId(resp?.[0].id);
-        setViewReport(true);
-
-        hydrateReport(resp?.[0]);
-      } else {
-        resetToCreateMode();
-      }
-    } catch (err) {
-      console.error(err);
-      resetToCreateMode();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchExistingReport();
-}, [formData.task_reporting_date, currentTask?.id]);
-
-
-const hydrateReport = (report) => {
-  // 1️⃣ Totals
-  setFormData((p) => ({
-    ...p,
-    visits: Number(report.visits) || 0,
-    joined: Number(report.joined) || 0,
-    in_pipeline: Number(report.in_pipeline) || 0,
-    total_leads: Number(report.total_leads_summary) || 0,
-    daily_leads: Number(report.daily_leads_summary) || 0,
-    total_client: Number(report.total_client_summary) || 0,
-    daily_client: Number(report.daily_client_summary) || 0,
-    total_capture: Number(report.total_capture_summary) || 0,
-    daily_capture: Number(report.daily_capture_summary) || 0,
-    total_confirmation: Number(report.total_confirmation) || 0,
-    Daily_confirmation: Number(report.daily_confirmation) || 0,
-  }));
-
-  /**
-   * 2️⃣ Build logical groups using parent relationship
-   */
-  const tempGroups = {};
-  const summaryMap = new Map();
-
-  report.summaries.forEach((s) => {
-    summaryMap.set(s.id, s);
-  });
-
-  report.summaries.forEach((s) => {
-    // Find ROOT client summary
-    let root = s;
-    while (root.parent_summary_id) {
-      root = summaryMap.get(root.parent_summary_id);
-    }
-
-    if (!tempGroups[root.id]) {
-      tempGroups[root.id] = [];
-    }
-
-    tempGroups[root.id].push(s);
-  });
-
-  /**
-   * 3️⃣ Convert to UI groups (1,2,3…)
-   */
-  const ORDER = ["Client Summary", "Capture Summary", "Confirm Summary"];
-
-  const clientSummaries = Object.values(tempGroups).map((items, index) => ({
-    id: index + 1, // ✅ STARTS FROM 1
-    stages: items
-      .sort(
-        (a, b) =>
-          ORDER.indexOf(a.summary_type) -
-          ORDER.indexOf(b.summary_type)
-      )
-      .map((s) => ({
-        type: s.summary_type,
-        status: s.status,
-        data: {
-          name: s.name || "",
-          phone: s.phone || "",
-          email: s.email || "",
-          shop: s.shop_name || "",
-          domain: s.shop_domain || "",
-          sector: s.shop_sector || "",
-          shop_no: s.shop_no || "",
-          location: s.location || "",
-          client_action:
-            s.summary_type === "Client Summary" ? s.action : "",
-          capture_action:
-            s.summary_type === "Capture Summary" ? s.action : "",
-          confirm_action:
-            s.summary_type === "Confirm Summary" ? s.action : "",
-        },
-      })),
-  }));
-
-  setClientSummaries(clientSummaries);
-
-  /**
-   * 4️⃣ Load sectors (unchanged)
-   */
-  clientSummaries.forEach((group, gIdx) => {
-    group.stages.forEach((stage, sIdx) => {
-      if (stage.data.domain) {
-        loadSectorsForStage(stage.data.domain, gIdx, sIdx);
-      }
-    });
-  });
-};
-
-
-
-
 
   const handleAddClientSummary = () => {
     setClientSummaries((prev) => [
@@ -305,8 +161,7 @@ const hydrateReport = (report) => {
   // };
 const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
   if (!domainName) return;
-  console.log(domainName);
-  
+
   const selectedDomain = domains.find(
     (d) => d.domain_id === domainName
   );
@@ -681,8 +536,6 @@ if (
   // 🔁 keep your existing domain → sector fetch exactly as-is
   if (field === "domain" && value) {
     try {
-      console.log(value);
-      
       const selectedDomain = domains.find(
         (d) => d.domain_id === value
       );
@@ -714,6 +567,7 @@ if (
         try {
           setLoading(true);
           const selectedTask = (await get_staff_task_with_token(task_token))?.[0];
+          console.log(selectedTask);
 
           if (selectedTask) {
             setCurrentTask(selectedTask);
@@ -891,20 +745,6 @@ useEffect(() => {
     }
 
     /* 🥈 PRIORITY 2: CAPTURE */
-    if (
-      capture &&
-      (
-        capture.status === "Pending" ||
-        capture.status === "Re-Action" ||
-        (capture.status === "Confirm" &&
-          capture.data.capture_action !== "Captured")
-      )
-    ) {
-      totalCapture += 1;
-      inPipeline += 1;
-      return;
-    }
-    
    if (
       capture &&
       (
@@ -919,7 +759,19 @@ useEffect(() => {
       return;
     }
 
-    
+    if (
+      capture &&
+      (
+        capture.status === "Pending" ||
+        capture.status === "Re-Action" ||
+        (capture.status === "Confirm" &&
+          capture.data.capture_action !== "Captured")
+      )
+    ) {
+      totalCapture += 1;
+      inPipeline += 1;
+      return;
+    }
 
     /* 🥈 PRIORITY 3: CLIENT */
 
