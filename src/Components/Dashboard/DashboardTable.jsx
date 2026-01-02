@@ -11,11 +11,15 @@ import {
 } from "@mui/material";
 import { get_role_employees } from "../../API/expressAPI";
 import DeleteIcon from '@mui/icons-material/Delete';
+import DialogPopup from "./DialogPopup";
+import AssignStaffAnEmployeeForm from "./Admin/AssignStaffAnEmployeeForm";
 
 export default function DashboardTable() {
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
 
   useEffect(()=>{
     const fetchEmployees = async () => {
@@ -35,6 +39,12 @@ export default function DashboardTable() {
 
     fetchEmployees();
   }, []);
+
+  const handleDeleteClick = (employeeId) => {
+    setSelectedEmployeeId(employeeId);
+    setOpen(true);
+  };
+
 
   
   return (
@@ -65,7 +75,8 @@ export default function DashboardTable() {
                 <TableCell>{emp.age}</TableCell>
                 <TableCell>{emp.phone}</TableCell>
                 <TableCell>{emp.email}</TableCell>
-                <TableCell><DeleteIcon className="deleteIcon"/></TableCell>
+                <TableCell><DeleteIcon className="deleteIcon" onClick={() => handleDeleteClick(emp.id)}
+/></TableCell>
               </TableRow>
             )) : <TableRow>
                 <TableCell colSpan={7} sx={{textAlign:'center'}}>No employee created</TableCell>
@@ -74,6 +85,13 @@ export default function DashboardTable() {
         </Table>
         </Box>
       </Box>
+      <DialogPopup
+          open={open}
+          handleClose={() => setOpen(false)}
+          FormComponent= {AssignStaffAnEmployeeForm}
+          popupHeading="Assign Employee"
+          task={selectedEmployeeId}
+       />
     </>
   );
 }
