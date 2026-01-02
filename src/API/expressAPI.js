@@ -31,6 +31,15 @@ export const get_staff_tasks = async (token) => {
     }
 }
 
+export const get_staff_tasks_by_reporting_date = async (token, task_reporting_date) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff-tasks-by-date/${token}/${task_reporting_date}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const post_travel_time = async (data) => {
     try{
         const response = await axios.post(`${admin_link}/travel-time`, data);

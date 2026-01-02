@@ -5,6 +5,7 @@ import CustomSnackbar from "../../../CustomSnackbar";
 import {
   get_staff_task_report_details,
   get_staff_tasks,
+  get_staff_tasks_by_reporting_date,
 } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
@@ -40,32 +41,43 @@ const StaffReportSubmitted = () => {
   useEffect(() => {
     if (formData?.assigned_task) {
       const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
-      setCurrentTask(fetch_selected_task);
-      const date_range = fetch_selected_task && [
-        dayjs(fetch_selected_task.start_date).toDate(),
-        dayjs(fetch_selected_task.end_date).toDate()
-      ];
-      console.log(date_range);
-
-      setFormData((prev) => ({
-        ...prev,
-        assigned_date: date_range,
-        assigned_area: fetch_selected_task?.assign_area?.map((a)=>a?.formatted_address),
-        approx_shops: fetch_selected_task?.approx_shops, 
-        approx_offices: fetch_selected_task?.approx_offices, 
-        approx_hawkers: fetch_selected_task?.approx_hawkers, 
-      }))
+      if(fetch_selected_task){
+        setCurrentTask(fetch_selected_task);
+        const date_range = fetch_selected_task && [
+          dayjs(fetch_selected_task.start_date).toDate(),
+          dayjs(fetch_selected_task.end_date).toDate()
+        ];
+        console.log(date_range);
+  
+        setFormData((prev) => ({
+          ...prev,
+          assigned_date: date_range,
+          assigned_area: fetch_selected_task?.assign_area?.map((a)=>a?.formatted_address),
+          approx_shops: fetch_selected_task?.approx_shops, 
+          approx_offices: fetch_selected_task?.approx_offices, 
+          approx_hawkers: fetch_selected_task?.approx_hawkers, 
+        }))
+      }else{
+        setFormData((prev)=>({
+          ...prev, 
+          assigned_area: '',
+          assigned_date: '',
+          approx_shops: '', 
+          approx_offices: '', 
+          approx_hawkers: '',
+        }))
+      }
     }
-  }, [formData?.assigned_task]);
+  }, [formData?.assigned_task, tasks]);
 
 
   // Fetch user by token
   useEffect(() => {
-      if (token) {
-        const fetchEmployees = async () => {
+      if (token && formData?.task_reporting_date) {
+        const fetchTasks = async () => {
           try {
             setLoading(true);
-            const resp = await get_staff_tasks(token);
+            const resp = await get_staff_tasks_by_reporting_date(token, dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD'));
             console.log(resp);
             if (resp) setTasks(resp);
           } catch (e) {
@@ -75,9 +87,9 @@ const StaffReportSubmitted = () => {
             setLoading(false);
           }
         };
-        fetchEmployees();
+        fetchTasks();
       }
-    }, [token]);
+    }, [token, formData?.task_reporting_date]);
 
 
 
@@ -125,12 +137,21 @@ const StaffReportSubmitted = () => {
       }
     }
   }, [tasks && formData?.assigned_task, formData?.task_reporting_date]);
-
-
+  
+  
   // FIELDS
   const formFields = [
     {
-      id: 3,
+      id: 1,
+      label: "Reporting Date",
+      name: "task_reporting_date",
+      type: "date",
+      cName: 'w-45',
+      minDate: currentTask?.start_date, 
+      maxDate: currentTask?.end_date, 
+    },
+    {
+      id: 2,
       label: "Assigned Task",
       name: "assigned_task",
       type: "select",
@@ -139,7 +160,7 @@ const StaffReportSubmitted = () => {
       cName: 'w-45',
     },
     {
-      id: 4,
+      id: 3,
       label: "Date",
       name: "assigned_date",
       type: "date-range",
@@ -147,7 +168,7 @@ const StaffReportSubmitted = () => {
       cName: 'flex-auto',
     },
     {
-      id: 6,
+      id: 4,
       label: "Assigned area",
       name: "assigned_area",
       type: "multi-select-checkbox",
@@ -155,7 +176,7 @@ const StaffReportSubmitted = () => {
       cName: 'w-100'
     },
     {
-      id: 7,
+      id: 5,
       label: "Approx. Shops",
       name: "approx_shops",
       type: "number",
@@ -163,7 +184,7 @@ const StaffReportSubmitted = () => {
       readOnly: true,
     },
     {
-      id: 8,
+      id: 6,
       label: "Approx. Offices",
       name: "approx_offices",
       type: "number",
@@ -171,21 +192,12 @@ const StaffReportSubmitted = () => {
       readOnly: true,
     },
     {
-      id: 9,
+      id: 7,
       label: "Approx. hawkers or small huts",
       name: "approx_hawkers",
       type: "number",
       cName: 'w-30',
       readOnly: true,
-    },
-    {
-      id: 5,
-      label: "Date",
-      name: "task_reporting_date",
-      type: "date",
-      cName: 'flex-auto',
-      minDate: currentTask?.start_date, 
-      maxDate: currentTask?.end_date, 
     },
   ];
 
