@@ -8,10 +8,13 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 
 export default function StaffReportSubmittedTable({ data }) {
   const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (data?.summaries) {
@@ -20,6 +23,13 @@ export default function StaffReportSubmittedTable({ data }) {
       setReport([]);
     }
   }, [data]);
+
+  console.log(report);
+  
+  
+  const handleRowClick = async (e, task_id, reporting_date, access_token, summary_group_id) =>{
+    navigate(`?id=${task_id}&date=${reporting_date}&group=${summary_group_id}&token=${access_token}`);
+  }
 
   return (
     <>
@@ -46,7 +56,7 @@ export default function StaffReportSubmittedTable({ data }) {
           <TableBody>
             {report.length > 0 ? (
               report.map((r, index) => (
-                <TableRow key={r.id || index} hover>
+                <TableRow key={r.id || index} hover onClick={(e)=>{handleRowClick(e, data?.task_id, dayjs(data?.task_reporting_date)?.format('YYYY-MM-DD'), data?.access_token, r?.summary_group_id)}}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell sx={{ textTransform: "capitalize" }}>
                     {r.shop_name || "-"}

@@ -4,11 +4,19 @@ import BoxHeader from "../../DashboardContent/BoxHeader";
 import { useSelector } from "react-redux";
 import { get_userByToken } from "../../../../API/expressAPI";
 import StaffReportSubmitted from "./StaffReportSubmitted";
+import { useParams, useSearchParams } from "react-router-dom";
+import UpdateStaffReportSubmittedForm from "./UpdateStaffReportSubmittedForm";
 
 function ReportsSubmitted() {
     const token = useSelector((state) => state.auth.token);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [searchParams] = useSearchParams();
+
+    const taskId = searchParams.get("id");
+    const taskReportingDate = searchParams.get("date");
+    const task_token = searchParams.get("token");
+    const summary_group_id = searchParams.get("group");
 
     useEffect(() => {
         if (token) {
@@ -35,9 +43,9 @@ function ReportsSubmitted() {
     return (
         <Box className="body">
             <Box className="content">
-                <BoxHeader title={user ? `${user?.role_name} - ${user?.name}`: ''} searchField={false} />
+                <BoxHeader title={(task_token && summary_group_id) ? 'tasks' : user && `${user?.role_name} - ${user?.name}`} searchField={false} backIcon={(task_token && summary_group_id) ? true : false} handleBackClick={-1}/>
                 <Box className="body">
-                    <StaffReportSubmitted />
+                    {(task_token && summary_group_id) ? <UpdateStaffReportSubmittedForm/> : <StaffReportSubmitted />}
                 </Box>
             </Box>
         </Box>

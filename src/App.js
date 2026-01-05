@@ -33,6 +33,7 @@ function App() {
         <Route path="/sales/assign-task" element={<AssignTask />} />
         <Route path="/sales/staff-report" element={<StaffReport />} />
         <Route path="/sales-staff/reports-submitted" element={<ReportsSubmitted />} />
+        <Route path="/sales-staff/reports-submitted/:task_token/:summary_group" element={<ReportsSubmitted />} />
         <Route path="/todo/:page" element={<TodoSubpage />} />
         <Route path="/todo/notices/:title/:id" element={<NoticeDetail />} />
         <Route path="/accounts/:user_type" element={<Account />} />

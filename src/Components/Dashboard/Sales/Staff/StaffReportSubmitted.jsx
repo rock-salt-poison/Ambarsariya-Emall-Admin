@@ -114,7 +114,6 @@ const StaffReportSubmitted = () => {
         if(fetch_selected_task){
           const fetchTaskReport = async () =>{
             const resp = (await get_staff_task_report_details(fetch_selected_task?.id, dayjs(formData?.task_reporting_date).format('YYYY-MM-DD')))?.[0];
-            console.log(resp);
             
             if(resp){
               setTaskReport(resp);

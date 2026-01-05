@@ -5,15 +5,16 @@ import CustomSnackbar from "../../../CustomSnackbar";
 import {
   fetchDomains,
   fetchDomainSectors,
+  get_selected_staff_task_report,
   get_staff_member_task_report_details,
   get_staff_task_with_token,
   post_task_report_details,
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import dayjs from "dayjs";
 
-const StaffReportForm = () => {
+const UpdateStaffReportSubmittedForm = () => {
 
   const initialData = {
     assigned_task:'',
@@ -40,6 +41,12 @@ const StaffReportForm = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingReportId, setExistingReportId] = useState(null);
 
+  const [searchParams] = useSearchParams();
+
+  const taskId = searchParams.get("id");
+  const taskReportingDate = searchParams.get("date");
+  const task_token = searchParams.get("token");
+  const summary_group_id = searchParams.get("group");
 
   const createEmptyStage = (type) => ({
   type,
@@ -64,8 +71,6 @@ const createClientSummaryGroup = (id) => ({
   stages: [createEmptyStage("Client Summary")],
 });
 
-  const { token: task_token } = useParams();
-
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -81,6 +86,9 @@ const createClientSummaryGroup = (id) => ({
  const [clientSummaries, setClientSummaries] = useState([
     createClientSummaryGroup(1),
   ]);
+  const isInitialHydrationRef = React.useRef(true);
+const apiTotalsRef = React.useRef(null);
+
 
   console.log(currentTask);
   
@@ -138,21 +146,20 @@ const createClientSummaryGroup = (id) => ({
 
 
   useEffect(() => {
-  if (!formData.task_reporting_date || !currentTask?.id) return;
+  if (!taskId || !taskReportingDate || !task_token || !summary_group_id) return;
 
   const fetchExistingReport = async () => {
     try {
-      setLoading(true);
-      console.log(currentTask?.id, dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD'));
-      
+      setLoading(true);      
 
-      const resp = await get_staff_member_task_report_details(
-        currentTask.id,
-        dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD')
+      const resp = await get_selected_staff_task_report(
+        taskId,
+        taskReportingDate, 
+        task_token,
+        summary_group_id
       );
       console.log('------------ previously submitted----------- ', resp);
       
-
       if (resp?.[0]) {
         setIsEditMode(true);
         setExistingReportId(resp?.[0].id);
@@ -171,23 +178,34 @@ const createClientSummaryGroup = (id) => ({
   };
 
   fetchExistingReport();
-}, [formData.task_reporting_date, currentTask?.id]);
+}, [taskId, taskReportingDate, task_token, summary_group_id]);
 
 
 const hydrateReport = (report) => {
   // 1️⃣ Totals
-  setFormData((p) => ({
-    ...p,
+
+  apiTotalsRef.current = {
     visits: Number(report.visits) || 0,
     joined: Number(report.joined) || 0,
     in_pipeline: Number(report.in_pipeline) || 0,
+    total_client: Number(report.total_client_summary) || 0,
+    total_capture: Number(report.total_capture_summary) || 0,
+    total_confirmation: Number(report.total_confirmation) || 0,
+  };
+
+
+ setFormData((prev) => ({
+    ...prev,
+    visits: apiTotalsRef.current.visits,
+    joined: apiTotalsRef.current.joined,
+    in_pipeline: apiTotalsRef.current.in_pipeline,
+    total_client: apiTotalsRef.current.total_client,
+    total_capture: apiTotalsRef.current.total_capture,
+    total_confirmation: apiTotalsRef.current.total_confirmation,
     total_leads: Number(report.total_leads_summary) || 0,
     daily_leads: Number(report.daily_leads_summary) || 0,
-    total_client: Number(report.total_client_summary) || 0,
     daily_client: Number(report.daily_client_summary) || 0,
-    total_capture: Number(report.total_capture_summary) || 0,
     daily_capture: Number(report.daily_capture_summary) || 0,
-    total_confirmation: Number(report.total_confirmation) || 0,
     Daily_confirmation: Number(report.daily_confirmation) || 0,
   }));
 
@@ -262,6 +280,8 @@ const hydrateReport = (report) => {
       }
     });
   });
+    isInitialHydrationRef.current = false;
+
 };
 
 
@@ -538,6 +558,7 @@ if (
               approx_shops: selectedTask?.approx_shops || "",
               approx_offices: selectedTask?.approx_offices || "",
               approx_hawkers: selectedTask?.approx_hawkers || "",
+              task_reporting_date: taskReportingDate
             }));
           }
         } catch (e) {
@@ -656,30 +677,25 @@ const validateFields = () => {
 };
   
 useEffect(() => {
+  if (isInitialHydrationRef.current) return;
+
   let totalClient = 0;
   let totalCapture = 0;
   let totalConfirmation = 0;
-  let totaljoinee = 0;
 
   let visits = 0;
   let inPipeline = 0;
   let joined = 0;
 
   clientSummaries.forEach((group) => {
-    const client = group.stages.find(
-      (s) => s.type === "Client Summary"
-    );
-    const capture = group.stages.find(
-      (s) => s.type === "Capture Summary"
-    );
-    const confirm = group.stages.find(
-      (s) => s.type === "Confirm Summary"
-    );
+    const client = group.stages.find(s => s.type === "Client Summary");
+    const capture = group.stages.find(s => s.type === "Capture Summary");
+    const confirm = group.stages.find(s => s.type === "Confirm Summary");
 
     /* 🥇 PRIORITY 1: CONFIRMATION */
     if (
-      confirm && (confirm?.status === "Confirm" ||
-      confirm?.status === "Joined" )
+      confirm &&
+      (confirm.status === "Confirm" || confirm.status === "Joined")
     ) {
       totalConfirmation += 1;
       joined += 1;
@@ -689,7 +705,7 @@ useEffect(() => {
     if (
       confirm?.status === "Confirm" ||
       (confirm?.status === "Joined" &&
-        capture.data.capture_action === "Captured")
+        capture?.data.capture_action === "Captured")
     ) {
       totalConfirmation += 1;
       inPipeline += 1;
@@ -710,8 +726,8 @@ useEffect(() => {
       inPipeline += 1;
       return;
     }
-    
-   if (
+
+    if (
       capture &&
       (
         capture.status === "Pending" ||
@@ -725,38 +741,37 @@ useEffect(() => {
       return;
     }
 
-    
-
     /* 🥈 PRIORITY 3: CLIENT */
-
-     if (
+    if (
       client &&
-      (client.status === "Confirm" &&
-          client.data.client_action === "Completed")
+      client.status === "Confirm" &&
+      client.data.client_action === "Completed"
     ) {
       totalCapture += 1;
       inPipeline += 1;
       return;
     }
-    
 
     /* 🥉 PRIORITY 4: CLIENT */
-    if (client && client?.status ) {
+    if (client && client.status) {
       totalClient += 1;
       visits += 1;
     }
   });
 
-  setFormData((prev) => ({
+  // ✅ REPLACE — not add, not merge
+  setFormData(prev => ({
     ...prev,
+    visits,
+    joined,
+    in_pipeline: inPipeline,
     total_client: totalClient,
     total_capture: totalCapture,
     total_confirmation: totalConfirmation,
-    visits,
-    in_pipeline: inPipeline,
-    joined,
   }));
-}, [clientSummaries]);
+}, []);
+
+
 
 
 
@@ -794,30 +809,30 @@ const handleSubmit = async (e) => {
     };
 
     // 5️⃣ Submit API
-    (async () => {
-      try {
-        setLoading(true);
-        const resp = await post_task_report_details(payload);
-        if (resp?.success) {
-          setSnackbar({
-            open: true,
-            message: "Task reported successfully",
-            severity: "success",
-          });
-          setFormData(initialData);
-          setTimeout(()=>{navigate('../sales-staff/my-tasks')},[1000]);
-        }
-      } catch (err) {
-        console.error(err);
-        setSnackbar({
-          open: true,
-          message: "Failed to report the task",
-          severity: "error",
-        });
-      } finally {
-        setLoading(false);
-      }
-    })();
+    // (async () => {
+    //   try {
+    //     setLoading(true);
+    //     const resp = await post_task_report_details(payload);
+    //     if (resp?.success) {
+    //       setSnackbar({
+    //         open: true,
+    //         message: "Task reported successfully",
+    //         severity: "success",
+    //       });
+    //       setFormData(initialData);
+    //       setTimeout(()=>{navigate('../sales-staff/my-tasks')},[1000]);
+    //     }
+    //   } catch (err) {
+    //     console.error(err);
+    //     setSnackbar({
+    //       open: true,
+    //       message: "Failed to report the task",
+    //       severity: "error",
+    //     });
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // })();
   }, 0); // schedule after state update
 };
 
@@ -1281,4 +1296,4 @@ const handleSubmit = async (e) => {
   );
 };
 
-export default StaffReportForm;
+export default UpdateStaffReportSubmittedForm;
