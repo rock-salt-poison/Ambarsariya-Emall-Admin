@@ -48,22 +48,30 @@ const AuthLayout = () => {
       { name: "Admin", icon: <HomeOutlined /> },
       {
         name: "Sales", icon: <HomeOutlined />,
+        children: []
+      },
+      {
+        name: "Sales Staff",
+        icon: <HomeOutlined />,
         children: [
-          { name: "Sales Dashboard", icon: <HomeOutlined /> },
+        ],
+      },
+      { name: "IT Manager", icon: <HomeOutlined /> },
+      { name: "Marketing", icon: <HomeOutlined /> ,
+        children: [
+          { name: "Marketing Dashboard", icon: <HomeOutlined /> },
           { name: "Assign Task", icon: <AssignmentOutlined /> },
           { name: "Staff Report", icon: <AssessmentOutlined /> },
         ],
       },
       {
-        name: "Sales Staff",
+        name: "Marketing Staff",
         icon: <HomeOutlined />,
         children: [
           { name: "My Tasks", icon: <AssignmentOutlined /> },
           { name: "Reports Submitted", icon: <AssessmentOutlined /> },
         ],
       },
-      { name: "IT Manager", icon: <HomeOutlined /> },
-      { name: "Marketing", icon: <HomeOutlined /> },
       { name: "Designers", icon: <HomeOutlined /> },
       {
         name: "Accounts",
@@ -118,6 +126,15 @@ const AuthLayout = () => {
       { name: "My Tasks", icon: <AssignmentOutlined /> },
       { name: "Reports Submitted", icon: <AssessmentOutlined /> },
     ],
+    "Marketing Manager": [
+      { name: "Marketing Dashboard", icon: <HomeOutlined /> },
+      { name: "Assign Task", icon: <AssignmentOutlined /> },
+      { name: "Staff Report", icon: <AssessmentOutlined /> },
+    ],
+    "Marketing Staff": [
+      { name: "My Tasks", icon: <AssignmentOutlined /> },
+      { name: "Reports Submitted", icon: <AssessmentOutlined /> },
+    ],
     "IT Manager": [
       { name: "Dashboard", icon: <HomeOutlined /> },
       { name: "To-Do", icon: <MailIcon /> },
@@ -140,7 +157,7 @@ const AuthLayout = () => {
   // Update menuItems when user changes
   useEffect(() => {
     if (user) {
-      const items = user?.user_type === 'staff' ? menuMap['Sales Staff']: menuMap[user.department_name] || [];
+      const items = user?.user_type === 'marketing_staff' ? menuMap['Marketing Staff']: menuMap[user.department_name] || [];
       setMenuItems(items);
 
       // Set first leaf as default selected
@@ -163,14 +180,14 @@ const AuthLayout = () => {
       case "To-Do":
         navigate("../todo");
         break;
-      case "Sales Dashboard":
-        navigate("../sales");
+      case "Marketing Dashboard":
+        navigate("../marketing");
         break;
       case "Assign Task":
-        navigate("../sales/assign-task");
+        navigate("../marketing/assign-task");
         break;
       case "Staff Report":
-        navigate("../sales/staff-report");
+        navigate("../marketing/staff-report");
         break;
       case "Visitor":
         navigate("../accounts/visitor");
@@ -191,10 +208,10 @@ const AuthLayout = () => {
         navigate("../finance/b2c");
         break;
       case "My Tasks":
-        navigate("../sales-staff/my-tasks");
+        navigate("../marketing-staff/my-tasks");
         break;
       case "Reports Submitted":
-        navigate("../sales-staff/reports-submitted");
+        navigate("../marketing-staff/reports-submitted");
         break;
       default:
         break;
@@ -215,7 +232,7 @@ const AuthLayout = () => {
       )}
       <SideBar onSelectItem={handleSelectItem} menuItems={menuItems} />
       <Box component="main" className="main">
-        <DashboardHeader user={user?.user_type === 'staff' ? 'Sales Staff': user?.department_name} />
+        <DashboardHeader user={user?.user_type === 'marketing_staff' ? 'Marketing Staff': user?.department_name} />
         <Outlet context={{ selectedItem }} />
       </Box>
     </Box>

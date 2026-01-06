@@ -812,7 +812,7 @@ const handleSubmit = async (e) => {
     //         severity: "success",
     //       });
     //       setFormData(initialData);
-    //       setTimeout(()=>{navigate('../sales-staff/my-tasks')},[1000]);
+    //       setTimeout(()=>{navigate('../marketing-staff/my-tasks')},[1000]);
     //     }
     //   } catch (err) {
     //     console.error(err);
@@ -980,7 +980,7 @@ const handleSubmit = async (e) => {
               {
                 id: `${prefix}_client_action`,
                 name: `${prefix}_client_action`,
-                label: "Select",
+                label: "Select Action",
                 type: "select",
                 options: [
                   "Completed",
@@ -1006,7 +1006,7 @@ const handleSubmit = async (e) => {
               {
                 id: `${prefix}_capture_action`,
                 name: `${prefix}_capture_action`,
-                label: "Select",
+                label: "Select Action",
                 type: "select",
                 options: [
                   "Form 1",
@@ -1049,7 +1049,7 @@ const handleSubmit = async (e) => {
               {
                 id: `${prefix}_confirm_action`,
                 name: `${prefix}_confirm_action`,
-                label: "Select",
+                label: "Select Action",
                 type: "select",
                 options: stage.status === 'Joined' ? [
                   "Self Creation",

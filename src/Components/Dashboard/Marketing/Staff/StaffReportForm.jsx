@@ -5,16 +5,15 @@ import CustomSnackbar from "../../../CustomSnackbar";
 import {
   fetchDomains,
   fetchDomainSectors,
-  get_selected_staff_task_report,
   get_staff_member_task_report_details,
   get_staff_task_with_token,
   post_task_report_details,
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 
-const UpdateStaffReportSubmittedForm = () => {
+const StaffReportForm = () => {
 
   const initialData = {
     assigned_task:'',
@@ -41,16 +40,16 @@ const UpdateStaffReportSubmittedForm = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingReportId, setExistingReportId] = useState(null);
 
-  const [searchParams] = useSearchParams();
-
-  const taskId = searchParams.get("id");
-  const taskReportingDate = searchParams.get("date");
-  const task_token = searchParams.get("token");
-  const summary_group_id = searchParams.get("group");
 
   const createEmptyStage = (type) => ({
   type,
   status: "",
+  history: {
+    form1: false,
+    send_url: false,
+    visit: false,
+  },
+  action: {},          // 🔥 action = JSON history
   data: {
     name: "",
     phone: "",
@@ -62,14 +61,41 @@ const UpdateStaffReportSubmittedForm = () => {
     client_action: "",
     confirm_action: "",
     capture_action: "",
+    comment: "",
     shop_no: "",
   },
 });
+
+const ACTION_KEY_MAP = {
+  "Form 1": "form1",
+  "Send URL": "send_url",
+  "Visit": "visit",
+  "Feedback": "feedback",
+  "Re-Visit": "revisit",
+  "Captured": "captured",
+};
+
+const shouldShowComment = (stage) => {
+  if (stage.type === "Client Summary" && stage.status === "Contact") {
+    return true;
+  }
+
+  if (stage.type === "Capture Summary") {
+    return ["Form 1", "Send URL", "Visit"].includes(
+      stage.data.capture_action
+    );
+  }
+
+  return false;
+};
+
 
 const createClientSummaryGroup = (id) => ({
   id,
   stages: [createEmptyStage("Client Summary")],
 });
+
+  const { token: task_token } = useParams();
 
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({
@@ -86,10 +112,6 @@ const createClientSummaryGroup = (id) => ({
  const [clientSummaries, setClientSummaries] = useState([
     createClientSummaryGroup(1),
   ]);
-  const isInitialHydrationRef = React.useRef(true);
-const apiTotalsRef = React.useRef(null);
-const [allSummaryGroups, setAllSummaryGroups] = useState([]);
-
 
   console.log(currentTask);
   
@@ -147,20 +169,21 @@ const [allSummaryGroups, setAllSummaryGroups] = useState([]);
 
 
   useEffect(() => {
-  if (!taskId || !taskReportingDate || !task_token || !summary_group_id) return;
+  if (!formData.task_reporting_date || !currentTask?.id) return;
 
   const fetchExistingReport = async () => {
     try {
-      setLoading(true);      
+      setLoading(true);
+      console.log(currentTask?.id, dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD'));
+      
 
-      const resp = await get_selected_staff_task_report(
-        taskId,
-        taskReportingDate, 
-        task_token,
-        summary_group_id
+      const resp = await get_staff_member_task_report_details(
+        currentTask.id,
+        dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD')
       );
       console.log('------------ previously submitted----------- ', resp);
       
+
       if (resp?.[0]) {
         setIsEditMode(true);
         setExistingReportId(resp?.[0].id);
@@ -179,34 +202,23 @@ const [allSummaryGroups, setAllSummaryGroups] = useState([]);
   };
 
   fetchExistingReport();
-}, [taskId, taskReportingDate, task_token, summary_group_id]);
+}, [formData.task_reporting_date, currentTask?.id]);
 
 
 const hydrateReport = (report) => {
   // 1️⃣ Totals
-
-  apiTotalsRef.current = {
+  setFormData((p) => ({
+    ...p,
     visits: Number(report.visits) || 0,
     joined: Number(report.joined) || 0,
     in_pipeline: Number(report.in_pipeline) || 0,
-    total_client: Number(report.total_client_summary) || 0,
-    total_capture: Number(report.total_capture_summary) || 0,
-    total_confirmation: Number(report.total_confirmation) || 0,
-  };
-
-
- setFormData((prev) => ({
-    ...prev,
-    visits: apiTotalsRef.current.visits,
-    joined: apiTotalsRef.current.joined,
-    in_pipeline: apiTotalsRef.current.in_pipeline,
-    total_client: apiTotalsRef.current.total_client,
-    total_capture: apiTotalsRef.current.total_capture,
-    total_confirmation: apiTotalsRef.current.total_confirmation,
     total_leads: Number(report.total_leads_summary) || 0,
     daily_leads: Number(report.daily_leads_summary) || 0,
+    total_client: Number(report.total_client_summary) || 0,
     daily_client: Number(report.daily_client_summary) || 0,
+    total_capture: Number(report.total_capture_summary) || 0,
     daily_capture: Number(report.daily_capture_summary) || 0,
+    total_confirmation: Number(report.total_confirmation) || 0,
     Daily_confirmation: Number(report.daily_confirmation) || 0,
   }));
 
@@ -239,53 +251,44 @@ const hydrateReport = (report) => {
    */
   const ORDER = ["Client Summary", "Capture Summary", "Confirm Summary"];
 
-const allGroups = Object.values(tempGroups).map((items) => ({
-  summary_group_id: items[0]?.summary_group_id, // 🔑 IMPORTANT
-  stages: items
-    .sort(
-      (a, b) =>
-        ORDER.indexOf(a.summary_type) -
-        ORDER.indexOf(b.summary_type)
-    )
-    .map((s) => ({
-      type: s.summary_type,
-      status: s.status,
-      data: {
-        client_action:
-          s.summary_type === "Client Summary" ? s.action : "",
-        capture_action:
-          s.summary_type === "Capture Summary" ? s.action : "",
-        confirm_action:
-          s.summary_type === "Confirm Summary" ? s.action : "",
+  const clientSummaries = Object.values(tempGroups).map((items, index) => ({
+    id: index + 1, // ✅ STARTS FROM 1
+    stages: items
+      .sort(
+        (a, b) =>
+          ORDER.indexOf(a.summary_type) -
+          ORDER.indexOf(b.summary_type)
+      )
+      .map((s) => ({
+        type: s.summary_type,
+        status: s.status,
+        action: s.action || {},
+history: {
+  form1: !!s.action?.form1?.some(a => a.status === "confirm"),
+  send_url: !!s.action?.send_url?.some(a => a.status === "confirm"),
+  visit: !!s.action?.visit?.some(a => a.status === "confirm"),
+},
 
-        // FULL DATA MAY EXIST ONLY FOR SELECTED GROUP
-        name: s.name || "",
-        phone: s.phone || "",
-        email: s.email || "",
-        shop: s.shop_name || "",
-        domain: s.shop_domain || "",
-        sector: s.shop_sector || "",
-        shop_no: s.shop_no || "",
-        location: s.location || "",
-      },
-    })),
-}));
-
-/* 🔐 STORE ALL GROUPS FOR REPORT CALC */
-setAllSummaryGroups(allGroups);
-
-/* 🧾 FILTER ONLY SELECTED GROUP FOR UI */
-const visibleGroups = allGroups
-  .filter(
-    g => String(g.summary_group_id) === String(summary_group_id)
-  )
-  .map((g, index) => ({
-    id: index + 1,
-    stages: g.stages,
+        data: {
+          name: s.name || "",
+          phone: s.phone || "",
+          email: s.email || "",
+          shop: s.shop_name || "",
+          domain: s.shop_domain || "",
+          sector: s.shop_sector || "",
+          shop_no: s.shop_no || "",
+          location: s.location || "",
+          client_action:
+            s.summary_type === "Client Summary" ? s.action : "",
+          capture_action:
+            s.summary_type === "Capture Summary" ? s.action : "",
+          confirm_action:
+            s.summary_type === "Confirm Summary" ? s.action : "",
+        },
+      })),
   }));
 
-setClientSummaries(visibleGroups);
-
+  setClientSummaries(clientSummaries);
 
   /**
    * 4️⃣ Load sectors (unchanged)
@@ -297,24 +300,47 @@ setClientSummaries(visibleGroups);
       }
     });
   });
-    isInitialHydrationRef.current = false;
-
 };
 
-useEffect(() => {
-  if (!domains.length || !clientSummaries.length) return;
-
-  clientSummaries.forEach((group, gIdx) => {
-    group.stages.forEach((stage, sIdx) => {
-      if (stage.data.domain) {
-        loadSectorsForStage(stage.data.domain, gIdx, sIdx);
-      }
-    });
-  });
-}, [domains]);
 
 
 
+
+  const handleAddClientSummary = () => {
+    setClientSummaries((prev) => [
+      ...prev,
+      createClientSummaryGroup(prev.length + 1),
+    ]);
+  };
+
+  const handleRemoveClientSummary = (groupIndex) => {
+  setClientSummaries((prev) =>
+    prev.filter((_, idx) => idx !== groupIndex)
+  );
+};
+
+
+  // const handleStageChange = (
+  //   groupIndex,
+  //   stageIndex,
+  //   field,
+  //   value
+  // ) => {
+  //   setClientSummaries((prev) =>
+  //     prev.map((group, gIdx) =>
+  //       gIdx !== groupIndex
+  //         ? group
+  //         : {
+  //             ...group,
+  //             stages: group.stages.map((stage, sIdx) =>
+  //               sIdx !== stageIndex
+  //                 ? stage
+  //                 : { ...stage, [field]: value }
+  //             ),
+  //           }
+  //     )
+  //   );
+  // };
 const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
   if (!domainName) return;
   console.log(domainName);
@@ -338,22 +364,6 @@ const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
       [`${groupIndex}_${stageIndex}`]: [],
     }));
   }
-};
-
-const syncToAllGroups = (updatedClientSummaries) => {
-  setAllSummaryGroups(prev =>
-    prev.map(group => {
-      if (
-        String(group.summary_group_id) === String(summary_group_id)
-      ) {
-        return {
-          ...group,
-          stages: updatedClientSummaries[0].stages, // selected group only
-        };
-      }
-      return group;
-    })
-  );
 };
 
 
@@ -403,7 +413,6 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
       ...updated[groupIndex],
       stages,
     };
-syncToAllGroups(updated);
 
     return updated;
   });
@@ -510,8 +519,6 @@ if (
 }
 
     updated[groupIndex] = { ...group, stages };
-    syncToAllGroups(updated);
-
     return updated;
   });
 
@@ -569,7 +576,6 @@ if (
               approx_shops: selectedTask?.approx_shops || "",
               approx_offices: selectedTask?.approx_offices || "",
               approx_hawkers: selectedTask?.approx_hawkers || "",
-              task_reporting_date: taskReportingDate
             }));
           }
         } catch (e) {
@@ -655,6 +661,11 @@ const validateFields = () => {
         valid = false;
       }
 
+      if (shouldShowComment(stage) && !stage.data.comment) {
+  newErrors[`${baseKey}_comment`] = "Comment is required";
+  valid = false;
+}
+
       // // ✅ Common required fields
       // const requiredCommonFields = [];
 
@@ -686,34 +697,49 @@ const validateFields = () => {
   setErrors(newErrors);
   return valid;
 };
-
+  
 useEffect(() => {
-  if (isInitialHydrationRef.current) return;
-
   let totalClient = 0;
   let totalCapture = 0;
   let totalConfirmation = 0;
+  let totaljoinee = 0;
 
   let visits = 0;
   let inPipeline = 0;
   let joined = 0;
 
-  allSummaryGroups.forEach((group) => {
-    const client = group.stages.find(s => s.type === "Client Summary");
-    const capture = group.stages.find(s => s.type === "Capture Summary");
-    const confirm = group.stages.find(s => s.type === "Confirm Summary");
+  clientSummaries.forEach((group) => {
+    const client = group.stages.find(
+      (s) => s.type === "Client Summary"
+    );
+    const capture = group.stages.find(
+      (s) => s.type === "Capture Summary"
+    );
+    const confirm = group.stages.find(
+      (s) => s.type === "Confirm Summary"
+    );
 
-    /* 🥇 CONFIRM */
+    /* 🥇 PRIORITY 1: CONFIRMATION */
     if (
-      confirm &&
-      (confirm.status === "Confirm" || confirm.status === "Joined")
+      confirm && (confirm?.status === "Confirm" ||
+      confirm?.status === "Joined" )
     ) {
-      totalConfirmation++;
-      joined++;
+      totalConfirmation += 1;
+      joined += 1;
       return;
     }
 
-    /* 🥈 CAPTURE */
+    if (
+      confirm?.status === "Confirm" ||
+      (confirm?.status === "Joined" &&
+        capture.data.capture_action === "Captured")
+    ) {
+      totalConfirmation += 1;
+      inPipeline += 1;
+      return;
+    }
+
+    /* 🥈 PRIORITY 2: CAPTURE */
     if (
       capture &&
       (
@@ -723,39 +749,58 @@ useEffect(() => {
           capture.data.capture_action !== "Captured")
       )
     ) {
-      totalCapture++;
-      inPipeline++;
+      totalCapture += 1;
+      inPipeline += 1;
       return;
     }
-
-    /* 🥉 CLIENT */
-    if (
-      client &&
-      client.status === "Confirm" &&
-      client.data.client_action === "Completed"
+    
+   if (
+      capture &&
+      (
+        capture.status === "Pending" ||
+        capture.status === "Re-Action" ||
+        (capture.status === "Confirm" &&
+          capture.data.capture_action === "Captured")
+      )
     ) {
-      totalCapture++;
-      inPipeline++;
+      totalConfirmation += 1;
+      inPipeline += 1;
       return;
     }
 
-    /* 🧱 DEFAULT */
-    if (client && client.status) {
-      totalClient++;
-      visits++;
+    
+
+    /* 🥈 PRIORITY 3: CLIENT */
+
+     if (
+      client &&
+      (client.status === "Confirm" &&
+          client.data.client_action === "Completed")
+    ) {
+      totalCapture += 1;
+      inPipeline += 1;
+      return;
+    }
+    
+
+    /* 🥉 PRIORITY 4: CLIENT */
+    if (client && client?.status ) {
+      totalClient += 1;
+      visits += 1;
     }
   });
 
-  setFormData(prev => ({
+  setFormData((prev) => ({
     ...prev,
-    visits,
-    joined,
-    in_pipeline: inPipeline,
     total_client: totalClient,
     total_capture: totalCapture,
     total_confirmation: totalConfirmation,
+    visits,
+    in_pipeline: inPipeline,
+    joined,
   }));
-}, [allSummaryGroups]);
+}, [clientSummaries]);
+
 
 
 
@@ -786,45 +831,46 @@ const handleSubmit = async (e) => {
 
     // 4️⃣ Prepare payload and submit
     const payload = {
-      formData: { visits : formData?.visits, joined : formData.joined, in_pipeline: formData?.in_pipeline, total_leads: formData?.total_leads,
-    daily_leads:formData?.daily_leads,
-    total_capture: formData?.total_capture,
-    daily_capture:formData?.daily_capture,
-    total_client:formData?.total_client,
-    daily_client:formData?.daily_client,
-    total_confirmation:formData?.total_confirmation,
-    Daily_confirmation:formData?.Daily_confirmation, },
-      clientSummaries,
-    };
+  formData: {
+    ...formData,
+    task_id: currentTask?.id,
+    task_reporting_date: dayjs(formData.task_reporting_date).format("YYYY-MM-DD"),
+  },
+  clientSummaries: clientSummaries.map(group => ({
+    ...group,
+    stages: group.stages.map(stage => ({
+      ...stage,
+      action: stage.action || {},   // 🔥 JSONB
+    })),
+  })),
+};
 
-    console.log(payload);
-    
 
     // 5️⃣ Submit API
-    // (async () => {
-    //   try {
-    //     setLoading(true);
-    //     const resp = await post_task_report_details(payload);
-    //     if (resp?.success) {
-    //       setSnackbar({
-    //         open: true,
-    //         message: "Task reported successfully",
-    //         severity: "success",
-    //       });
-    //       setFormData(initialData);
-    //       setTimeout(()=>{navigate('../sales-staff/my-tasks')},[1000]);
-    //     }
-    //   } catch (err) {
-    //     console.error(err);
-    //     setSnackbar({
-    //       open: true,
-    //       message: "Failed to report the task",
-    //       severity: "error",
-    //     });
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // })();
+    (async () => {
+      try {
+        setLoading(true);
+        const resp = await post_task_report_details(payload);
+        if (resp?.success) {
+          setSnackbar({
+            open: true,
+            message: "Task reported successfully",
+            severity: "success",
+          });
+          setFormData(initialData);
+          setTimeout(()=>{navigate('../marketing-staff/my-tasks')},[1000]);
+        }
+      } catch (err) {
+        console.error(err);
+        setSnackbar({
+          open: true,
+          message: "Failed to report the task",
+          severity: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, 0); // schedule after state update
 };
 
@@ -842,7 +888,15 @@ const handleSubmit = async (e) => {
           id: `${prefix}_title`,
           name: `${prefix}_title`,
           label: `${stage.type} - ${group.id} `,
-          
+          btn: stage.type === "Client Summary"
+    ? groupIndex === 0
+      ? "Add"
+      : "Remove"
+    : null,
+          handleAddClick: handleAddClientSummary,
+
+          // btn: groupIndex > 0 ? "Remove" : stageIndex === 0 ? "Add" : null,
+          handleRemoveClick: () => handleRemoveClientSummary(groupIndex),
         },
 
         {
@@ -980,7 +1034,7 @@ const handleSubmit = async (e) => {
               {
                 id: `${prefix}_client_action`,
                 name: `${prefix}_client_action`,
-                label: "Select",
+                label: "Select Action",
                 type: "select",
                 options: [
                   "Completed",
@@ -1001,21 +1055,22 @@ const handleSubmit = async (e) => {
             ]
           : []),
 
-        ...(stage.type === "Capture Summary" &&  stage.status === "Confirm"
+        ...(stage.type === "Capture Summary"
           ? [
               {
                 id: `${prefix}_capture_action`,
                 name: `${prefix}_capture_action`,
-                label: "Select",
+                label: "Select Action",
                 type: "select",
-                options: [
-                  "Form 1",
-                  "Send URL",
-                  "Visit",
-                  "Feedback",
-                  "Re-Visit",
-                  "Captured"
-                ],
+                options: (() => {
+  const h = stage.history || {};
+
+  if (!h.form1) return ["Form 1"];
+  if (h.form1 && !h.send_url) return ["Send URL"];
+  if (h.form1 && h.send_url && !h.visit) return ["Visit"];
+
+  return ["Feedback", "Re-Visit", "Captured"];
+})(),
                 cName: "w-30",
                 value: stage.data.capture_action,
                 onChange: (e) =>
@@ -1049,7 +1104,7 @@ const handleSubmit = async (e) => {
               {
                 id: `${prefix}_confirm_action`,
                 name: `${prefix}_confirm_action`,
-                label: "Select",
+                label: "Select Action",
                 type: "select",
                 options: stage.status === 'Joined' ? [
                   "Self Creation",
@@ -1080,6 +1135,26 @@ const handleSubmit = async (e) => {
               },
             ]
           : []),
+          ...(shouldShowComment(stage)
+  ? [
+      {
+        id: `${prefix}_comment`,
+        name: `${prefix}_comment`,
+        label: "Comment",
+        type: "textarea",
+        cName: "w-100",
+        value: stage.data.comment,
+        onChange: (e) =>
+          handleStageDataChange(
+            groupIndex,
+            stageIndex,
+            "comment",
+            e.target.value
+          ),
+      },
+    ]
+  : []),
+
       ];
     })
 );
@@ -1280,4 +1355,4 @@ const handleSubmit = async (e) => {
   );
 };
 
-export default UpdateStaffReportSubmittedForm;
+export default StaffReportForm;
