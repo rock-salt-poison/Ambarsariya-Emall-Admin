@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DialogPopup from "../../DialogPopup";
 import BoxHeader from "../../DashboardContent/BoxHeader";
-import DashboardTable from "../../../Dashboard/Sales/SalesManager/DashboardTable";
+import DashboardTable from "../../../Dashboard/Sales/Manager/DashboardTable";
 import AddStaffForm from "./AddStaffForm";
 
 function SalesDashboard() {

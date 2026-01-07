@@ -1,10 +1,7 @@
 import { Box, Button } from "@mui/material";
 import React, { useState } from "react";
-import DialogPopup from "../../DialogPopup";
 import BoxHeader from "../../DashboardContent/BoxHeader";
-import AddStaffForm from "../SalesManager/AddStaffForm";
-import StaffDashboardTable from "./StaffDashboardTable";
-import StaffReportForm from "../SalesManager/StaffReportForm";
+import StaffReportForm from "../Manager/StaffReportForm";
 
 function StaffReport() {
     const [open, setOpen] = useState(false);
@@ -17,13 +14,6 @@ function StaffReport() {
                     <StaffReportForm />
                 </Box>
             </Box>
-
-            <DialogPopup
-                open={open}
-                handleClose={() => setOpen(false)}
-                FormComponent= {AddStaffForm}
-                popupHeading="Tasks"
-            />
         </Box>
     );
 }
