@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import FormFields from "../Form/FormFields";
-import { Box, Button } from "@mui/material";
+import { Box, Button, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAdminToken } from "../../store/authSlice";
@@ -16,6 +16,7 @@ function LoginForm() {
 
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -42,6 +43,7 @@ function LoginForm() {
 
     try {
       // Call your API to authenticate
+      setLoading(true);
       const response = await authenticateUser(formData);
       console.log(response);
       
@@ -57,11 +59,14 @@ function LoginForm() {
     } catch (error) {
       console.error(error);
       setSnackbar({ open: true, message: error.response.data.message, severity: "error" });
+    }finally{
+      setLoading(false);
     }
   };
 
   return (
     <Box component="form" noValidate autoComplete="off" onSubmit={handleSubmit}>
+      {loading && <Box className="loading"><CircularProgress/></Box> }
       {formFields.map((field) => (
         <FormFields
           key={field.id}

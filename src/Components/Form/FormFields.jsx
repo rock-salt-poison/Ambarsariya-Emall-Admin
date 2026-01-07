@@ -138,7 +138,6 @@ const ITEM_PADDING_TOP = 8;
             required={required}
             multiple={multiple}
             error={error}
-            helperText={helperText}
             readOnly={readOnly}
           >
 

@@ -418,124 +418,96 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
   });
 };
 
+const pushActionHistory = (stage, field, value) => {
+  const allowedFields = ["client_action", "capture_action", "confirm_action"];
+  if (!allowedFields.includes(field)) return stage;
 
-const handleStageDataChange = async (
-  groupIndex,
-  stageIndex,
-  field,
-  value
-) => {
+  // Initialize the action array if not present
+  if (!stage.action) stage.action = {};
+  if (!Array.isArray(stage.action[field])) stage.action[field] = [];
+
+  stage.action[field].push({
+    action: value,
+    comment: stage.data.comment || "",
+    date: new Date().toISOString(),
+  });
+
+  // Always update stage.data[field] with latest value for the form
+  stage.data[field] = value;
+
+  return stage;
+};
+
+
+
+
+const handleStageDataChange = async (groupIndex, stageIndex, field, value) => {
   setClientSummaries((prev) => {
     const updated = [...prev];
     const group = { ...updated[groupIndex] };
     const stages = [...group.stages];
-    const currentStage = { ...stages[stageIndex] };
+    let currentStage = { ...stages[stageIndex] };
 
+    // 1️⃣ Update stage.data with the new value
     currentStage.data = {
       ...currentStage.data,
       [field]: value,
-      ...(field === "domain" ? { sector: "" } : {}),
+      ...(field === "domain" ? { sector: "" } : {}), // Reset sector if domain changes
     };
 
+    // 3️⃣ Add or remove dependent stages based on action/status
+    const type = currentStage.type;
+
+    if (type === "Client Summary" && field === "client_action") {
+      const captureIndex = stages.findIndex((s) => s.type === "Capture Summary");
+
+      if (value === "Completed" && captureIndex === -1) {
+        const newStage = {
+          ...createEmptyStage("Capture Summary"),
+          data: {
+            ...createEmptyStage("Capture Summary").data,
+            ...copyCommonData(currentStage.data),
+          },
+        };
+        stages.push(newStage);
+        loadSectorsForStage(currentStage.data.domain, groupIndex, stages.length - 1);
+      } else if (value !== "Completed" && captureIndex !== -1) {
+        stages.splice(captureIndex);
+      }
+    }
+
+    if (type === "Capture Summary" && field === "capture_action") {
+      const confirmIndex = stages.findIndex((s) => s.type === "Confirm Summary");
+
+      if (value === "Captured" && confirmIndex === -1) {
+        const newStage = {
+          ...createEmptyStage("Confirm Summary"),
+          data: {
+            ...createEmptyStage("Confirm Summary").data,
+            ...copyCommonData(currentStage.data),
+          },
+        };
+        stages.push(newStage);
+        loadSectorsForStage(currentStage.data.domain, groupIndex, stages.length - 1);
+      } else if (value !== "Captured" && confirmIndex !== -1) {
+        stages.splice(confirmIndex);
+      }
+    }
+
+    // 4️⃣ Update the stages in the group
     stages[stageIndex] = currentStage;
-
-    /* ✅ ADD ONLY THIS BLOCK */
-    if (
-  field === "client_action" &&
-  currentStage.type === "Client Summary" &&
-  currentStage.status === "Confirm"
-) {
-  const captureIndex = stages.findIndex(
-    (s) => s.type === "Capture Summary"
-  );
-
-  // ✅ ADD Capture when Completed
-  if (value === "Completed") {
-    if (captureIndex === -1) {
-      const newIndex = stages.length;
-
-      const newStage = {
-        ...createEmptyStage("Capture Summary"),
-        data: {
-          ...createEmptyStage("Capture Summary").data,
-          ...copyCommonData(currentStage.data),
-        },
-      };
-
-      stages.push(newStage);
-
-      loadSectorsForStage(
-        currentStage.data.domain,
-        groupIndex,
-        newIndex
-      );
-    }
-  }
-  // ❌ REMOVE Capture when NOT Completed
-  else {
-    if (captureIndex !== -1) {
-      stages.splice(captureIndex);
-    }
-  }
-}
-
-if (
-  field === "capture_action" &&
-  currentStage.type === "Capture Summary" &&
-  currentStage.status === "Confirm"
-) {
-  const confirmIndex = stages.findIndex(
-    (s) => s.type === "Confirm Summary"
-  );
-
-  // ✅ ADD Capture when Completed
-  if (value === "Captured") {
-    if (confirmIndex === -1) {
-      const newIndex = stages.length;
-
-      const newStage = {
-        ...createEmptyStage("Confirm Summary"),
-        data: {
-          ...createEmptyStage("Confirm Summary").data,
-          ...copyCommonData(currentStage.data),
-        },
-      };
-
-      stages.push(newStage);
-
-      loadSectorsForStage(
-        currentStage.data.domain,
-        groupIndex,
-        newIndex
-      );
-    }
-  }
-  // ❌ REMOVE Capture when NOT Completed
-  else {
-    if (confirmIndex !== -1) {
-      stages.splice(confirmIndex);
-    }
-  }
-}
-
     updated[groupIndex] = { ...group, stages };
+
     return updated;
   });
 
-  // 🔁 keep your existing domain → sector fetch exactly as-is
+  // 5️⃣ Fetch sectors if domain changes
   if (field === "domain" && value) {
     try {
-      console.log(value);
-      
-      const selectedDomain = domains.find(
-        (d) => d.domain_id === value
-      );
-
+      const selectedDomain = domains.find((d) => d.domain_id === value);
       if (!selectedDomain) return;
 
-      const resp = await fetchDomainSectors(
-        selectedDomain.domain_id
-      );
+      const resp = await fetchDomainSectors(selectedDomain.domain_id);
 
       setSectorMap((prev) => ({
         ...prev,
@@ -550,6 +522,7 @@ if (
     }
   }
 };
+
 
   
   useEffect(() => {
@@ -837,14 +810,24 @@ const handleSubmit = async (e) => {
     task_reporting_date: dayjs(formData.task_reporting_date).format("YYYY-MM-DD"),
   },
   clientSummaries: clientSummaries.map(group => ({
-    ...group,
+    id: group.id,
     stages: group.stages.map(stage => ({
-      ...stage,
-      action: stage.action || {},   // 🔥 JSONB
+      type: stage.type,
+      status: stage.status,
+      data:{...stage.data,
+      client_action: stage.data.client_action
+        ? [{ action: stage.data.client_action, comment: stage.data.comment || "", date: new Date().toISOString() }]
+        : [],
+      capture_action: stage.data.capture_action
+        ? [{ action: stage.data.capture_action, comment: stage.data.comment || "", date: new Date().toISOString() }]
+        : [],
+      confirm_action: stage.data.confirm_action
+        ? [{ action: stage.data.confirm_action, comment: stage.data.comment || "", date: new Date().toISOString() }]
+        : [],}
     })),
   })),
 };
-
+console.log(payload);
 
     // 5️⃣ Submit API
     (async () => {
@@ -871,6 +854,8 @@ const handleSubmit = async (e) => {
         setLoading(false);
       }
     })();
+
+    
   }, 0); // schedule after state update
 };
 
