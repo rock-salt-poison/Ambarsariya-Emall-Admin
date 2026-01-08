@@ -61,33 +61,48 @@ const StaffReportForm = () => {
     client_action: "",
     confirm_action: "",
     capture_action: "",
-    comment: "",
+    client_comment: "",
+    capture_comments: {},
+    confirm_comment: "",
     shop_no: "",
   },
 });
 
-const ACTION_KEY_MAP = {
-  "Form 1": "form1",
-  "Send URL": "send_url",
-  "Visit": "visit",
-  "Feedback": "feedback",
-  "Re-Visit": "revisit",
-  "Captured": "captured",
-};
+// const ACTION_KEY_MAP = {
+//   "Form 1": "form1",
+//   "Send URL": "send_url",
+//   "Visit": "visit",
+//   "Feedback": "feedback",
+//   "Re-Visit": "revisit",
+//   "Captured": "captured",
+// };
 
-const shouldShowComment = (stage) => {
-  if (stage.type === "Client Summary" && stage.status === "Contact") {
-    return true;
-  }
+// const shouldShowComment = (stage) => {
+//   if (stage.type === "Client Summary" && stage.status === "Contact") {
+//     return true;
+//   }
 
-  if (stage.type === "Capture Summary") {
-    return ["Form 1", "Send URL", "Visit"].includes(
-      stage.data.capture_action
-    );
-  }
+//   if (stage.type === "Capture Summary") {
+//     return ["Form 1", "Send URL", "Visit"].includes(
+//       stage.data.capture_action
+//     );
+//   }
 
-  return false;
-};
+//   return false;
+// };
+
+const shouldShowClientComment = (stage) =>
+  stage.type === "Client Summary" &&
+  stage.status === "Contact";
+
+const shouldShowCaptureComment = (stage) =>
+  stage.type === "Capture Summary" &&
+  ["Form 1", "Send URL", "Visit"].includes(stage.data.capture_action);
+
+const shouldShowConfirmComment = (stage) =>
+  stage.type === "Confirm Summary" &&
+  !!stage.data.confirm_action;
+
 
 
 const createClientSummaryGroup = (id) => ({
@@ -112,8 +127,6 @@ const createClientSummaryGroup = (id) => ({
  const [clientSummaries, setClientSummaries] = useState([
     createClientSummaryGroup(1),
   ]);
-
-  console.log(currentTask);
   
 
   const copyCommonData = (fromData) => ({
@@ -173,9 +186,7 @@ const createClientSummaryGroup = (id) => ({
 
   const fetchExistingReport = async () => {
     try {
-      setLoading(true);
-      console.log(currentTask?.id, dayjs(formData?.task_reporting_date)?.format('YYYY-MM-DD'));
-      
+      setLoading(true);  
 
       const resp = await get_staff_member_task_report_details(
         currentTask.id,
@@ -204,9 +215,12 @@ const createClientSummaryGroup = (id) => ({
   fetchExistingReport();
 }, [formData.task_reporting_date, currentTask?.id]);
 
+const getLastAction = (arr) =>
+  Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
+
 
 const hydrateReport = (report) => {
-  // 1️⃣ Totals
+  /* 1️⃣ Totals */
   setFormData((p) => ({
     ...p,
     visits: Number(report.visits) || 0,
@@ -222,78 +236,103 @@ const hydrateReport = (report) => {
     Daily_confirmation: Number(report.daily_confirmation) || 0,
   }));
 
-  /**
-   * 2️⃣ Build logical groups using parent relationship
-   */
-  const tempGroups = {};
+  /* 2️⃣ Group summaries by root client */
   const summaryMap = new Map();
+  report.summaries.forEach((s) => summaryMap.set(s.id, s));
 
+  const grouped = {};
   report.summaries.forEach((s) => {
-    summaryMap.set(s.id, s);
-  });
-
-  report.summaries.forEach((s) => {
-    // Find ROOT client summary
     let root = s;
     while (root.parent_summary_id) {
       root = summaryMap.get(root.parent_summary_id);
     }
-
-    if (!tempGroups[root.id]) {
-      tempGroups[root.id] = [];
-    }
-
-    tempGroups[root.id].push(s);
+    grouped[root.id] ??= [];
+    grouped[root.id].push(s);
   });
 
-  /**
-   * 3️⃣ Convert to UI groups (1,2,3…)
-   */
+  /* 3️⃣ Build UI groups */
   const ORDER = ["Client Summary", "Capture Summary", "Confirm Summary"];
 
-  const clientSummaries = Object.values(tempGroups).map((items, index) => ({
-    id: index + 1, // ✅ STARTS FROM 1
+  const uiGroups = Object.values(grouped).map((items, idx) => ({
+    id: idx + 1,
     stages: items
       .sort(
         (a, b) =>
           ORDER.indexOf(a.summary_type) -
           ORDER.indexOf(b.summary_type)
       )
-      .map((s) => ({
-        type: s.summary_type,
-        status: s.status,
-        action: s.action || {},
-history: {
-  form1: !!s.action?.form1?.some(a => a.status === "confirm"),
-  send_url: !!s.action?.send_url?.some(a => a.status === "confirm"),
-  visit: !!s.action?.visit?.some(a => a.status === "confirm"),
-},
+      .map((s) => {
+        const action = s.action || {};
 
-        data: {
-          name: s.name || "",
-          phone: s.phone || "",
-          email: s.email || "",
-          shop: s.shop_name || "",
-          domain: s.shop_domain || "",
-          sector: s.shop_sector || "",
-          shop_no: s.shop_no || "",
-          location: s.location || "",
-          client_action:
-            s.summary_type === "Client Summary" ? s.action : "",
-          capture_action:
-            s.summary_type === "Capture Summary" ? s.action : "",
-          confirm_action:
-            s.summary_type === "Confirm Summary" ? s.action : "",
-        },
-      })),
+        const lastClient = getLastAction(action.client_action);
+        const lastCapture = getLastAction(action.capture_action);
+        const lastConfirm = getLastAction(action.confirm_action);
+const captureComments = {};
+action.capture_action?.forEach((a) => {
+  captureComments[a.action] = a.comment;
+});
+
+        return {
+          type: s.summary_type,
+          status: s.status,
+
+          /* 🔥 FULL HISTORY STORED HERE */
+          action,
+
+          /* 🔄 history flags (used for Capture flow logic) */
+          history: {
+            form1: !!action.capture_action?.some(a => a.action === "Form 1"),
+            send_url: !!action.capture_action?.some(a => a.action === "Send URL"),
+            visit: !!action.capture_action?.some(a => a.action === "Visit"),
+          },
+
+          data: {
+            name: s.name || "",
+            phone: s.phone || "",
+            email: s.email || "",
+            shop: s.shop_name || "",
+            domain: s.shop_domain || "",
+            sector: s.shop_sector || "",
+            shop_no: s.shop_no || "",
+            location: s.location || "",
+
+            /* ✅ Latest actions only for dropdowns */
+            client_action:
+              s.summary_type === "Client Summary"
+                ? lastClient?.action || ""
+                : "",
+
+            capture_action:
+              s.summary_type === "Capture Summary"
+                ? lastCapture?.action || ""
+                : "",
+
+            confirm_action:
+              s.summary_type === "Confirm Summary"
+                ? lastConfirm?.action || ""
+                : "",
+
+                client_comment:
+              s.summary_type === "Client Summary"
+                ? lastClient?.comment || ""
+                : "",
+
+            capture_comments:
+              captureComments,
+
+            confirm_comment:
+              s.summary_type === "Confirm Summary"
+                ? lastConfirm?.comment || ""
+                : "",
+          },
+        };
+      }),
   }));
 
-  setClientSummaries(clientSummaries);
+  setClientSummaries(uiGroups);
 
-  /**
-   * 4️⃣ Load sectors (unchanged)
-   */
-  clientSummaries.forEach((group, gIdx) => {
+  /* 4️⃣ Load sectors */
+  uiGroups.forEach((group, gIdx) => {
     group.stages.forEach((stage, sIdx) => {
       if (stage.data.domain) {
         loadSectorsForStage(stage.data.domain, gIdx, sIdx);
@@ -301,6 +340,7 @@ history: {
     });
   });
 };
+
 
 
 
@@ -343,7 +383,6 @@ history: {
   // };
 const loadSectorsForStage = async (domainName, groupIndex, stageIndex) => {
   if (!domainName) return;
-  console.log(domainName);
   
   const selectedDomain = domains.find(
     (d) => d.domain_id === domainName
@@ -418,28 +457,6 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
   });
 };
 
-const pushActionHistory = (stage, field, value) => {
-  const allowedFields = ["client_action", "capture_action", "confirm_action"];
-  if (!allowedFields.includes(field)) return stage;
-
-  // Initialize the action array if not present
-  if (!stage.action) stage.action = {};
-  if (!Array.isArray(stage.action[field])) stage.action[field] = [];
-
-  stage.action[field].push({
-    action: value,
-    comment: stage.data.comment || "",
-    date: new Date().toISOString(),
-  });
-
-  // Always update stage.data[field] with latest value for the form
-  stage.data[field] = value;
-
-  return stage;
-};
-
-
-
 
 const handleStageDataChange = async (groupIndex, stageIndex, field, value) => {
   setClientSummaries((prev) => {
@@ -475,6 +492,18 @@ const handleStageDataChange = async (groupIndex, stageIndex, field, value) => {
         stages.splice(captureIndex);
       }
     }
+
+    if (
+  currentStage.type === "Capture Summary" &&
+  field === "capture_action"
+) {
+  currentStage.data.capture_comments = {
+    ...currentStage.data.capture_comments,
+    [value]:
+      currentStage.data.capture_comments?.[value] || "",
+  };
+}
+
 
     if (type === "Capture Summary" && field === "capture_action") {
       const confirmIndex = stages.findIndex((s) => s.type === "Confirm Summary");
@@ -634,10 +663,35 @@ const validateFields = () => {
         valid = false;
       }
 
-      if (shouldShowComment(stage) && !stage.data.comment) {
-  newErrors[`${baseKey}_comment`] = "Comment is required";
+      if (
+  shouldShowClientComment(stage) &&
+  !stage.data.client_comment
+) {
+  newErrors[`${baseKey}_client_comment`] = "Comment required";
   valid = false;
 }
+
+if (stage.type === "Capture Summary") {
+  Object.entries(stage.data.capture_comments || {}).forEach(
+    ([action, comment]) => {
+      if (!comment) {
+        newErrors[`${baseKey}_capture_comment_${action}`] =
+          `${action} comment required`;
+        valid = false;
+      }
+    }
+  );
+}
+
+
+if (
+  shouldShowConfirmComment(stage) &&
+  !stage.data.confirm_comment
+) {
+  newErrors[`${baseKey}_confirm_comment`] = "Comment required";
+  valid = false;
+}
+
 
       // // ✅ Common required fields
       // const requiredCommonFields = [];
@@ -775,10 +829,6 @@ useEffect(() => {
 }, [clientSummaries]);
 
 
-
-
-  console.log(errors);
-
 const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -815,19 +865,32 @@ const handleSubmit = async (e) => {
       type: stage.type,
       status: stage.status,
       data:{...stage.data,
-      client_action: stage.data.client_action
-        ? [{ action: stage.data.client_action, comment: stage.data.comment || "", date: new Date().toISOString() }]
+      client_action:   stage.type === "Client Summary" &&
+  (stage.data.client_action || stage.data.client_comment)
+        ? [{ action: stage.data.client_action || null, comment: stage.data.client_comment || null, date: new Date().toISOString() }]
         : [],
-      capture_action: stage.data.capture_action
-        ? [{ action: stage.data.capture_action, comment: stage.data.comment || "", date: new Date().toISOString() }]
-        : [],
-      confirm_action: stage.data.confirm_action
-        ? [{ action: stage.data.confirm_action, comment: stage.data.comment || "", date: new Date().toISOString() }]
-        : [],}
+      capture_action:
+  stage.type === "Capture Summary"
+    ? Object.entries(stage.data.capture_comments || {}).map(
+        ([action, comment]) => ({
+          action,
+          comment,
+          date: new Date().toISOString(),
+        })
+      )
+    : [],
+
+      confirm_action: stage.type === "Confirm Summary" && stage.data.confirm_action
+    ? [{
+        action: stage.data.confirm_action,
+        comment: stage.data.confirm_comment || "",
+        date: new Date().toISOString(),
+      }]
+    : [],
+}
     })),
   })),
 };
-console.log(payload);
 
     // 5️⃣ Submit API
     (async () => {
@@ -1051,10 +1114,10 @@ console.log(payload);
   const h = stage.history || {};
 
   if (!h.form1) return ["Form 1"];
-  if (h.form1 && !h.send_url) return ["Send URL"];
-  if (h.form1 && h.send_url && !h.visit) return ["Visit"];
+  if (h.form1 && !h.send_url) return ["Form 1", "Send URL"];
+  if (h.form1 && h.send_url && !h.visit) return ["Form 1", "Send URL", "Visit"];
 
-  return ["Feedback", "Re-Visit", "Captured"];
+  return ["Form 1", "Send URL", "Visit","Feedback", "Re-Visit", "Captured"];
 })(),
                 cName: "w-30",
                 value: stage.data.capture_action,
@@ -1120,25 +1183,56 @@ console.log(payload);
               },
             ]
           : []),
-          ...(shouldShowComment(stage)
-  ? [
-      {
-        id: `${prefix}_comment`,
-        name: `${prefix}_comment`,
-        label: "Comment",
-        type: "textarea",
-        cName: "w-100",
-        value: stage.data.comment,
-        onChange: (e) =>
-          handleStageDataChange(
-            groupIndex,
-            stageIndex,
-            "comment",
-            e.target.value
-          ),
-      },
-    ]
+          ...(shouldShowClientComment(stage)
+  ? [{
+      id: `${prefix}_client_comment`,
+      label: "Client Comment",
+      type: "textarea",
+      value: stage.data.client_comment,
+      onChange: (e) =>
+        handleStageDataChange(
+          groupIndex,
+          stageIndex,
+          "client_comment",
+          e.target.value
+        ),
+    }]
   : []),
+...(stage.type === "Capture Summary"
+  ? Object.keys(stage.data.capture_comments || {}).map((actionKey) => ({
+      id: `${prefix}_capture_comment_${actionKey}`,
+      label: `${actionKey} Comment`, // 🔥 dynamic label
+      type: "textarea",
+      value: stage.data.capture_comments[actionKey],
+      onChange: (e) =>
+        handleStageDataChange(
+          groupIndex,
+          stageIndex,
+          "capture_comments",
+          {
+            ...stage.data.capture_comments,
+            [actionKey]: e.target.value,
+          }
+        ),
+    }))
+  : []),
+
+...(shouldShowConfirmComment(stage)
+  ? [{
+      id: `${prefix}_confirm_comment`,
+      label: "Confirm Comment",
+      type: "textarea",
+      value: stage.data.confirm_comment,
+      onChange: (e) =>
+        handleStageDataChange(
+          groupIndex,
+          stageIndex,
+          "confirm_comment",
+          e.target.value
+        ),
+    }]
+  : []),
+
 
       ];
     })
