@@ -152,7 +152,7 @@ const StaffReportSubmitted = () => {
       label: "Assigned Task",
       name: "assigned_task",
       type: "select",
-      options: tasks?.map((t) => ({ label: t?.assigned_task, value: t?.access_token })),
+      options: tasks.length > 0 ? tasks?.map((t) => ({ label: t?.assigned_task, value: t?.access_token })) : ['No task reported'],
       disable: tasks?.length == 0 ? true : false,
       cName: 'w-45',
     },
