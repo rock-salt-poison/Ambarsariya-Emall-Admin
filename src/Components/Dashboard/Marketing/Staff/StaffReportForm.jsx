@@ -267,10 +267,12 @@ const hydrateReport = (report) => {
         const lastClient = getLastAction(action.client_action);
         const lastCapture = getLastAction(action.capture_action);
         const lastConfirm = getLastAction(action.confirm_action);
-const captureComments = {};
-action.capture_action?.forEach((a) => {
-  captureComments[a.action] = a.comment;
-});
+        const captureComments = {};
+        action.capture_action?.forEach((a) => {
+          const key = `${a.status}::${a.action}`;
+          captureComments[key] = a.comment;
+        });
+
 
         return {
           type: s.summary_type,
@@ -414,6 +416,12 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
 
     // 1️⃣ Update status
     currentStage[field] = value;
+     if (currentStage.type === "Capture Summary") {
+    currentStage.data = {
+      ...currentStage.data,
+      capture_action: "",
+    };
+  }
     stages[stageIndex] = currentStage;
 
     /**
@@ -493,21 +501,23 @@ const handleStageDataChange = async (groupIndex, stageIndex, field, value) => {
       }
     }
 
-    if (
+   if (
   currentStage.type === "Capture Summary" &&
   field === "capture_action"
 ) {
+  const key = `${currentStage.status}::${value}`;
+
   currentStage.data.capture_comments = {
     ...currentStage.data.capture_comments,
-    [value]:
-      currentStage.data.capture_comments?.[value] || "",
+    [key]:
+      currentStage.data.capture_comments?.[key] || "",
   };
 }
 
 
     if (type === "Capture Summary" && field === "capture_action") {
       const confirmIndex = stages.findIndex((s) => s.type === "Confirm Summary");
-
+      
       if (value === "Captured" && confirmIndex === -1) {
         const newStage = {
           ...createEmptyStage("Confirm Summary"),
@@ -671,17 +681,22 @@ const validateFields = () => {
   valid = false;
 }
 
-if (stage.type === "Capture Summary") {
-  Object.entries(stage.data.capture_comments || {}).forEach(
-    ([action, comment]) => {
-      if (!comment) {
-        newErrors[`${baseKey}_capture_comment_${action}`] =
-          `${action} comment required`;
-        valid = false;
-      }
-    }
-  );
+if (
+  stage.type === "Capture Summary" &&
+  stage.status &&
+  stage.data.capture_action
+) {
+  const key = `${stage.status}::${stage.data.capture_action}`;
+  const comment = stage.data.capture_comments?.[key];
+
+  if (!comment) {
+    newErrors[`${baseKey}_capture_comment_${key}`] =
+      "Comment required";
+    valid = false;
+  }
 }
+
+
 
 
 if (
@@ -724,6 +739,9 @@ if (
   setErrors(newErrors);
   return valid;
 };
+
+console.log(errors);
+
   
 useEffect(() => {
   let totalClient = 0;
@@ -872,13 +890,19 @@ const handleSubmit = async (e) => {
       capture_action:
   stage.type === "Capture Summary"
     ? Object.entries(stage.data.capture_comments || {}).map(
-        ([action, comment]) => ({
-          action,
-          comment,
-          date: new Date().toISOString(),
-        })
+        ([key, comment]) => {
+          const [status, action] = key.split("::");
+
+          return {
+            action,
+            status,
+            comment,
+            date: new Date().toISOString(),
+          };
+        }
       )
     : [],
+
 
       confirm_action: stage.type === "Confirm Summary" && stage.data.confirm_action
     ? [{
@@ -930,7 +954,8 @@ const handleSubmit = async (e) => {
   (group, groupIndex) =>
     group.stages.flatMap((stage, stageIndex) => {
       const prefix = `cs_${groupIndex}_${stageIndex}`;
-
+      console.log(stage);
+      
       return [
         {
           id: `${prefix}_title`,
@@ -954,6 +979,7 @@ const handleSubmit = async (e) => {
           type: "select",
           options: stage.type === "Client Summary" ? ["Pending", "Contact", "Confirm"] : stage.type === "Capture Summary" ? ["Pending", "Re-Action", "Confirm"] : stage.type === "Confirm Summary" ? ["Joined", "Hold", "Revisit"] : [],
           value: stage.status,
+          readOnly: stage.type === "Client Summary" && stage.status === 'Confirm' && stage.data.client_action==='Completed' ?  true : stage.type === "Capture Summary" && stage.status === 'Confirm' && stage.data.capture_action==='Captured' ? true : stage.type === "Confirm Summary" && stage.status === 'Joined' && stage.data.confirm_action ? true : false,
           cName: "w-30",
           onChange: (e) =>
             handleStageChange(
@@ -1092,6 +1118,7 @@ const handleSubmit = async (e) => {
                 ],
                 cName: "w-30",
                 value: stage.data.client_action,
+                readOnly: stage.type === "Client Summary" && stage.status === 'Confirm' && stage.data.client_action==='Completed' ?  true : false,
                 onChange: (e) =>
                   handleStageDataChange(
                     groupIndex,
@@ -1121,6 +1148,7 @@ const handleSubmit = async (e) => {
 })(),
                 cName: "w-30",
                 value: stage.data.capture_action,
+                readOnly: stage.type === "Capture Summary" && stage.status === 'Confirm' && stage.data.capture_action==='Captured' ? true : false,
                 onChange: (e) =>
                   handleStageDataChange(
                     groupIndex,
@@ -1172,6 +1200,7 @@ const handleSubmit = async (e) => {
                   "Support"
                 ] : [],
                 cName: "w-30",
+                readOnly: stage.type === "Confirm Summary" && stage.status === 'Joined' && stage.data.confirm_action ? true : false,
                 value: stage.data.confirm_action,
                 onChange: (e) =>
                   handleStageDataChange(
@@ -1198,24 +1227,33 @@ const handleSubmit = async (e) => {
         ),
     }]
   : []),
-...(stage.type === "Capture Summary"
-  ? Object.keys(stage.data.capture_comments || {}).map((actionKey) => ({
-      id: `${prefix}_capture_comment_${actionKey}`,
-      label: `${actionKey} Comment`, // 🔥 dynamic label
-      type: "textarea",
-      value: stage.data.capture_comments[actionKey],
-      onChange: (e) =>
-        handleStageDataChange(
-          groupIndex,
-          stageIndex,
-          "capture_comments",
-          {
-            ...stage.data.capture_comments,
-            [actionKey]: e.target.value,
-          }
-        ),
-    }))
+...(stage.type === "Capture Summary" &&
+  stage.status &&
+  stage.data.capture_action
+  ? (() => {
+      const key = `${stage.status}::${stage.data.capture_action}`;
+
+      return stage.data.capture_comments?.[key] !== undefined
+        ? [{
+            id: `${prefix}_capture_comment_${key}`,
+            label: `${stage.data.capture_action} Comment`,
+            type: "textarea",
+            value: stage.data.capture_comments[key],
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "capture_comments",
+                {
+                  ...stage.data.capture_comments,
+                  [key]: e.target.value,
+                }
+              ),
+          }]
+        : [];
+    })()
   : []),
+
 
 ...(shouldShowConfirmComment(stage)
   ? [{
