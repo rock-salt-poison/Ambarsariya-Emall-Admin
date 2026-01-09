@@ -128,6 +128,7 @@ const createClientSummaryGroup = (id) => ({
     createClientSummaryGroup(1),
   ]);
   
+  const apiTotalsRef = React.useRef(null);
 
   const copyCommonData = (fromData) => ({
     name: fromData.name,
@@ -141,6 +142,15 @@ const createClientSummaryGroup = (id) => ({
 
 
   useEffect(() => {
+  // Only calculate total_leads if not in edit mode (for new reports)
+  if (isEditMode && apiTotalsRef.current) {
+    setFormData(prev => ({
+      ...prev,
+      total_leads: apiTotalsRef.current.total_leads,
+    }));
+    return;
+  }
+
   const visits = Number(formData?.visits || 0);
   const joined = Number(formData?.joined || 0);
   const inPipeline = Number(formData?.in_pipeline || 0);
@@ -151,7 +161,7 @@ const createClientSummaryGroup = (id) => ({
     ...prev,
     total_leads: total_leads_summary,
   }));
-}, [formData?.visits, formData?.joined, formData?.in_pipeline]);
+}, [formData?.visits, formData?.joined, formData?.in_pipeline, isEditMode]);
 
   useEffect(()=>{
     const getDomains= async () => {
@@ -178,6 +188,7 @@ const createClientSummaryGroup = (id) => ({
   setIsEditMode(false);
   setExistingReportId(null);
   setClientSummaries([createClientSummaryGroup(1)]);
+  apiTotalsRef.current = null;
 };
 
 
@@ -220,28 +231,38 @@ const getLastAction = (arr) =>
 
 
 const hydrateReport = (report) => {
-  /* 1️⃣ Totals */
+  /* 1️⃣ Store API totals in ref */
+  apiTotalsRef.current = {
+    total_leads: Number(report.total_leads_summary) || 0,
+    total_client: Number(report.total_client_summary) || 0,
+    total_capture: Number(report.total_capture_summary) || 0,
+    total_confirmation: Number(report.total_confirmation) || 0,
+  };
+
+  /* 2️⃣ Set form data with API totals and daily values */
   setFormData((p) => ({
     ...p,
     visits: Number(report.visits) || 0,
     joined: Number(report.joined) || 0,
     in_pipeline: Number(report.in_pipeline) || 0,
-    total_leads: Number(report.total_leads_summary) || 0,
+    total_leads: apiTotalsRef.current.total_leads,
     daily_leads: Number(report.daily_leads_summary) || 0,
-    total_client: Number(report.total_client_summary) || 0,
+    total_client: apiTotalsRef.current.total_client,
     daily_client: Number(report.daily_client_summary) || 0,
-    total_capture: Number(report.total_capture_summary) || 0,
+    total_capture: apiTotalsRef.current.total_capture,
     daily_capture: Number(report.daily_capture_summary) || 0,
-    total_confirmation: Number(report.total_confirmation) || 0,
+    total_confirmation: apiTotalsRef.current.total_confirmation,
     Daily_confirmation: Number(report.daily_confirmation) || 0,
   }));
 
-  /* 2️⃣ Group summaries by root client */
+  /* 3️⃣ Group summaries by root client */
   const summaryMap = new Map();
-  report.summaries.forEach((s) => summaryMap.set(s.id, s));
+  const summaries = report.summaries || [];
+  
+  summaries.forEach((s) => summaryMap.set(s.id, s));
 
   const grouped = {};
-  report.summaries.forEach((s) => {
+  summaries.forEach((s) => {
     let root = s;
     while (root.parent_summary_id) {
       root = summaryMap.get(root.parent_summary_id);
@@ -250,7 +271,7 @@ const hydrateReport = (report) => {
     grouped[root.id].push(s);
   });
 
-  /* 3️⃣ Build UI groups */
+  /* 4️⃣ Build UI groups */
   const ORDER = ["Client Summary", "Capture Summary", "Confirm Summary"];
 
   const uiGroups = Object.values(grouped).map((items, idx) => ({
@@ -331,9 +352,10 @@ const hydrateReport = (report) => {
       }),
   }));
 
-  setClientSummaries(uiGroups);
+  // If no summaries exist, ensure at least one empty group is shown
+  setClientSummaries(uiGroups.length > 0 ? uiGroups : [createClientSummaryGroup(1)]);
 
-  /* 4️⃣ Load sectors */
+  /* 5️⃣ Load sectors */
   uiGroups.forEach((group, gIdx) => {
     group.stages.forEach((stage, sIdx) => {
       if (stage.data.domain) {
@@ -742,12 +764,24 @@ if (
 
 console.log(errors);
 
-  
+// Effect to ensure API totals are displayed when in edit mode
 useEffect(() => {
-  let totalClient = 0;
-  let totalCapture = 0;
-  let totalConfirmation = 0;
-  let totaljoinee = 0;
+  if (isEditMode && apiTotalsRef.current) {
+    setFormData(prev => ({
+      ...prev,
+      total_leads: apiTotalsRef.current.total_leads,
+      total_client: apiTotalsRef.current.total_client,
+      total_capture: apiTotalsRef.current.total_capture,
+      total_confirmation: apiTotalsRef.current.total_confirmation,
+    }));
+  }
+}, [isEditMode]);
+
+useEffect(() => {
+  // Calculate daily totals from form data (same way totals were calculated before)
+  let dailyClient = 0;
+  let dailyCapture = 0;
+  let dailyConfirmation = 0;
 
   let visits = 0;
   let inPipeline = 0;
@@ -769,7 +803,7 @@ useEffect(() => {
       confirm && (confirm?.status === "Confirm" ||
       confirm?.status === "Joined" )
     ) {
-      totalConfirmation += 1;
+      dailyConfirmation += 1;
       joined += 1;
       return;
     }
@@ -779,7 +813,7 @@ useEffect(() => {
       (confirm?.status === "Joined" &&
         capture.data.capture_action === "Captured")
     ) {
-      totalConfirmation += 1;
+      dailyConfirmation += 1;
       inPipeline += 1;
       return;
     }
@@ -794,7 +828,7 @@ useEffect(() => {
           capture.data.capture_action !== "Captured")
       )
     ) {
-      totalCapture += 1;
+      dailyCapture += 1;
       inPipeline += 1;
       return;
     }
@@ -808,7 +842,7 @@ useEffect(() => {
           capture.data.capture_action === "Captured")
       )
     ) {
-      totalConfirmation += 1;
+      dailyConfirmation += 1;
       inPipeline += 1;
       return;
     }
@@ -822,7 +856,7 @@ useEffect(() => {
       (client.status === "Confirm" &&
           client.data.client_action === "Completed")
     ) {
-      totalCapture += 1;
+      dailyCapture += 1;
       inPipeline += 1;
       return;
     }
@@ -830,21 +864,41 @@ useEffect(() => {
 
     /* 🥉 PRIORITY 4: CLIENT */
     if (client && client?.status ) {
-      totalClient += 1;
+      dailyClient += 1;
       visits += 1;
     }
   });
 
-  setFormData((prev) => ({
-    ...prev,
-    total_client: totalClient,
-    total_capture: totalCapture,
-    total_confirmation: totalConfirmation,
-    visits,
-    in_pipeline: inPipeline,
-    joined,
-  }));
-}, [clientSummaries]);
+  const dailyLeads = visits + joined + inPipeline;
+
+  setFormData((prev) => {
+    const updated = {
+      ...prev,
+      daily_client: dailyClient,
+      daily_capture: dailyCapture,
+      Daily_confirmation: dailyConfirmation,
+      daily_leads: dailyLeads,
+      visits,
+      in_pipeline: inPipeline,
+      joined,
+    };
+
+    // If in edit mode, use API totals; otherwise calculate totals from form data
+    if (isEditMode && apiTotalsRef.current) {
+      updated.total_leads = apiTotalsRef.current.total_leads;
+      updated.total_client = apiTotalsRef.current.total_client;
+      updated.total_capture = apiTotalsRef.current.total_capture;
+      updated.total_confirmation = apiTotalsRef.current.total_confirmation;
+    } else {
+      // Calculate totals from form data (for new reports)
+      updated.total_client = dailyClient;
+      updated.total_capture = dailyCapture;
+      updated.total_confirmation = dailyConfirmation;
+    }
+
+    return updated;
+  });
+}, [clientSummaries, isEditMode]);
 
 
 const handleSubmit = async (e) => {
@@ -1343,21 +1397,21 @@ const handleSubmit = async (e) => {
     }]:[],
     {
       id: 7,
-      label: "Total number of visits",
+      label: "Number of visits",
       name: "visits",
       type: "number",
       cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 8,
-      label: "Total number of joined",
+      label: "Number of joined",
       name: "joined",
       type: "number",
       cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 9,
-      label: "Total number of clients in pipeline",
+      label: "Number of clients in pipeline",
       name: "in_pipeline",
       type: "number",
       cName: viewReport ? 'w-30' : 'w-30 d_none',
@@ -1367,6 +1421,7 @@ const handleSubmit = async (e) => {
       label: "Total Leads Summary",
       name: "total_leads",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
@@ -1381,6 +1436,7 @@ const handleSubmit = async (e) => {
       label: "Total Client Summary",
       name: "total_client",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
@@ -1395,6 +1451,7 @@ const handleSubmit = async (e) => {
       label: "Total Capture Summary",
       name: "total_capture",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {
@@ -1409,6 +1466,7 @@ const handleSubmit = async (e) => {
       label: "Total Confirmation",
       name: "total_confirmation",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {

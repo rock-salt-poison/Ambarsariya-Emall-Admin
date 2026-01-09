@@ -51,6 +51,12 @@ const UpdateStaffReportSubmittedForm = () => {
   const createEmptyStage = (type) => ({
   type,
   status: "",
+  history: {
+    form1: false,
+    send_url: false,
+    visit: false,
+  },
+  action: {},          // 🔥 action = JSON history
   data: {
     name: "",
     phone: "",
@@ -62,9 +68,27 @@ const UpdateStaffReportSubmittedForm = () => {
     client_action: "",
     confirm_action: "",
     capture_action: "",
+    client_comment: "",
+    capture_comments: {},
+    confirm_comment: "",
     shop_no: "",
   },
 });
+
+const getLastAction = (arr) =>
+  Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
+
+const shouldShowClientComment = (stage) =>
+  stage.type === "Client Summary" &&
+  stage.status === "Contact";
+
+const shouldShowCaptureComment = (stage) =>
+  stage.type === "Capture Summary" &&
+  ["Form 1", "Send URL", "Visit"].includes(stage.data.capture_action);
+
+const shouldShowConfirmComment = (stage) =>
+  stage.type === "Confirm Summary" &&
+  !!stage.data.confirm_action;
 
 const createClientSummaryGroup = (id) => ({
   id,
@@ -106,6 +130,15 @@ const [allSummaryGroups, setAllSummaryGroups] = useState([]);
 
 
   useEffect(() => {
+  // Only calculate total_leads if not in edit mode (for new reports)
+  if (isEditMode && apiTotalsRef.current) {
+    setFormData(prev => ({
+      ...prev,
+      total_leads: apiTotalsRef.current.total_leads,
+    }));
+    return;
+  }
+
   const visits = Number(formData?.visits || 0);
   const joined = Number(formData?.joined || 0);
   const inPipeline = Number(formData?.in_pipeline || 0);
@@ -116,7 +149,7 @@ const [allSummaryGroups, setAllSummaryGroups] = useState([]);
     ...prev,
     total_leads: total_leads_summary,
   }));
-}, [formData?.visits, formData?.joined, formData?.in_pipeline]);
+}, [formData?.visits, formData?.joined, formData?.in_pipeline, isEditMode]);
 
   useEffect(()=>{
     const getDomains= async () => {
@@ -143,6 +176,7 @@ const [allSummaryGroups, setAllSummaryGroups] = useState([]);
   setIsEditMode(false);
   setExistingReportId(null);
   setClientSummaries([createClientSummaryGroup(1)]);
+  apiTotalsRef.current = null;
 };
 
 
@@ -183,44 +217,42 @@ const [allSummaryGroups, setAllSummaryGroups] = useState([]);
 
 
 const hydrateReport = (report) => {
-  // 1️⃣ Totals
-
+  /* 1️⃣ Store API totals in ref */
   apiTotalsRef.current = {
-    visits: Number(report.visits) || 0,
-    joined: Number(report.joined) || 0,
-    in_pipeline: Number(report.in_pipeline) || 0,
+    total_leads: Number(report.total_leads_summary) || 0,
     total_client: Number(report.total_client_summary) || 0,
     total_capture: Number(report.total_capture_summary) || 0,
     total_confirmation: Number(report.total_confirmation) || 0,
   };
 
-
- setFormData((prev) => ({
+  /* 2️⃣ Set form data with API totals and daily values */
+  setFormData((prev) => ({
     ...prev,
-    visits: apiTotalsRef.current.visits,
-    joined: apiTotalsRef.current.joined,
-    in_pipeline: apiTotalsRef.current.in_pipeline,
-    total_client: apiTotalsRef.current.total_client,
-    total_capture: apiTotalsRef.current.total_capture,
-    total_confirmation: apiTotalsRef.current.total_confirmation,
-    total_leads: Number(report.total_leads_summary) || 0,
+    visits: Number(report.visits) || 0,
+    joined: Number(report.joined) || 0,
+    in_pipeline: Number(report.in_pipeline) || 0,
+    total_leads: apiTotalsRef.current.total_leads,
     daily_leads: Number(report.daily_leads_summary) || 0,
+    total_client: apiTotalsRef.current.total_client,
     daily_client: Number(report.daily_client_summary) || 0,
+    total_capture: apiTotalsRef.current.total_capture,
     daily_capture: Number(report.daily_capture_summary) || 0,
+    total_confirmation: apiTotalsRef.current.total_confirmation,
     Daily_confirmation: Number(report.daily_confirmation) || 0,
   }));
 
   /**
    * 2️⃣ Build logical groups using parent relationship
    */
+  const summaries = report.summaries || [];
   const tempGroups = {};
   const summaryMap = new Map();
 
-  report.summaries.forEach((s) => {
+  summaries.forEach((s) => {
     summaryMap.set(s.id, s);
   });
 
-  report.summaries.forEach((s) => {
+  summaries.forEach((s) => {
     // Find ROOT client summary
     let root = s;
     while (root.parent_summary_id) {
@@ -247,28 +279,73 @@ const allGroups = Object.values(tempGroups).map((items) => ({
         ORDER.indexOf(a.summary_type) -
         ORDER.indexOf(b.summary_type)
     )
-    .map((s) => ({
-      type: s.summary_type,
-      status: s.status,
-      data: {
-        client_action:
-          s.summary_type === "Client Summary" ? s.action : "",
-        capture_action:
-          s.summary_type === "Capture Summary" ? s.action : "",
-        confirm_action:
-          s.summary_type === "Confirm Summary" ? s.action : "",
+    .map((s) => {
+      const action = s.action || {};
 
-        // FULL DATA MAY EXIST ONLY FOR SELECTED GROUP
-        name: s.name || "",
-        phone: s.phone || "",
-        email: s.email || "",
-        shop: s.shop_name || "",
-        domain: s.shop_domain || "",
-        sector: s.shop_sector || "",
-        shop_no: s.shop_no || "",
-        location: s.location || "",
-      },
-    })),
+      const lastClient = getLastAction(action.client_action);
+      const lastCapture = getLastAction(action.capture_action);
+      const lastConfirm = getLastAction(action.confirm_action);
+      const captureComments = {};
+      action.capture_action?.forEach((a) => {
+        const key = `${a.status}::${a.action}`;
+        captureComments[key] = a.comment;
+      });
+
+      return {
+        type: s.summary_type,
+        status: s.status,
+
+        /* 🔥 FULL HISTORY STORED HERE */
+        action,
+
+        /* 🔄 history flags (used for Capture flow logic) */
+        history: {
+          form1: !!action.capture_action?.some(a => a.action === "Form 1"),
+          send_url: !!action.capture_action?.some(a => a.action === "Send URL"),
+          visit: !!action.capture_action?.some(a => a.action === "Visit"),
+        },
+
+        data: {
+          name: s.name || "",
+          phone: s.phone || "",
+          email: s.email || "",
+          shop: s.shop_name || "",
+          domain: s.shop_domain || "",
+          sector: s.shop_sector || "",
+          shop_no: s.shop_no || "",
+          location: s.location || "",
+
+          /* ✅ Latest actions only for dropdowns */
+          client_action:
+            s.summary_type === "Client Summary"
+              ? lastClient?.action || ""
+              : "",
+
+          capture_action:
+            s.summary_type === "Capture Summary"
+              ? lastCapture?.action || ""
+              : "",
+
+          confirm_action:
+            s.summary_type === "Confirm Summary"
+              ? lastConfirm?.action || ""
+              : "",
+
+          client_comment:
+            s.summary_type === "Client Summary"
+              ? lastClient?.comment || ""
+              : "",
+
+          capture_comments:
+            captureComments,
+
+          confirm_comment:
+            s.summary_type === "Confirm Summary"
+              ? lastConfirm?.comment || ""
+              : "",
+        },
+      };
+    }),
 }));
 
 /* 🔐 STORE ALL GROUPS FOR REPORT CALC */
@@ -284,26 +361,19 @@ const visibleGroups = allGroups
     stages: g.stages,
   }));
 
-setClientSummaries(visibleGroups);
+// If no summaries exist, ensure at least one empty group is shown
+setClientSummaries(visibleGroups.length > 0 ? visibleGroups : [createClientSummaryGroup(1)]);
 
-
-  /**
-   * 4️⃣ Load sectors (unchanged)
-   */
-  clientSummaries.forEach((group, gIdx) => {
-    group.stages.forEach((stage, sIdx) => {
-      if (stage.data.domain) {
-        loadSectorsForStage(stage.data.domain, gIdx, sIdx);
-      }
-    });
-  });
-    isInitialHydrationRef.current = false;
+  // Note: Sectors will be loaded by the useEffect hook when domains are available
+  isInitialHydrationRef.current = false;
 
 };
 
 useEffect(() => {
   if (!domains.length || !clientSummaries.length) return;
 
+  // Load sectors for all stages that have a domain
+  // This ensures sectors are loaded when domains become available
   clientSummaries.forEach((group, gIdx) => {
     group.stages.forEach((stage, sIdx) => {
       if (stage.data.domain) {
@@ -311,7 +381,7 @@ useEffect(() => {
       }
     });
   });
-}, [domains]);
+}, [domains, clientSummaries]);
 
 
 
@@ -365,6 +435,12 @@ const handleStageChange = (groupIndex, stageIndex, field, value) => {
 
     // 1️⃣ Update status
     currentStage[field] = value;
+    if (currentStage.type === "Capture Summary") {
+      currentStage.data = {
+        ...currentStage.data,
+        capture_action: "",
+      };
+    }
     stages[stageIndex] = currentStage;
 
     /**
@@ -422,93 +498,67 @@ const handleStageDataChange = async (
     const stages = [...group.stages];
     const currentStage = { ...stages[stageIndex] };
 
+    // 1️⃣ Update stage.data with the new value
     currentStage.data = {
       ...currentStage.data,
       [field]: value,
-      ...(field === "domain" ? { sector: "" } : {}),
+      ...(field === "domain" ? { sector: "" } : {}), // Reset sector if domain changes
     };
 
-    stages[stageIndex] = currentStage;
+    // 3️⃣ Add or remove dependent stages based on action/status
+    const type = currentStage.type;
 
-    /* ✅ ADD ONLY THIS BLOCK */
+    if (type === "Client Summary" && field === "client_action") {
+      const captureIndex = stages.findIndex((s) => s.type === "Capture Summary");
+
+      if (value === "Completed" && captureIndex === -1) {
+        const newStage = {
+          ...createEmptyStage("Capture Summary"),
+          data: {
+            ...createEmptyStage("Capture Summary").data,
+            ...copyCommonData(currentStage.data),
+          },
+        };
+        stages.push(newStage);
+        loadSectorsForStage(currentStage.data.domain, groupIndex, stages.length - 1);
+      } else if (value !== "Completed" && captureIndex !== -1) {
+        stages.splice(captureIndex);
+      }
+    }
+
     if (
-  field === "client_action" &&
-  currentStage.type === "Client Summary" &&
-  currentStage.status === "Confirm"
-) {
-  const captureIndex = stages.findIndex(
-    (s) => s.type === "Capture Summary"
-  );
+      currentStage.type === "Capture Summary" &&
+      field === "capture_action"
+    ) {
+      const key = `${currentStage.status}::${value}`;
 
-  // ✅ ADD Capture when Completed
-  if (value === "Completed") {
-    if (captureIndex === -1) {
-      const newIndex = stages.length;
-
-      const newStage = {
-        ...createEmptyStage("Capture Summary"),
-        data: {
-          ...createEmptyStage("Capture Summary").data,
-          ...copyCommonData(currentStage.data),
-        },
+      currentStage.data.capture_comments = {
+        ...currentStage.data.capture_comments,
+        [key]:
+          currentStage.data.capture_comments?.[key] || "",
       };
-
-      stages.push(newStage);
-
-      loadSectorsForStage(
-        currentStage.data.domain,
-        groupIndex,
-        newIndex
-      );
     }
-  }
-  // ❌ REMOVE Capture when NOT Completed
-  else {
-    if (captureIndex !== -1) {
-      stages.splice(captureIndex);
+
+    if (type === "Capture Summary" && field === "capture_action") {
+      const confirmIndex = stages.findIndex((s) => s.type === "Confirm Summary");
+      
+      if (value === "Captured" && confirmIndex === -1) {
+        const newStage = {
+          ...createEmptyStage("Confirm Summary"),
+          data: {
+            ...createEmptyStage("Confirm Summary").data,
+            ...copyCommonData(currentStage.data),
+          },
+        };
+        stages.push(newStage);
+        loadSectorsForStage(currentStage.data.domain, groupIndex, stages.length - 1);
+      } else if (value !== "Captured" && confirmIndex !== -1) {
+        stages.splice(confirmIndex);
+      }
     }
-  }
-}
 
-if (
-  field === "capture_action" &&
-  currentStage.type === "Capture Summary" &&
-  currentStage.status === "Confirm"
-) {
-  const confirmIndex = stages.findIndex(
-    (s) => s.type === "Confirm Summary"
-  );
-
-  // ✅ ADD Capture when Completed
-  if (value === "Captured") {
-    if (confirmIndex === -1) {
-      const newIndex = stages.length;
-
-      const newStage = {
-        ...createEmptyStage("Confirm Summary"),
-        data: {
-          ...createEmptyStage("Confirm Summary").data,
-          ...copyCommonData(currentStage.data),
-        },
-      };
-
-      stages.push(newStage);
-
-      loadSectorsForStage(
-        currentStage.data.domain,
-        groupIndex,
-        newIndex
-      );
-    }
-  }
-  // ❌ REMOVE Capture when NOT Completed
-  else {
-    if (confirmIndex !== -1) {
-      stages.splice(confirmIndex);
-    }
-  }
-}
-
+    // 4️⃣ Update the stages in the group
+    stages[stageIndex] = currentStage;
     updated[groupIndex] = { ...group, stages };
     syncToAllGroups(updated);
 
@@ -655,6 +705,37 @@ const validateFields = () => {
         valid = false;
       }
 
+      if (
+  shouldShowClientComment(stage) &&
+  !stage.data.client_comment
+) {
+  newErrors[`${baseKey}_client_comment`] = "Comment required";
+  valid = false;
+}
+
+if (
+  stage.type === "Capture Summary" &&
+  stage.status &&
+  stage.data.capture_action
+) {
+  const key = `${stage.status}::${stage.data.capture_action}`;
+  const comment = stage.data.capture_comments?.[key];
+
+  if (!comment) {
+    newErrors[`${baseKey}_capture_comment_${key}`] =
+      "Comment required";
+    valid = false;
+  }
+}
+
+if (
+  shouldShowConfirmComment(stage) &&
+  !stage.data.confirm_comment
+) {
+  newErrors[`${baseKey}_confirm_comment`] = "Comment required";
+  valid = false;
+}
+
       // // ✅ Common required fields
       // const requiredCommonFields = [];
 
@@ -690,30 +771,47 @@ const validateFields = () => {
 useEffect(() => {
   if (isInitialHydrationRef.current) return;
 
-  let totalClient = 0;
-  let totalCapture = 0;
-  let totalConfirmation = 0;
+  // Calculate daily totals from visible group (clientSummaries) - same way totals were calculated before
+  let dailyClient = 0;
+  let dailyCapture = 0;
+  let dailyConfirmation = 0;
 
   let visits = 0;
   let inPipeline = 0;
   let joined = 0;
 
-  allSummaryGroups.forEach((group) => {
-    const client = group.stages.find(s => s.type === "Client Summary");
-    const capture = group.stages.find(s => s.type === "Capture Summary");
-    const confirm = group.stages.find(s => s.type === "Confirm Summary");
+  clientSummaries.forEach((group) => {
+    const client = group.stages.find(
+      (s) => s.type === "Client Summary"
+    );
+    const capture = group.stages.find(
+      (s) => s.type === "Capture Summary"
+    );
+    const confirm = group.stages.find(
+      (s) => s.type === "Confirm Summary"
+    );
 
-    /* 🥇 CONFIRM */
+    /* 🥇 PRIORITY 1: CONFIRMATION */
     if (
-      confirm &&
-      (confirm.status === "Confirm" || confirm.status === "Joined")
+      confirm && (confirm?.status === "Confirm" ||
+      confirm?.status === "Joined" )
     ) {
-      totalConfirmation++;
-      joined++;
+      dailyConfirmation += 1;
+      joined += 1;
       return;
     }
 
-    /* 🥈 CAPTURE */
+    if (
+      confirm?.status === "Confirm" ||
+      (confirm?.status === "Joined" &&
+        capture.data.capture_action === "Captured")
+    ) {
+      dailyConfirmation += 1;
+      inPipeline += 1;
+      return;
+    }
+
+    /* 🥈 PRIORITY 2: CAPTURE */
     if (
       capture &&
       (
@@ -723,40 +821,90 @@ useEffect(() => {
           capture.data.capture_action !== "Captured")
       )
     ) {
-      totalCapture++;
-      inPipeline++;
+      dailyCapture += 1;
+      inPipeline += 1;
       return;
     }
-
-    /* 🥉 CLIENT */
-    if (
-      client &&
-      client.status === "Confirm" &&
-      client.data.client_action === "Completed"
+    
+   if (
+      capture &&
+      (
+        capture.status === "Pending" ||
+        capture.status === "Re-Action" ||
+        (capture.status === "Confirm" &&
+          capture.data.capture_action === "Captured")
+      )
     ) {
-      totalCapture++;
-      inPipeline++;
+      dailyConfirmation += 1;
+      inPipeline += 1;
       return;
     }
 
-    /* 🧱 DEFAULT */
-    if (client && client.status) {
-      totalClient++;
-      visits++;
+    
+
+    /* 🥈 PRIORITY 3: CLIENT */
+
+     if (
+      client &&
+      (client.status === "Confirm" &&
+          client.data.client_action === "Completed")
+    ) {
+      dailyCapture += 1;
+      inPipeline += 1;
+      return;
+    }
+    
+
+    /* 🥉 PRIORITY 4: CLIENT */
+    if (client && client?.status ) {
+      dailyClient += 1;
+      visits += 1;
     }
   });
 
-  setFormData(prev => ({
-    ...prev,
-    visits,
-    joined,
-    in_pipeline: inPipeline,
-    total_client: totalClient,
-    total_capture: totalCapture,
-    total_confirmation: totalConfirmation,
-  }));
-}, [allSummaryGroups]);
+  const dailyLeads = visits + joined + inPipeline;
 
+  setFormData((prev) => {
+    const updated = {
+      ...prev,
+      daily_client: dailyClient,
+      daily_capture: dailyCapture,
+      Daily_confirmation: dailyConfirmation,
+      daily_leads: dailyLeads,
+      visits,
+      joined,
+      in_pipeline: inPipeline,
+    };
+
+    // If in edit mode, use API totals; otherwise calculate totals from form data
+    if (isEditMode && apiTotalsRef.current) {
+      updated.total_leads = apiTotalsRef.current.total_leads;
+      updated.total_client = apiTotalsRef.current.total_client;
+      updated.total_capture = apiTotalsRef.current.total_capture;
+      updated.total_confirmation = apiTotalsRef.current.total_confirmation;
+    } else {
+      // Calculate totals from form data (for new reports)
+      updated.total_client = dailyClient;
+      updated.total_capture = dailyCapture;
+      updated.total_confirmation = dailyConfirmation;
+    }
+
+    return updated;
+  });
+}, [clientSummaries, isEditMode]);
+
+// Effect to ensure API totals are displayed when in edit mode
+useEffect(() => {
+  if (isEditMode && apiTotalsRef.current) {
+    setFormData(prev => ({
+      ...prev,
+      total_leads: apiTotalsRef.current.total_leads,
+      total_client: apiTotalsRef.current.total_client,
+      total_capture: apiTotalsRef.current.total_capture,
+      total_confirmation: apiTotalsRef.current.total_confirmation,
+    }));
+  }
+}, [isEditMode]);
 
 
   console.log(errors);
@@ -786,45 +934,78 @@ const handleSubmit = async (e) => {
 
     // 4️⃣ Prepare payload and submit
     const payload = {
-      formData: { visits : formData?.visits, joined : formData.joined, in_pipeline: formData?.in_pipeline, total_leads: formData?.total_leads,
-    daily_leads:formData?.daily_leads,
-    total_capture: formData?.total_capture,
-    daily_capture:formData?.daily_capture,
-    total_client:formData?.total_client,
-    daily_client:formData?.daily_client,
-    total_confirmation:formData?.total_confirmation,
-    Daily_confirmation:formData?.Daily_confirmation, },
-      clientSummaries,
-    };
+  formData: {
+    ...formData,
+    task_id: currentTask?.id,
+    task_reporting_date: dayjs(formData.task_reporting_date).format("YYYY-MM-DD"),
+  },
+  clientSummaries: clientSummaries.map(group => ({
+    id: group.id,
+    stages: group.stages.map(stage => ({
+      type: stage.type,
+      status: stage.status,
+      data:{...stage.data,
+      client_action:   stage.type === "Client Summary" &&
+  (stage.data.client_action || stage.data.client_comment)
+        ? [{ action: stage.data.client_action || null, comment: stage.data.client_comment || null, date: new Date().toISOString() }]
+        : [],
+      capture_action:
+  stage.type === "Capture Summary"
+    ? Object.entries(stage.data.capture_comments || {}).map(
+        ([key, comment]) => {
+          const [status, action] = key.split("::");
+
+          return {
+            action,
+            status,
+            comment,
+            date: new Date().toISOString(),
+          };
+        }
+      )
+    : [],
+
+
+      confirm_action: stage.type === "Confirm Summary" && stage.data.confirm_action
+    ? [{
+        action: stage.data.confirm_action,
+        comment: stage.data.confirm_comment || "",
+        date: new Date().toISOString(),
+      }]
+    : [],
+}
+    })),
+  })),
+};
 
     console.log(payload);
     
 
     // 5️⃣ Submit API
-    // (async () => {
-    //   try {
-    //     setLoading(true);
-    //     const resp = await post_task_report_details(payload);
-    //     if (resp?.success) {
-    //       setSnackbar({
-    //         open: true,
-    //         message: "Task reported successfully",
-    //         severity: "success",
-    //       });
-    //       setFormData(initialData);
-    //       setTimeout(()=>{navigate('../marketing-staff/my-tasks')},[1000]);
-    //     }
-    //   } catch (err) {
-    //     console.error(err);
-    //     setSnackbar({
-    //       open: true,
-    //       message: "Failed to report the task",
-    //       severity: "error",
-    //     });
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // })();
+    (async () => {
+      try {
+        setLoading(true);
+        const resp = await post_task_report_details(payload);
+        if (resp?.success) {
+          setSnackbar({
+            open: true,
+            message: "Task reported successfully",
+            severity: "success",
+          });
+          setFormData(initialData);
+          setTimeout(()=>{navigate('../marketing-staff/reports-submitted')},[1000]);
+        }
+      } catch (err) {
+        console.error(err);
+        setSnackbar({
+          open: true,
+          message: "Failed to report the task",
+          severity: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, 0); // schedule after state update
 };
 
@@ -851,6 +1032,7 @@ const handleSubmit = async (e) => {
           label: "Status",
           type: "select",
           options: stage.type === "Client Summary" ? ["Pending", "Contact", "Confirm"] : stage.type === "Capture Summary" ? ["Pending", "Re-Action", "Confirm"] : stage.type === "Confirm Summary" ? ["Joined", "Hold", "Revisit"] : [],
+          readOnly: stage.type === "Client Summary" && stage.status === 'Confirm' && stage.data.client_action==='Completed' ?  true : stage.type === "Capture Summary" && stage.status === 'Confirm' && stage.data.capture_action==='Captured' ? true : stage.type === "Confirm Summary" && stage.status === 'Joined' && stage.data.confirm_action ? true : false,
           value: stage.status,
           cName: "w-30",
           onChange: (e) =>
@@ -951,7 +1133,7 @@ const handleSubmit = async (e) => {
     ) || [],
   disable:
     !sectorMap[`${groupIndex}_${stageIndex}`]?.length,
-          value: stage.data.sector,
+          value: stage.data.sector || "",
           onChange: (e) =>
             handleStageDataChange(
               groupIndex,
@@ -990,6 +1172,7 @@ const handleSubmit = async (e) => {
                 ],
                 cName: "w-30",
                 value: stage.data.client_action,
+                readOnly: stage.type === "Client Summary" && stage.status === 'Confirm' && stage.data.client_action==='Completed' ?  true : false,
                 onChange: (e) =>
                   handleStageDataChange(
                     groupIndex,
@@ -1001,23 +1184,25 @@ const handleSubmit = async (e) => {
             ]
           : []),
 
-        ...(stage.type === "Capture Summary" &&  stage.status === "Confirm"
+        ...(stage.type === "Capture Summary"
           ? [
               {
                 id: `${prefix}_capture_action`,
                 name: `${prefix}_capture_action`,
                 label: "Select Action",
                 type: "select",
-                options: [
-                  "Form 1",
-                  "Send URL",
-                  "Visit",
-                  "Feedback",
-                  "Re-Visit",
-                  "Captured"
-                ],
+                options: (() => {
+  const h = stage.history || {};
+
+  if (!h.form1) return ["Form 1"];
+  if (h.form1 && !h.send_url) return ["Form 1", "Send URL"];
+  if (h.form1 && h.send_url && !h.visit) return ["Form 1", "Send URL", "Visit"];
+
+  return ["Form 1", "Send URL", "Visit","Feedback", "Re-Visit", "Captured"];
+})(),
                 cName: "w-30",
                 value: stage.data.capture_action,
+                readOnly: stage.type === "Capture Summary" && stage.status === 'Confirm' && stage.data.capture_action==='Captured' ? true : false,
                 onChange: (e) =>
                   handleStageDataChange(
                     groupIndex,
@@ -1069,6 +1254,7 @@ const handleSubmit = async (e) => {
                   "Support"
                 ] : [],
                 cName: "w-30",
+                readOnly: stage.type === "Confirm Summary" && stage.status === 'Joined' && stage.data.confirm_action ? true : false,
                 value: stage.data.confirm_action,
                 onChange: (e) =>
                   handleStageDataChange(
@@ -1080,6 +1266,66 @@ const handleSubmit = async (e) => {
               },
             ]
           : []),
+          ...(shouldShowClientComment(stage)
+  ? [{
+      id: `${prefix}_client_comment`,
+      label: "Client Comment",
+      type: "textarea",
+      value: stage.data.client_comment,
+      onChange: (e) =>
+        handleStageDataChange(
+          groupIndex,
+          stageIndex,
+          "client_comment",
+          e.target.value
+        ),
+    }]
+  : []),
+...(stage.type === "Capture Summary" &&
+  stage.status &&
+  stage.data.capture_action
+  ? (() => {
+      const key = `${stage.status}::${stage.data.capture_action}`;
+
+      return stage.data.capture_comments?.[key] !== undefined
+        ? [{
+            id: `${prefix}_capture_comment_${key}`,
+            label: `${stage.data.capture_action} Comment`,
+            type: "textarea",
+            value: stage.data.capture_comments[key],
+            onChange: (e) =>
+              handleStageDataChange(
+                groupIndex,
+                stageIndex,
+                "capture_comments",
+                {
+                  ...stage.data.capture_comments,
+                  [key]: e.target.value,
+                }
+              ),
+          }]
+        : [];
+    })()
+  : []),
+
+
+...(shouldShowConfirmComment(stage)
+  ? [{
+      id: `${prefix}_confirm_comment`,
+      label: "Confirm Comment",
+      type: "textarea",
+      value: stage.data.confirm_comment,
+      onChange: (e) =>
+        handleStageDataChange(
+          groupIndex,
+          stageIndex,
+          "confirm_comment",
+          e.target.value
+        ),
+    }]
+  : []),
+
+
       ];
     })
 );
@@ -1151,21 +1397,21 @@ const handleSubmit = async (e) => {
     }]:[],
     {
       id: 7,
-      label: "Total number of visits",
+      label: "Number of visits",
       name: "visits",
       type: "number",
       cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 8,
-      label: "Total number of joined",
+      label: "Number of joined",
       name: "joined",
       type: "number",
       cName: viewReport ? 'w-30' : 'w-30 d_none',
     },
     {
       id: 9,
-      label: "Total number of clients in pipeline",
+      label: "Number of clients in pipeline",
       name: "in_pipeline",
       type: "number",
       cName: viewReport ? 'w-30' : 'w-30 d_none',
@@ -1175,6 +1421,7 @@ const handleSubmit = async (e) => {
       label: "Total Leads Summary",
       name: "total_leads",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
@@ -1189,6 +1436,7 @@ const handleSubmit = async (e) => {
       label: "Total Client Summary",
       name: "total_client",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none'
     },
     {
@@ -1203,6 +1451,7 @@ const handleSubmit = async (e) => {
       label: "Total Capture Summary",
       name: "total_capture",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {
@@ -1217,6 +1466,7 @@ const handleSubmit = async (e) => {
       label: "Total Confirmation",
       name: "total_confirmation",
       type: "number",
+      readOnly: isEditMode,
       cName: viewReport ? 'w-45' : 'w-45 d_none',
     },
     {
