@@ -5,6 +5,7 @@ import BoxHeader from "../../DashboardContent/BoxHeader";
 import AddStaffForm from "../Manager/AddStaffForm";
 import StaffDashboardTable from "./StaffDashboardTable";
 import StaffReportForm from "./StaffReportForm";
+import MarketingStaffReportForm from "../Manager/MarketingStaffReportForm";
 
 function MarketingStaffReport() {
     const [open, setOpen] = useState(false);
@@ -14,7 +15,7 @@ function MarketingStaffReport() {
             <Box className="content">
                 <BoxHeader title="Staff Report"/>
                 <Box className="body">
-                    <StaffReportForm />
+                    <MarketingStaffReportForm />
                 </Box>
             </Box>
 

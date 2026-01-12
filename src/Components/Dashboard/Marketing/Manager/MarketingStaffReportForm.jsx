@@ -121,6 +121,8 @@ const MarketingStaffReportForm = () => {
         const fetchTasks = async () => {
           try {
             setLoading(true);
+            console.log(assigned_by, assigned_to);
+            
             const resp = await get_staff_member_tasks(assigned_by, assigned_to);
             console.log(resp);
 
@@ -141,6 +143,10 @@ const MarketingStaffReportForm = () => {
   useEffect(() => {
     if (formData?.assigned_task) {
       const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
+
+      if(fetch_selected_task){
+        setCurrentTask(fetch_selected_task);
+      }
 
       const date_range = fetch_selected_task && [
         dayjs(fetch_selected_task.start_date).toDate(),
@@ -780,7 +786,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
       label: "Assigned Task",
       name: "assigned_task",
       type: "select",
-      options: tasks?.map((t) => ({ label: t?.assigned_task, value: t?.access_token })),
+      options: tasks?.length > 0 ? tasks?.map((t) => ({ label: t?.assigned_task, value: t?.access_token })) : ['No task assigned'],
       disable: tasks?.length == 0 ? true : false,
       cName: 'w-45',
     },
@@ -830,6 +836,8 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
       name: "task_reporting_date",
       type: "date",
       cName: 'flex-auto',
+      minDate: currentTask?.start_date, 
+      maxDate: currentTask?.end_date, 
     },
     // {
     //   id: 10,
@@ -937,6 +945,8 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
           readOnly={field.readOnly}
           disable={field.disable}
           btn={field.btn}
+          minDate={field.minDate}
+          maxDate={field.maxDate}
           handleAddClick={field.handleAddClick}
           handleRemoveClick={field.handleRemoveClick}
         />
