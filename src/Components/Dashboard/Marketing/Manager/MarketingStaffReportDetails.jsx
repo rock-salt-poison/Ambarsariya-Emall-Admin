@@ -72,14 +72,20 @@ export default function MarketingStaffReportDetails() {
           const actionValue = typeof actionItem === 'object' ? actionItem.action : actionItem;
           const comment = typeof actionItem === 'object' ? actionItem.comment : null;
           const date = typeof actionItem === 'object' ? actionItem.date : null;
+          const status = typeof actionItem === 'object' ? actionItem.status : null;
           
           return (
             <Box key={idx} sx={{ mb: 1, pb: 1, borderBottom: idx < actionArray.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
               <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                 Action: {actionValue || "-"}
               </Typography>
+              {status && (
+                <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85em', mt: 0.5, textTransform: 'capitalize' }}>
+                  Status: {status}
+                </Typography>
+              )}
               {date && (
-                <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85em' }}>
+                <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85em', mt: 0.5 }}>
                   Date: {dayjs(date).format("YYYY-MM-DD HH:mm")}
                 </Typography>
               )}
@@ -102,7 +108,7 @@ export default function MarketingStaffReportDetails() {
           <BoxHeader
             title="Report Details"
             backIcon={true}
-            handleBackClick={() => navigate(-1)}
+            handleBackClick={-1}
           />
           <Box className="loading">
             <CircularProgress />
@@ -135,7 +141,7 @@ export default function MarketingStaffReportDetails() {
         <BoxHeader
           title="Report Details"
           backIcon={true}
-          handleBackClick={() => navigate(-1)}
+          handleBackClick={-1}
         />
           {/* Staff Assigned Task */}
           {data.staff_task && (
@@ -336,7 +342,7 @@ export default function MarketingStaffReportDetails() {
                     <TableCell>Shop Name</TableCell>
                     <TableCell>Domain</TableCell>
                     <TableCell>Sector</TableCell>
-                    <TableCell sx={{ minWidth: 300 }}>Actions (Date, Comment, Action)</TableCell>
+                    <TableCell sx={{ minWidth: 300 }}>Actions </TableCell>
                     <TableCell>Shop No</TableCell>
                     <TableCell>Summary Group ID</TableCell>
                     <TableCell>Parent Summary ID</TableCell>
