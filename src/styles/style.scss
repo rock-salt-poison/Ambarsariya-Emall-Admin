@@ -744,3 +744,21 @@ a{
 .d-flex{
   display: flex;
 }
+
+.table_heading{
+  @include text(17px, $dark-blue, 600 !important);
+  margin: 10px 0px !important;
+}
+
+td.bold{
+  font-weight: 600 !important;
+}
+
+td ol{
+  padding-left: 15px;
+  margin: 0px;
+
+  li{
+    text-transform: capitalize;
+  }
+}

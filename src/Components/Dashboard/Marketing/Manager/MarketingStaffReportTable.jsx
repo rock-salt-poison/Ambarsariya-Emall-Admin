@@ -8,10 +8,12 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export default function MarketingStaffReportTable({ data }) {
   const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (data?.summaries) {
@@ -20,6 +22,10 @@ export default function MarketingStaffReportTable({ data }) {
       setReport([]);
     }
   }, [data]);
+
+  const handleRowClick = (summaryId) => {
+    navigate(`/marketing/staff-report-details/${summaryId}`);
+  };
 
   const formatAction = (action, summaryType, status) => {
     if (!action || typeof action !== 'object') {
@@ -193,7 +199,12 @@ export default function MarketingStaffReportTable({ data }) {
           <TableBody>
             {report.length > 0 ? (
               report.map((r, index) => (
-                <TableRow key={r.id || index} hover>
+                <TableRow 
+                  key={r.id || index} 
+                  hover 
+                  onClick={() => handleRowClick(r.id)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>{index + 1}</TableCell>
                   <TableCell sx={{ textTransform: "capitalize" }}>
                     {r.shop_name || "-"}

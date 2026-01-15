@@ -22,6 +22,7 @@ import MarketingStaffReportsSubmitted from "./Components/Dashboard/Marketing/Sta
 import MarketingStaffDailyTaskReport from "./Components/Dashboard/Marketing/Staff/MarketingStaffDailyTaskReport";
 import MarketingAssignTask from "./Components/Dashboard/Marketing/Manager/MarketingAssignTask";
 import MarketingStaffReport from "./Components/Dashboard/Marketing/Staff/MarketingStaffReport";
+import MarketingStaffReportDetails from "./Components/Dashboard/Marketing/Manager/MarketingStaffReportDetails";
 
 function App() {
   return (
@@ -62,6 +63,10 @@ function App() {
         />
         <Route path="/marketing/assign-task" element={<MarketingAssignTask />} />
         <Route path="/marketing/staff-report" element={<MarketingStaffReport />} />
+        <Route
+          path="/marketing/staff-report-details/:summary_id"
+          element={<MarketingStaffReportDetails />}
+        />
         <Route
           path="/marketing-staff/reports-submitted"
           element={<MarketingStaffReportsSubmitted />}

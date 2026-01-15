@@ -501,6 +501,15 @@ export const get_selected_staff_task_report = async (task_id, task_reporting_dat
     }
 }
 
+export const get_marketing_staff_report_details_by_summary_id = async (summary_id) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/marketing-staff-report-details/${summary_id}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const get_staff_member_task_report_details = async (task_id, task_reporting_date) => {
     try{
         const response = await axios.get(`${admin_roles_api}/staff-member-task-report-details/${task_id}/${task_reporting_date}`);
