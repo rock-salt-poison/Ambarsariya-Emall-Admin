@@ -358,6 +358,7 @@ const visibleGroups = allGroups
   )
   .map((g, index) => ({
     id: index + 1,
+    summary_group_id: g.summary_group_id,
     stages: g.stages,
   }));
 
@@ -907,7 +908,7 @@ useEffect(() => {
 }, [isEditMode]);
 
 
-  console.log(errors);
+  console.log(formData, clientSummaries);
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -941,6 +942,7 @@ const handleSubmit = async (e) => {
   },
   clientSummaries: clientSummaries.map(group => ({
     id: group.id,
+    summary_group_id: group.summary_group_id,
     stages: group.stages.map(stage => ({
       type: stage.type,
       status: stage.status,
