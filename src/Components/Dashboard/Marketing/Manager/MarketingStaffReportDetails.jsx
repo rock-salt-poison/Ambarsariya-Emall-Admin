@@ -344,8 +344,6 @@ export default function MarketingStaffReportDetails() {
                     <TableCell>Sector</TableCell>
                     <TableCell sx={{ minWidth: 300 }}>Actions </TableCell>
                     <TableCell>Shop No</TableCell>
-                    <TableCell>Summary Group ID</TableCell>
-                    <TableCell>Parent Summary ID</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -382,8 +380,6 @@ export default function MarketingStaffReportDetails() {
                         {formatActionsDetail(summary.action, summary.summary_type)}
                       </TableCell>
                       <TableCell>{summary.shop_no || "-"}</TableCell>
-                      <TableCell>{summary.summary_group_id || "-"}</TableCell>
-                      <TableCell>{summary.parent_summary_id || "-"}</TableCell>
                     </TableRow>
                     );
                   })}
