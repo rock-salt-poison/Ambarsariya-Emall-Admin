@@ -519,6 +519,15 @@ export const get_staff_member_task_report_details = async (task_id, task_reporti
     }
 }
 
+export const get_all_staff_reports_by_token = async (token) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/all-staff-reports/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const delete_auth_credentials = async (credentials_id) => {
     try{
         const response = await axios.delete(`${admin_roles_api}/delete-credentials/${credentials_id}`);

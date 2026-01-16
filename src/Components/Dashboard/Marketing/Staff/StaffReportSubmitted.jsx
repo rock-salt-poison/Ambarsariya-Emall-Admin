@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { Box, CircularProgress, Button } from "@mui/material";
 import FormFields from "../../../Form/FormFields";
 import CustomSnackbar from "../../../CustomSnackbar";
 import {
   get_staff_task_report_details,
   get_staff_tasks,
   get_staff_tasks_by_reporting_date,
+  get_all_staff_reports_by_token,
 } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 import StaffReportSubmittedTable from "./StaffReportSubmittedTable";
+import { Link } from "react-router-dom";
 
 const StaffReportSubmitted = () => {
 
@@ -35,6 +37,8 @@ const StaffReportSubmitted = () => {
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [taskReport, setTaskReport] = useState(null);
+  const [allReports, setAllReports] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
 
 
@@ -71,9 +75,33 @@ const StaffReportSubmitted = () => {
   }, [formData?.assigned_task, tasks]);
 
 
+  // Fetch all reports by default
+  useEffect(() => {
+    if (token && !isFiltered) {
+      const fetchAllReports = async () => {
+        try {
+          setLoading(true);
+          const resp = await get_all_staff_reports_by_token(token);
+          console.log("All reports:", resp);
+          if (resp && resp.length > 0) {
+            setAllReports(resp);
+          } else {
+            setAllReports([]);
+          }
+        } catch (e) {
+          console.log(e);
+          setAllReports([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAllReports();
+    }
+  }, [token, isFiltered]);
+
   // Fetch user by token
   useEffect(() => {
-      if (token && formData?.task_reporting_date) {
+      if (token && formData?.task_reporting_date && isFiltered) {
         const fetchTasks = async () => {
           try {
             setLoading(true);
@@ -89,7 +117,7 @@ const StaffReportSubmitted = () => {
         };
         fetchTasks();
       }
-    }, [token, formData?.task_reporting_date]);
+    }, [token, formData?.task_reporting_date, isFiltered]);
 
 
 
@@ -101,12 +129,17 @@ const StaffReportSubmitted = () => {
 
     setFormData((prev) => ({ ...prev, [name]: value }));
 
+    // If date or task is selected, enable filtering
+    if (name === 'task_reporting_date' || name === 'assigned_task') {
+      setIsFiltered(true);
+    }
+
     // Reset errors while typing
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
  useEffect(()=>{
-    if(formData?.assigned_task && formData?.task_reporting_date){
+    if(formData?.assigned_task && formData?.task_reporting_date && isFiltered){
       try{
         setLoading(true);
         const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
@@ -134,10 +167,21 @@ const StaffReportSubmitted = () => {
       }finally{
         setLoading(false);
       }
+    } else if (!isFiltered) {
+      // Reset taskReport when not filtering
+      setTaskReport(null);
     }
-  }, [tasks && formData?.assigned_task, formData?.task_reporting_date]);
+  }, [tasks && formData?.assigned_task, formData?.task_reporting_date, isFiltered]);
   
   
+  // Reset filter handler
+  const handleResetFilter = () => {
+    setFormData(initialData);
+    setIsFiltered(false);
+    setTaskReport(null);
+    setTasks([]);
+  };
+
   // FIELDS
   const formFields = [
     {
@@ -230,6 +274,18 @@ const StaffReportSubmitted = () => {
         />
       ))}
 
+      {isFiltered && (
+        <Box className="label_group">
+          <Link 
+            variant="outlined" 
+            onClick={handleResetFilter}
+            className="btn-link"
+          >
+            Show All Reports
+          </Link>
+        </Box>
+      )}
+
       <CustomSnackbar
         open={snackbar.open}
         handleClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
@@ -237,7 +293,7 @@ const StaffReportSubmitted = () => {
         severity={snackbar.severity}
         />
     </Box>
-        <StaffReportSubmittedTable data={taskReport}/>
+        <StaffReportSubmittedTable data={isFiltered ? taskReport : null} allReports={!isFiltered ? allReports : null}/>
         </>
   );
 };

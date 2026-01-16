@@ -11,20 +11,36 @@ import {
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
-export default function StaffReportSubmittedTable({ data }) {
+export default function StaffReportSubmittedTable({ data, allReports }) {
   const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (data?.summaries) {
+    if (allReports && allReports.length > 0) {
+      // Flatten all reports into a single array with report metadata
+      const flattenedReports = [];
+      allReports.forEach((reportItem) => {
+        if (reportItem.summaries && Array.isArray(reportItem.summaries)) {
+          reportItem.summaries.forEach((summary) => {
+            flattenedReports.push({
+              ...summary,
+              task_reporting_date: reportItem.task_reporting_date,
+              task_id: reportItem.task_id,
+              access_token: reportItem.access_token,
+            });
+          });
+        }
+      });
+      setReport(flattenedReports);
+    } else if (data?.summaries) {
       setReport(data.summaries);
     } else {
       setReport([]);
     }
-  }, [data]);
+  }, [data, allReports]);
 
-  console.log(report);
+  console.log(data);
   
   
   const handleRowClick = async (e, task_id, reporting_date, access_token, summary_group_id) =>{
@@ -191,7 +207,7 @@ export default function StaffReportSubmittedTable({ data }) {
           <TableHead>
             <TableRow>
               <TableCell>S.No</TableCell>
-              <TableCell>Shop Name</TableCell>
+              <TableCell>Date</TableCell>
               <TableCell>Domain</TableCell>
               <TableCell>Sector</TableCell>
               <TableCell>Summary Type</TableCell>
@@ -202,23 +218,35 @@ export default function StaffReportSubmittedTable({ data }) {
 
           <TableBody>
             {report.length > 0 ? (
-              report.map((r, index) => (
-                <TableRow key={r.id || index} hover onClick={(e)=>{handleRowClick(e, data?.task_id, dayjs(data?.task_reporting_date)?.format('YYYY-MM-DD'), data?.access_token, r?.summary_group_id)}}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>
-                    {r.shop_name || "-"}
-                  </TableCell>
-                  <TableCell>{r.shop_domain || "-"}</TableCell>
-                  <TableCell>{r.shop_sector || "-"}</TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>
-                    {r.summary_type}
-                  </TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>
-                    {r.status}
-                  </TableCell>
-                  <TableCell>{formatAction(r.action, r.summary_type, r.status)}</TableCell>
-                </TableRow>
-              ))
+              report.map((r, index) => {
+                const taskId = r.task_id || data?.task_id;
+                const reportingDate = r.task_reporting_date || data?.task_reporting_date;
+                const accessToken = r.access_token || data?.access_token;
+                
+                return (
+                  <TableRow 
+                    key={r.id || index} 
+                    hover 
+                    onClick={(e) => {
+                      handleRowClick(e, taskId, dayjs(reportingDate)?.format('YYYY-MM-DD'), accessToken, r?.summary_group_id);
+                    }}
+                  >
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>
+                      {reportingDate ? dayjs(reportingDate).format('YYYY-MM-DD') : "-"}
+                    </TableCell>
+                    <TableCell>{r.shop_domain_name || r.shop_domain || "-"}</TableCell>
+                    <TableCell>{r.shop_sector_name || r.shop_sector || "-"}</TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>
+                      {r.summary_type}
+                    </TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>
+                      {r.status}
+                    </TableCell>
+                    <TableCell>{formatAction(r.action, r.summary_type, r.status)}</TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={7} sx={{ textAlign: "center" }}>
