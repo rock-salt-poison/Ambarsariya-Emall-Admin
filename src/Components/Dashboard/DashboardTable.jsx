@@ -74,8 +74,8 @@ export default function DashboardTable() {
                   <TableCell>{emp.age}</TableCell>
                   <TableCell>{emp.phone}</TableCell>
                   <TableCell>{emp.email}</TableCell>
-                  <TableCell><DeleteIcon className="deleteIcon" onClick={() => handleDeleteClick(emp.id)}
-                  /></TableCell>
+                  <TableCell>{emp.role_name === 'Admin' ?'' : <DeleteIcon className="deleteIcon" onClick={() => handleDeleteClick(emp.id)}
+                  />}</TableCell>
                 </TableRow>
               )) : <TableRow>
                 <TableCell colSpan={7} sx={{ textAlign: 'center' }}>No employee created</TableCell>
