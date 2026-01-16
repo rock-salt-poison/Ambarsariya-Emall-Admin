@@ -804,7 +804,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
       name: "assigned_task",
       type: "select",
       options: tasks?.length > 0 ? tasks?.map((t) => ({ label: t?.assigned_task, value: t?.access_token })) : ['No task assigned'],
-      disable: tasks?.length == 0 ? true : false,
+      disable: tasks?.length === 0 ? true : false,
       cName: 'w-45',
     },
     {

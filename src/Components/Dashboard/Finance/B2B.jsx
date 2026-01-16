@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Box, CircularProgress } from "@mui/material";
+import React from "react";
+import { Box } from "@mui/material";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import Tabs from "../DashboardContent/Tabs";
 import ReceivableTable from "./ReceivableTable";

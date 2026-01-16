@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, CircularProgress } from "@mui/material";
 import FormFields from "../../Form/FormFields";
-import { useNavigate } from "react-router-dom";
 import CustomSnackbar from "../../CustomSnackbar";
 import { delete_advt, get_advt, post_advt } from "../../../API/expressAPI";
 
@@ -45,7 +44,6 @@ const ADVT = ({ page }) => {
     },
   ]);
 
-  const navigate = useNavigate();
 
   // Handle form data changes
   const handleChange = (e) => {
@@ -187,66 +185,66 @@ const handleRemoveField = async (id) => {
 };
 
 
-useEffect(() => {
-    fetch_advt_from_database();
+  const fetch_advt_from_database = React.useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const resp = await get_advt(page);
+
+      if (resp?.message === 'Valid' && resp?.data?.length > 0) {
+        const newFields = resp.data.map((ad, index) => {
+          const newIndex = index + 1;
+
+          return {
+            id: ad.id ?? `advt_${newIndex}`,
+            label: `ADVT ${newIndex}`,
+            btn: newIndex === 1 ? "Add" : "Remove",
+            fields: [
+              {
+                id: `shop_${newIndex}`,
+                label: "Shop",
+                name: `shop_${newIndex}`,
+                type: "text",
+                value: ad?.shop_no ?? "",
+                required: true,
+              },
+              {
+                id: `bg_${newIndex}`,
+                label: "Select Background",
+                name: `bg_${newIndex}`,
+                type: "select",
+                options: [
+                  "Coupon Frame",
+                  "Post Stamp Frame",
+                  "Turkey Stamp Frame",
+                  "Zig-zag Border",
+                  "Travel Postal Stamp",
+                ],
+                value: ad?.background ?? "",
+                required: true,
+              },
+            ],
+          };
+        });
+
+        setFormFields(newFields);
+      } else {
+        setFormFields([]); // Optional: Clear form if no valid data
+      }
+    } catch (e) {
+      setSnackbar({
+        open: true,
+        message: "No Advt created.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [page]);
 
-  const fetch_advt_from_database = async () => {
-  setLoading(true);
-
-  try {
-    const resp = await get_advt(page);
-
-    if (resp?.message === 'Valid' && resp?.data?.length > 0) {
-      const newFields = resp.data.map((ad, index) => {
-        const newIndex = index + 1;
-
-        return {
-          id: ad.id ?? `advt_${newIndex}`,
-          label: `ADVT ${newIndex}`,
-          btn: newIndex === 1 ? "Add" : "Remove",
-          fields: [
-            {
-              id: `shop_${newIndex}`,
-              label: "Shop",
-              name: `shop_${newIndex}`,
-              type: "text",
-              value: ad?.shop_no ?? "",
-              required: true,
-            },
-            {
-              id: `bg_${newIndex}`,
-              label: "Select Background",
-              name: `bg_${newIndex}`,
-              type: "select",
-              options: [
-                "Coupon Frame",
-                "Post Stamp Frame",
-                "Turkey Stamp Frame",
-                "Zig-zag Border",
-                "Travel Postal Stamp",
-              ],
-              value: ad?.background ?? "",
-              required: true,
-            },
-          ],
-        };
-      });
-
-      setFormFields(newFields);
-    } else {
-      setFormFields([]); // Optional: Clear form if no valid data
-    }
-  } catch (e) {
-    setSnackbar({
-      open: true,
-      message: "No Advt created.",
-      severity: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  useEffect(() => {
+    fetch_advt_from_database();
+  }, [fetch_advt_from_database]);
 
   
 

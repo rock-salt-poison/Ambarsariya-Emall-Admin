@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../Form/FormFields';
 import CustomSnackbar from "../../CustomSnackbar";
-import { check_email_exists, get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../API/expressAPI';
+import { check_email_exists, get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp } from '../../../API/expressAPI';
 
 const CreateRoleForm = ({ onClose }) => {
 
