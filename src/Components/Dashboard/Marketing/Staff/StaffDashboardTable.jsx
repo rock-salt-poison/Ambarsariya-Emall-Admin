@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import DialogPopup from "../../DialogPopup";
 import AssignedTaskForm from "./AssignedTaskForm";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 
 export default function StaffDashboardTable() {
   const token = useSelector((state) => state.auth.token);
@@ -74,8 +75,8 @@ export default function StaffDashboardTable() {
                 <TableCell>{index + 1}</TableCell>
                 <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_task}</TableCell>
                 <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_by_name}</TableCell>
-                <TableCell>{emp.start_date?.split("T")?.[0]}</TableCell>
-                <TableCell>{emp.end_date?.split("T")?.[0]}</TableCell>
+                <TableCell>{dayjs(emp?.start_date)?.format('YYYY-MM-DD')}</TableCell>
+                <TableCell>{dayjs(emp?.end_date)?.format('YYYY-MM-DD')}</TableCell>
               </TableRow>
             )) : (
               <TableRow>
