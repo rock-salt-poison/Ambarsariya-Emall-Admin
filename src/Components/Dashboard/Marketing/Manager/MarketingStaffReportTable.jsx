@@ -9,22 +9,34 @@ import {
   TableRow,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 
-export default function MarketingStaffReportTable({ data }) {
+export default function MarketingStaffReportTable({ data, allReports }) {
   const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (data?.summaries) {
-      setReport(data.summaries);
+    if (allReports && Array.isArray(allReports) && allReports.length > 0) {
+      // Use allReports when available (all reports view)
+      setReport(allReports);
+    } else if (data) {
+      // Handle data prop - can be array or single object
+      if (Array.isArray(data)) {
+        setReport(data);
+      } else if (data.task_report_id) {
+        // Single report object
+        setReport([data]);
+      } else {
+        setReport([]);
+      }
     } else {
       setReport([]);
     }
-  }, [data]);
+  }, [data, allReports]);
 
-  const handleRowClick = (summaryId) => {
-    navigate(`/marketing/staff-report-details/${summaryId}`);
+  const handleRowClick = (taskReportId) => {
+    navigate(`/marketing/staff-report-details/${taskReportId}`);
   };
 
   const formatAction = (action, summaryType, status) => {
@@ -187,12 +199,11 @@ export default function MarketingStaffReportTable({ data }) {
           <TableHead>
             <TableRow>
               <TableCell>S.No</TableCell>
-              <TableCell>Shop Name</TableCell>
-              <TableCell>Domain</TableCell>
-              <TableCell>Sector</TableCell>
-              <TableCell>Summary Type</TableCell>
-              <TableCell>Summary Status</TableCell>
-              <TableCell>Action</TableCell>
+              <TableCell>Assigned Task</TableCell>
+              <TableCell>Assigned By</TableCell>
+              <TableCell>Reporting Date</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>End Date</TableCell>
             </TableRow>
           </TableHead>
 
@@ -200,29 +211,39 @@ export default function MarketingStaffReportTable({ data }) {
             {report.length > 0 ? (
               report.map((r, index) => (
                 <TableRow 
-                  key={r.id || index} 
+                  key={r.task_report_id || index} 
                   hover 
-                  onClick={() => handleRowClick(r.id)}
-                  sx={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    const taskReportId = r.task_report_id;
+                    if (taskReportId) {
+                      handleRowClick(taskReportId);
+                    }
+                  }}
+                  sx={{ cursor: r.task_report_id ? 'pointer' : 'default' }}
                 >
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>
-                    {r.shop_name || "-"}
+                    <TableCell>{r.assigned_task || "-"}</TableCell>
+                    <TableCell>{r.assigned_by || "-"}</TableCell>
+                  <TableCell>
+                    {r.task_reporting_date 
+                      ? dayjs(r.task_reporting_date).format('YYYY-MM-DD') 
+                      : "-"}
                   </TableCell>
-                  <TableCell>{r.shop_domain || "-"}</TableCell>
-                  <TableCell>{r.shop_sector || "-"}</TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>
-                    {r.summary_type}
+                  <TableCell>
+                    {r.start_date 
+                      ? dayjs(r.start_date).format('YYYY-MM-DD') 
+                      : "-"}
                   </TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>
-                    {r.status}
+                  <TableCell>
+                    {r.end_date 
+                      ? dayjs(r.end_date).format('YYYY-MM-DD') 
+                      : "-"}
                   </TableCell>
-                  <TableCell>{formatAction(r.action, r.summary_type, r.status)}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} sx={{ textAlign: "center" }}>
+                <TableCell colSpan={6} sx={{ textAlign: "center" }}>
                   No report submitted
                 </TableCell>
               </TableRow>

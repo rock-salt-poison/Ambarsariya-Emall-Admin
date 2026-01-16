@@ -64,7 +64,7 @@ function App() {
         <Route path="/marketing/assign-task" element={<MarketingAssignTask />} />
         <Route path="/marketing/staff-report" element={<MarketingStaffReport />} />
         <Route
-          path="/marketing/staff-report-details/:summary_id"
+          path="/marketing/staff-report-details/:task_report_id"
           element={<MarketingStaffReportDetails />}
         />
         <Route

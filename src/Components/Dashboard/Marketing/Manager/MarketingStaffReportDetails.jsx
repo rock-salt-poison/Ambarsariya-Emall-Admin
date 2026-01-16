@@ -12,11 +12,11 @@ import {
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import BoxHeader from "../../../Dashboard/DashboardContent/BoxHeader";
-import { get_marketing_staff_report_details_by_summary_id } from "../../../../API/expressAPI";
+import { get_marketing_staff_report_details_by_task_report_id } from "../../../../API/expressAPI";
 import dayjs from "dayjs";
 
 export default function MarketingStaffReportDetails() {
-  const { summary_id } = useParams();
+  const { task_report_id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -26,7 +26,7 @@ export default function MarketingStaffReportDetails() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await get_marketing_staff_report_details_by_summary_id(summary_id);
+        const response = await get_marketing_staff_report_details_by_task_report_id(task_report_id);
         setData(response);
       } catch (err) {
         console.error("Error fetching report details:", err);
@@ -36,10 +36,10 @@ export default function MarketingStaffReportDetails() {
       }
     };
 
-    if (summary_id) {
+    if (task_report_id) {
       fetchData();
     }
-  }, [summary_id]);
+  }, [task_report_id]);
 
   const formatActionsDetail = (action, summaryType) => {
     if (!action || typeof action !== 'object') {

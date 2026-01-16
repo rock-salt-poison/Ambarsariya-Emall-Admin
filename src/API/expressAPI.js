@@ -501,9 +501,9 @@ export const get_selected_staff_task_report = async (task_id, task_reporting_dat
     }
 }
 
-export const get_marketing_staff_report_details_by_summary_id = async (summary_id) => {
+export const get_marketing_staff_report_details_by_task_report_id = async (task_report_id) => {
     try{
-        const response = await axios.get(`${admin_roles_api}/marketing-staff-report-details/${summary_id}`);
+        const response = await axios.get(`${admin_roles_api}/marketing-staff-report-details/${task_report_id}`);
         return response.data;
     }catch(e){
         throw e;
@@ -522,6 +522,20 @@ export const get_staff_member_task_report_details = async (task_id, task_reporti
 export const get_all_staff_reports_by_token = async (token) => {
     try{
         const response = await axios.get(`${admin_roles_api}/all-staff-reports/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_all_reports_by_staff_and_type = async (staff_id, staff_type_id) => {
+    try{
+        const params = new URLSearchParams({
+            staff_id,
+            staff_type_id
+        });
+        
+        const response = await axios.get(`${admin_roles_api}/all-reports-by-staff-and-type?${params.toString()}`);
         return response.data;
     }catch(e){
         throw e;

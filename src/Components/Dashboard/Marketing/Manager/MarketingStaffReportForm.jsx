@@ -14,11 +14,13 @@ import {
   post_staff_email_otp,
   post_verify_staff_email_otp,
   send_otp_to_email,
+  get_all_reports_by_staff_and_type,
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
 import dayjs from "dayjs";
 import MarketingStaffReportTable from "./MarketingStaffReportTable";
+import { Link } from "react-router-dom";
 
 const MarketingStaffReportForm = () => {
 
@@ -80,6 +82,8 @@ const MarketingStaffReportForm = () => {
   const [loading, setLoading] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [taskReport, setTaskReport] = useState(null);
+  const [allReports, setAllReports] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
   const [staffMembers, setStaffMembers] = useState([]);
 
   const [currentTask, setCurrentTask] = useState(null);
@@ -139,6 +143,34 @@ const MarketingStaffReportForm = () => {
       }
     }
   }, [formData?.staff, manager])
+
+  // Fetch all reports by default when staff_type and staff are selected
+  useEffect(() => {
+    if (formData?.staff_type && formData?.staff && staffMembers.length > 0 && !isFiltered) {
+      const fetchAllReports = async () => {
+        try {
+          setLoading(true);
+          const selectedStaff = staffMembers.find((sm) => sm.name === formData?.staff);
+          const selectedStaffType = staffTypes.find((st) => st.staff_type_name === formData?.staff_type);
+          
+          if (selectedStaff && selectedStaffType) {
+            const resp = await get_all_reports_by_staff_and_type(
+              selectedStaff.id,
+              selectedStaffType.id
+            );
+            console.log("All reports:", resp);
+            setAllReports(resp || []);
+          }
+        } catch (e) {
+          console.error("Error fetching all reports:", e);
+          setAllReports([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAllReports();
+    }
+  }, [formData?.staff_type, formData?.staff, staffMembers, staffTypes, isFiltered])
 
   useEffect(() => {
     if (formData?.assigned_task) {
@@ -233,93 +265,47 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
 
 
 
+  // Filter reports when assigned_task and task_reporting_date are selected
   useEffect(()=>{
     if(formData?.assigned_task && formData?.task_reporting_date){
+      setIsFiltered(true);
       try{
         setLoading(true);
         const fetch_selected_task = tasks?.find(t => t.access_token === formData?.assigned_task);
 
         if(fetch_selected_task){
           const fetchTaskReport = async () =>{
-            const resp = (await get_staff_task_report_details(fetch_selected_task?.id, dayjs(formData?.task_reporting_date).format('YYYY-MM-DD')))?.[0];
-            setTaskReport(resp);
-            console.log(resp);
+            const resp = await get_staff_task_report_details(fetch_selected_task?.id, dayjs(formData?.task_reporting_date).format('YYYY-MM-DD'));
+            console.log("Filtered report response:", resp);
             
-            if(resp){
-              setFormData((prev)=>({
-                ...prev, 
-                visits: resp?.visits,
-                joined: resp?.joined,
-                in_pipeline: resp?.in_pipeline,
-                total_leads: resp?.total_leads_summary,
-                daily_leads: resp?.daily_leads_summary,
-                total_client: resp?.total_client_summary,
-                daily_client: resp?.daily_client_summary,
-                total_capture: resp?.total_capture_summary,
-                daily_capture: resp?.daily_capture_summary,
-                total_confirmation: resp?.total_confirmation,
-                Daily_confirmation: resp?.daily_confirmation,
-              }));
-
-               if (Array.isArray(resp.summaries) && resp.summaries.length > 0) {
-                const mappedSummaries = mapApiSummariesToClientSummaries(resp.summaries);
-                setClientSummaries(mappedSummaries);
-              }else {
-              setClientSummaries([createClientSummaryGroup(1)]);
-            }
-            }else {
+            if(resp && Array.isArray(resp) && resp.length > 0){
+              // API returns an array, set it directly to update the table
+              setTaskReport(resp);
+            } else if (resp && resp.task_report_id) {
+              // Single object response, convert to array
+              setTaskReport([resp]);
+            } else {
               setSnackbar({
                 open: true,
                 message: "No record exists for the selected date",
                 severity: "error",
               });
               setTaskReport(null);
-               setFormData((prev)=>({
-                ...prev, 
-                visits: 0,
-                joined: 0,
-                in_pipeline: 0,
-                total_leads: 0,
-                daily_leads: 0,
-                total_client: 0,
-                daily_client: 0,
-                total_capture: 0,
-                daily_capture: 0,
-                total_confirmation: 0,
-                Daily_confirmation: 0,
-              }));
-
-              setClientSummaries([createClientSummaryGroup(1)]);
-
             }
           }
-
           fetchTaskReport();
         }
-        
       }catch(e){
         console.log(e);
         setTaskReport(null);
       }finally{
         setLoading(false);
       }
+    } else if (!formData?.assigned_task && !formData?.task_reporting_date) {
+      setIsFiltered(false);
+      setTaskReport(null);
     }
-  }, [tasks && formData?.assigned_task, formData?.task_reporting_date]);
-
-
-  const handleAddClientSummary = () => {
-    setClientSummaries((prev) => [
-      ...prev,
-      createClientSummaryGroup(prev.length + 1),
-    ]);
-  };
-
-  const handleRemoveClientSummary = (groupIndex) => {
-    setClientSummaries((prev) =>
-      prev.filter((_, idx) => idx !== groupIndex)
-    );
-  };
-
+  }, [formData?.assigned_task, formData?.task_reporting_date, tasks]);
 
 
   const handleStageChange = (
@@ -420,8 +406,39 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
 
     setFormData((prev) => ({ ...prev, [name]: value }));
 
+    // If date or task is selected, enable filtering
+    if (name === 'task_reporting_date' || name === 'assigned_task') {
+      if (value) {
+        setIsFiltered(true);
+      } else {
+        // If both filters are cleared, reset to show all
+        if (name === 'assigned_task' && !formData.task_reporting_date) {
+          setIsFiltered(false);
+        } else if (name === 'task_reporting_date' && !formData.assigned_task) {
+          setIsFiltered(false);
+        }
+      }
+    }
+
     // Reset errors while typing
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  // Reset filter handler
+  const handleResetFilter = () => {
+    setFormData((prev) => ({
+      ...prev,
+      assigned_task: '',
+      task_reporting_date: '',
+      assigned_date: '',
+      assigned_area: '',
+      approx_shops: '',
+      approx_offices: '',
+      approx_hawkers: '',
+    }));
+    setIsFiltered(false);
+    setTaskReport(null);
+    setCurrentTask(null);
   };
 
   // VALIDATION FUNCTION
@@ -952,6 +969,18 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         />
       ))}
 
+      {isFiltered && (
+        <Box className="label_group">
+          <Link 
+            variant="outlined" 
+            onClick={handleResetFilter}
+            className="btn-link"
+          >
+            Show All Reports
+          </Link>
+        </Box>
+      )}
+
       <CustomSnackbar
         open={snackbar.open}
         handleClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
@@ -959,7 +988,10 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         severity={snackbar.severity}
         />
     </Box>
-        <MarketingStaffReportTable data={taskReport}/>
+        <MarketingStaffReportTable 
+          data={isFiltered ? taskReport : null} 
+          allReports={!isFiltered ? allReports : null}
+        />
         </>
   );
 };
