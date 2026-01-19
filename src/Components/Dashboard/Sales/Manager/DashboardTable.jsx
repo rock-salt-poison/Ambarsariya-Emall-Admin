@@ -9,7 +9,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { get_role_employees, get_staff } from "../../../../API/expressAPI";
+import { get_role_employees, get_sales_staff } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
 
 export default function DashboardTable() {
@@ -23,7 +23,7 @@ export default function DashboardTable() {
       const fetchEmployees = async () => {
         try{
           setLoading(true);
-          const resp = await get_staff(token);
+          const resp = await get_sales_staff(token);
           // console.log(resp);
           if(resp){
             setEmployees(resp);

@@ -87,14 +87,46 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
 
   useEffect(() => {
     if (menuItems.length > 0 && !selectedItem) {
-      setSelectedItem(menuItems[0].name);
-      onSelectItem(menuItems[0].name);
+      // Get first leaf item (actual clickable item)
+      const getFirstLeaf = (items, parent = null) => {
+        for (const item of items) {
+          if (item.children && item.children.length > 0) {
+            const leaf = getFirstLeaf(item.children, item.name);
+            if (leaf) return leaf;
+          } else {
+            return { item, parent };
+          }
+        }
+        return null;
+      };
+      const result = getFirstLeaf(menuItems);
+      if (result && result.item) {
+        setSelectedItem(result.item.name);
+        onSelectItem({ 
+          name: result.item.name, 
+          type: result.item.type || null,
+          parent: result.parent
+        });
+      } else if (menuItems[0]) {
+        // Fallback to first item if no leaf found
+        setSelectedItem(menuItems[0].name);
+        onSelectItem({ 
+          name: menuItems[0].name, 
+          type: menuItems[0].type || null,
+          parent: null
+        });
+      }
     }
   }, [menuItems, selectedItem, onSelectItem]);
 
-  const handleItemClick = (item) => {
+  const handleItemClick = (item, parentName = null) => {
     setSelectedItem(item.name);
-    onSelectItem(item.name);
+    // Pass item object with parent context for better navigation handling
+    onSelectItem({ 
+      name: item.name, 
+      type: item.type || null,
+      parent: parentName || null
+    });
   };
 
   const handleExpandToggle = (itemName) => {
@@ -143,7 +175,7 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
                 onClick={() =>
                   item.children
                     ? handleExpandToggle(item.name)
-                    : handleItemClick(item)
+                    : handleItemClick(item, null)
                 }
                 className={selectedItem === item.name ? "item active" : "item"}
                 sx={{
@@ -185,10 +217,10 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
                 {item.children.map((child) => (
                   <ListItem key={child.name} disablePadding>
                     <ListItemButton
-                      onClick={() => handleItemClick(child)}
+                      onClick={() => handleItemClick(child, item.name)}
                       sx={{ pl: "32px !important" }}
                       className={
-                        selectedItem === item.name ? "item active" : "item"
+                        selectedItem === child.name ? "item active" : "item"
                       }
                     >
                       <ListItemIcon

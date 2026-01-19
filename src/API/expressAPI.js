@@ -49,6 +49,15 @@ export const get_staff_members_by_manager_id = async (id) => {
     }
 }
 
+export const get_sales_staff_members_by_manager_id = async (id) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/sales-staff-members/${id}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const post_travel_time = async (data) => {
     try{
         const response = await axios.post(`${admin_link}/travel-time`, data);
@@ -356,10 +365,36 @@ export const get_staff = async (token) => {
         throw e;
     }
 }
+export const get_sales_staff = async (token) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/sales-staff/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
 export const get_staff_with_type = async (token, staff_type) => {
     try{
         console.log(token, staff_type);
         const response = await axios.get(`${admin_roles_api}/staff-with-type/${token}/${staff_type}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_sales_staff_with_type = async (token, staff_type) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/sales-staff-with-type/${token}/${staff_type}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_staff_confirm_summaries = async (staff_id) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/staff-confirm-summaries/${staff_id}`);
         return response.data;
     }catch(e){
         throw e;
@@ -425,6 +460,17 @@ export const post_create_staff = async (data) => {
     try{
         if(data){
             const response = await  axios.put(`${admin_roles_api}/create-staff`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+} 
+
+export const post_create_sales_staff = async (data) => {
+    try{
+        if(data){
+            const response = await  axios.put(`${admin_roles_api}/create-sales-staff`, data);
             return response.data;
         }
     }catch(e){

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../../Form/FormFields';
 import CustomSnackbar from "../../../CustomSnackbar";
-import { check_email_exists, get_permissions, get_staff_types, get_userByToken, post_create_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
+import { check_email_exists, get_permissions, get_staff_types, get_userByToken, post_create_sales_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from '../../../../store/otpSlice';
 
@@ -383,7 +383,7 @@ const handleSubmit = async (e) => {
       assign_area_name: formData.assign_area_name,
     };
 
-    const response = await post_create_staff(payload);
+    const response = await post_create_sales_staff(payload);
 
     if (response?.success) {
       setSnackbar({
