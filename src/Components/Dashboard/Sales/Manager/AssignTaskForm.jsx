@@ -9,6 +9,8 @@ import {
   get_staff_confirm_summaries,
   get_support_page_famous_areas,
   get_userByToken,
+  get_managers_by_department,
+  get_manager_token_by_id,
   post_create_staff,
   post_create_staff_tasks,
   post_staff_email_otp,
@@ -21,6 +23,7 @@ import dayjs from "dayjs";
 
 const AssignTaskForm = () => {
   const initialData = {
+    manager: "",
     staff_type: "",
     staff_member: "",
     assigned_task: "",
@@ -49,14 +52,19 @@ const AssignTaskForm = () => {
   const [staffMembers, setStaffMembers] = useState([]);
   const [famousAreas, setFamousAreas] = useState([]);
   const [confirmSummaries, setConfirmSummaries] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [managers, setManagers] = useState([]);
+  const [selectedManagerToken, setSelectedManagerToken] = useState(null);
 
   useEffect(() => {
-    if (token && formData?.staff_type) {
+    const tokenToUse = isAdmin ? selectedManagerToken : token;
+    
+    if (tokenToUse && formData?.staff_type && (!isAdmin || formData.manager)) {
       const fetchEmployees = async () => {
         try {
           setLoading(true);
 
-          const resp = await get_sales_staff_with_type(token, formData.staff_type);
+          const resp = await get_sales_staff_with_type(tokenToUse, formData.staff_type);
           if (resp) {
             setStaffMembers(resp);
           }
@@ -69,8 +77,10 @@ const AssignTaskForm = () => {
       };
 
       fetchEmployees();
+    } else {
+      setStaffMembers([]);
     }
-  }, [token, formData?.staff_type]);
+  }, [token, selectedManagerToken, formData?.staff_type, formData?.manager, isAdmin]);
 
   useEffect(() => {
     if (!formData.staff_member) {
@@ -94,7 +104,7 @@ const AssignTaskForm = () => {
       const fetchConfirmSummaries = async () => {
         try {
           setLoading(true);
-          const resp = await get_staff_confirm_summaries(selectedStaff.id);
+          const resp = await get_staff_confirm_summaries();
           if (resp) {
             setConfirmSummaries(resp);
           }
@@ -109,7 +119,7 @@ const AssignTaskForm = () => {
     }
   }, [formData.staff_member, staffMembers]);
 
-  // Fetch user by token
+  // Fetch user by token and check if admin
   useEffect(() => {
     if (token) {
       const fetchUser = async () => {
@@ -117,6 +127,7 @@ const AssignTaskForm = () => {
           const resp = await get_userByToken(token);
           if (resp?.user) {
             setManager(resp.user);
+            setIsAdmin(resp.user.department_name === 'Admin');
           }
         } catch (e) {
           console.error(e);
@@ -129,6 +140,51 @@ const AssignTaskForm = () => {
       setLoading(false);
     }
   }, [token]);
+
+  // Fetch managers if admin
+  useEffect(() => {
+    if (isAdmin && token) {
+      const fetchManagers = async () => {
+        try {
+          setLoading(true);
+          const resp = await get_managers_by_department('Sales Manager', token);
+          if (resp) {
+            setManagers(resp);
+          }
+        } catch (e) {
+          console.error(e);
+          setManagers([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchManagers();
+    }
+  }, [isAdmin, token]);
+
+  // Fetch manager token when manager is selected
+  useEffect(() => {
+    if (isAdmin && formData.manager) {
+      const selectedManager = managers.find(m => m.name === formData.manager);
+      if (selectedManager?.access_token) {
+        setSelectedManagerToken(selectedManager.access_token);
+      } else if (selectedManager?.id) {
+        const fetchToken = async () => {
+          try {
+            const resp = await get_manager_token_by_id(selectedManager.id);
+            if (resp?.access_token) {
+              setSelectedManagerToken(resp.access_token);
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        };
+        fetchToken();
+      }
+    } else if (!isAdmin) {
+      setSelectedManagerToken(token);
+    }
+  }, [formData.manager, managers, isAdmin, token]);
 
   
 
@@ -147,6 +203,10 @@ const AssignTaskForm = () => {
     const newErrors = {};
     let valid = true;
 
+    if (isAdmin && !formData.manager) {
+      newErrors.manager = "Manager is required";
+      valid = false;
+    }
     if (!formData.staff_type) {
       newErrors.staff_type = "Staff Type is required";
       valid = false;
@@ -210,7 +270,12 @@ const AssignTaskForm = () => {
         (s) => s.name === formData.staff_member
       )?.id;
 
-      const assigned_by = manager?.id;
+      // If admin, use selected manager's ID, otherwise use logged-in manager's ID
+      let assigned_by = manager?.id;
+      if (isAdmin && formData.manager) {
+        const selectedManager = managers.find(m => m.name === formData.manager);
+        assigned_by = selectedManager?.id || manager?.id;
+      }
 
       const start_date = dayjs(formData?.task_date?.[0]).format('YYYY-MM-DD');
       const end_date = dayjs(formData?.task_date?.[1]).format('YYYY-MM-DD');
@@ -276,13 +341,22 @@ const AssignTaskForm = () => {
 
   // FIELDS
   const formFields = [
+    ...(isAdmin ? [{
+      id: 0,
+      label: "Select Manager",
+      name: "manager",
+      type: "select",
+      options: managers.map((m) => m.name),
+      cName: 'w-30',
+    }] : []),
     {
       id: 1,
       label: "Select Staff",
       name: "staff_type",
       type: "select",
       options: staffTypes.map((s) => s.staff_type_name),
-      cName:'w-45',
+      cName:'w-30',
+      disable: isAdmin && !formData.manager,
     },
     {
       id: 2,
@@ -290,8 +364,8 @@ const AssignTaskForm = () => {
       name: "staff_member",
       type: "select",
       options: staffMembers.length>0 ?  staffMembers.map((s) => s.name) : ['No staff members'],
-      disable: staffMembers.length>0 ? false : true,
-      cName:'w-45',
+      disable: staffMembers.length>0 ? false : true || (isAdmin && !formData.manager),
+      cName:'w-30',
     },
     { 
       id: 3, 
@@ -377,60 +451,6 @@ const AssignTaskForm = () => {
         />
       ))}
       
-      {/* Display Confirm Summaries */}
-      {formData.staff_member && confirmSummaries.length > 0 && (
-        <Box sx={{ width: '100%', mt: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Tasks with Confirm Summary (Joined Status)
-          </Typography>
-          <Paper sx={{ overflow: 'auto', maxHeight: 400 }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Shop Name</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Assigned Task</TableCell>
-                  <TableCell>Task Date</TableCell>
-                  <TableCell>Created At</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {confirmSummaries.map((summary, index) => (
-                  <TableRow key={summary.id || index} hover>
-                    <TableCell>{summary.name || 'N/A'}</TableCell>
-                    <TableCell>{summary.phone || 'N/A'}</TableCell>
-                    <TableCell>{summary.email || 'N/A'}</TableCell>
-                    <TableCell>{summary.shop_name || 'N/A'}</TableCell>
-                    <TableCell>
-                      {summary.location 
-                        ? (typeof summary.location === 'object' 
-                            ? summary.location.formatted_address || JSON.stringify(summary.location)
-                            : summary.location)
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell>{summary.assigned_task || 'N/A'}</TableCell>
-                    <TableCell>
-                      {summary.task_start_date && summary.task_end_date
-                        ? `${new Date(summary.task_start_date).toLocaleDateString()} - ${new Date(summary.task_end_date).toLocaleDateString()}`
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {summary.created_at 
-                        ? new Date(summary.created_at).toLocaleString()
-                        : 'N/A'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-        </Box>
-      )}
-
-
       <Box sx={{width:'100%'}}>
         <Button type="submit" variant="contained">
           Create

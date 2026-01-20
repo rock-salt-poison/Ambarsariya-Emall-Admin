@@ -8,6 +8,8 @@ import {
   get_staff_with_type,
   get_support_page_famous_areas,
   get_userByToken,
+  get_managers_by_department,
+  get_manager_token_by_id,
   post_create_staff,
   post_create_staff_tasks,
   post_staff_email_otp,
@@ -20,6 +22,7 @@ import dayjs from "dayjs";
 
 const AssignTaskForm = () => {
   const initialData = {
+    manager: "",
     staff_type: "",
     staff_member: "",
     assigned_task: "",
@@ -47,14 +50,19 @@ const AssignTaskForm = () => {
   const token = useSelector((state) => state.auth.token);
   const [staffMembers, setStaffMembers] = useState([]);
   const [famousAreas, setFamousAreas] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [managers, setManagers] = useState([]);
+  const [selectedManagerToken, setSelectedManagerToken] = useState(null);
 
   useEffect(() => {
-    if (token && formData?.staff_type) {
+    const tokenToUse = isAdmin ? selectedManagerToken : token;
+    
+    if (tokenToUse && formData?.staff_type && (!isAdmin || formData.manager)) {
       const fetchEmployees = async () => {
         try {
           setLoading(true);
 
-          const resp = await get_staff_with_type(token, formData.staff_type);
+          const resp = await get_staff_with_type(tokenToUse, formData.staff_type);
           if (resp) {
             setStaffMembers(resp);
           }
@@ -67,8 +75,10 @@ const AssignTaskForm = () => {
       };
 
       fetchEmployees();
+    } else {
+      setStaffMembers([]);
     }
-  }, [token, formData?.staff_type]);
+  }, [token, selectedManagerToken, formData?.staff_type, formData?.manager, isAdmin]);
 
   useEffect(() => {
     if (!formData.staff_member) return;
@@ -85,7 +95,7 @@ const AssignTaskForm = () => {
     }
   }, [formData.staff_member, staffMembers]);
 
-  // Fetch user by token
+  // Fetch user by token and check if admin
   useEffect(() => {
     if (token) {
       const fetchUser = async () => {
@@ -93,6 +103,7 @@ const AssignTaskForm = () => {
           const resp = await get_userByToken(token);
           if (resp?.user) {
             setManager(resp.user);
+            setIsAdmin(resp.user.department_name === 'Admin');
           }
         } catch (e) {
           console.error(e);
@@ -106,13 +117,67 @@ const AssignTaskForm = () => {
     }
   }, [token]);
 
+  // Fetch managers if admin
+  useEffect(() => {
+    if (isAdmin && token) {
+      const fetchManagers = async () => {
+        try {
+          setLoading(true);
+          const resp = await get_managers_by_department('Marketing Manager', token);
+          if (resp) {
+            setManagers(resp);
+          }
+        } catch (e) {
+          console.error(e);
+          setManagers([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchManagers();
+    }
+  }, [isAdmin, token]);
+
+  // Fetch manager token when manager is selected
+  useEffect(() => {
+    if (isAdmin && formData.manager) {
+      const selectedManager = managers.find(m => m.name === formData.manager);
+      if (selectedManager?.access_token) {
+        setSelectedManagerToken(selectedManager.access_token);
+      } else if (selectedManager?.id) {
+        const fetchToken = async () => {
+          try {
+            const resp = await get_manager_token_by_id(selectedManager.id);
+            if (resp?.access_token) {
+              setSelectedManagerToken(resp.access_token);
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        };
+        fetchToken();
+      }
+    } else if (!isAdmin) {
+      setSelectedManagerToken(token);
+    }
+  }, [formData.manager, managers, isAdmin, token]);
+
   
 
   // Handle Input Change
   const handleOnChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      // Reset dependent fields when manager changes
+      if (name === 'manager' && isAdmin) {
+        newData.staff_type = '';
+        newData.staff_member = '';
+        setStaffMembers([]);
+      }
+      return newData;
+    });
 
     // Reset errors while typing
     setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -186,7 +251,12 @@ const AssignTaskForm = () => {
         (s) => s.name === formData.staff_member
       )?.id;
 
-      const assigned_by = manager?.id;
+      // If admin, use selected manager's ID, otherwise use logged-in manager's ID
+      let assigned_by = manager?.id;
+      if (isAdmin && formData.manager) {
+        const selectedManager = managers.find(m => m.name === formData.manager);
+        assigned_by = selectedManager?.id || manager?.id;
+      }
 
       const start_date = dayjs(formData?.task_date?.[0]).format('YYYY-MM-DD');
       const end_date = dayjs(formData?.task_date?.[1]).format('YYYY-MM-DD');
@@ -247,13 +317,22 @@ const AssignTaskForm = () => {
 
   // FIELDS
   const formFields = [
+    ...(isAdmin ? [{
+      id: 0,
+      label: "Select Manager",
+      name: "manager",
+      type: "select",
+      options: managers.map((m) => m.name),
+      cName: 'w-30',
+    }] : []),
     {
       id: 1,
       label: "Select Staff",
       name: "staff_type",
       type: "select",
       options: staffTypes.map((s) => s.staff_type_name),
-      cName:'w-45',
+      cName:'w-30',
+      disable: isAdmin && !formData.manager,
     },
     {
       id: 2,
@@ -261,8 +340,8 @@ const AssignTaskForm = () => {
       name: "staff_member",
       type: "select",
       options: staffMembers.length>0 ?  staffMembers.map((s) => s.name) : ['No staff members'],
-      disable: staffMembers.length>0 ? false : true,
-      cName:'w-45',
+      disable: staffMembers.length>0 ? false : true || (isAdmin && !formData.manager),
+      cName:'w-30',
     },
     { id: 3, label: "Assign Task", name: "assigned_task", type: "textarea" },
     { id: 4, label: "Task Date", name: "task_date", type: "date-range", cName: 'flex-auto'},

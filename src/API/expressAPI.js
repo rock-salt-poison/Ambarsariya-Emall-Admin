@@ -357,6 +357,26 @@ export const get_role_employees = async () => {
     }
 }
 
+export const get_managers_by_department = async (department_name, token) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/managers/${department_name}`, {
+            params: token ? { token } : {}
+        });
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
+export const get_manager_token_by_id = async (id) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/manager-token/${id}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const get_staff = async (token) => {
     try{
         const response = await axios.get(`${admin_roles_api}/staff/${token}`);
@@ -392,9 +412,9 @@ export const get_sales_staff_with_type = async (token, staff_type) => {
     }
 }
 
-export const get_staff_confirm_summaries = async (staff_id) => {
+export const get_staff_confirm_summaries = async () => {
     try{
-        const response = await axios.get(`${admin_roles_api}/staff-confirm-summaries/${staff_id}`);
+        const response = await axios.get(`${admin_roles_api}/staff-confirm-summaries`);
         return response.data;
     }catch(e){
         throw e;

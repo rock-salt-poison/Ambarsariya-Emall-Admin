@@ -19,11 +19,14 @@ export default function MarketingStaffReportTable({ data, allReports }) {
   useEffect(() => {
     if (allReports && Array.isArray(allReports) && allReports.length > 0) {
       // Use allReports when available (all reports view)
-      setReport(allReports);
+      // Ensure each report has task_report_id
+      const validReports = allReports.filter(r => r.task_report_id);
+      setReport(validReports);
     } else if (data) {
       // Handle data prop - can be array or single object
       if (Array.isArray(data)) {
-        setReport(data);
+        const validReports = data.filter(r => r.task_report_id);
+        setReport(validReports);
       } else if (data.task_report_id) {
         // Single report object
         setReport([data]);
@@ -36,6 +39,11 @@ export default function MarketingStaffReportTable({ data, allReports }) {
   }, [data, allReports]);
 
   const handleRowClick = (taskReportId) => {
+    if (!taskReportId) {
+      console.error("taskReportId is missing:", taskReportId);
+      return;
+    }
+    console.log("Navigating to:", `/marketing/staff-report-details/${taskReportId}`);
     navigate(`/marketing/staff-report-details/${taskReportId}`);
   };
 

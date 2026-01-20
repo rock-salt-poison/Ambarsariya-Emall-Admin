@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import SideBar from "../Components/SideBar";
 import DashboardHeader from "../Components/Dashboard/DashboardHeader";
@@ -17,6 +17,9 @@ const AuthLayout = () => {
   const [selectedItem, setSelectedItem] = useState(null); // Can be string or object with {name, type, parent}
   const [menuItems, setMenuItems] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isUserNavigation = useRef(false); // Track if navigation is from user click
+  const isInitialMount = useRef(true); // Track initial mount
 
   // Fetch user by token
   useEffect(() => {
@@ -181,9 +184,23 @@ const AuthLayout = () => {
     }
   }, [user]);
 
-  // Navigate when selectedItem changes
+  // Navigate when selectedItem changes (only if user explicitly clicked, not on initial load/refresh)
   useEffect(() => {
     if (!selectedItem || !user) return;
+
+    // On initial mount, don't navigate - let the current route stay
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Only navigate if user explicitly clicked on a menu item
+    if (!isUserNavigation.current) {
+      return;
+    }
+
+    // Reset the flag after checking
+    isUserNavigation.current = false;
 
     // Extract item name and type if selectedItem is an object
     const itemName = typeof selectedItem === 'object' ? selectedItem.name : selectedItem;
@@ -340,12 +357,15 @@ const AuthLayout = () => {
       default:
         break;
     }
-  }, [selectedItem, user, menuItems, navigate]);
+  }, [selectedItem, user, menuItems, navigate, location.pathname]);
 
   // Early return for unauthorized user
   if (!loading && !user) return <Navigate to="/login" replace />;
 
   const handleSelectItem = (item) => {
+    // Mark that this is user-initiated navigation
+    isUserNavigation.current = true;
+    
     // If item is an object with name property, store both name and context
     // If item is just a string (legacy), store as string
     if (typeof item === 'object' && item.name) {

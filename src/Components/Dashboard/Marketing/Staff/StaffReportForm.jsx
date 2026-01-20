@@ -988,7 +988,7 @@ const handleSubmit = async (e) => {
         console.error(err);
         setSnackbar({
           open: true,
-          message: "Failed to report the task",
+          message: err.response.data.error.includes("already exists for another task_report_id or summary_group_id") ? "Email already exists" : "Failed to report the task",
           severity: "error",
         });
       } finally {

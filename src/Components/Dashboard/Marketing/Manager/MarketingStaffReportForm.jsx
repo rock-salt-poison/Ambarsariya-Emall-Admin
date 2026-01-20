@@ -9,6 +9,8 @@ import {
   get_staff_types,
   get_staff_with_type,
   get_userByToken,
+  get_managers_by_department,
+  get_manager_token_by_id,
   post_create_staff,
   post_create_staff_tasks,
   post_staff_email_otp,
@@ -25,6 +27,7 @@ import { Link } from "react-router-dom";
 const MarketingStaffReportForm = () => {
 
   const initialData = {
+    manager: "",
     staff_type: "",
     staff: "",
     assigned_task: '',
@@ -85,6 +88,9 @@ const MarketingStaffReportForm = () => {
   const [allReports, setAllReports] = useState([]);
   const [isFiltered, setIsFiltered] = useState(false);
   const [staffMembers, setStaffMembers] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [managers, setManagers] = useState([]);
+  const [selectedManagerToken, setSelectedManagerToken] = useState(null);
 
   const [currentTask, setCurrentTask] = useState(null);
   const [clientSummaries, setClientSummaries] = useState([
@@ -93,14 +99,14 @@ const MarketingStaffReportForm = () => {
 
 
   useEffect(() => {
-    if (token && formData?.staff_type) {
+    const tokenToUse = isAdmin ? selectedManagerToken : token;
+    
+    if (tokenToUse && formData?.staff_type && (!isAdmin || formData.manager)) {
       const fetchEmployees = async () => {
         try {
           setLoading(true);
-          console.log(formData.staff_type);
 
-          const resp = await get_staff_with_type(token, formData.staff_type);
-          console.log(resp);
+          const resp = await get_staff_with_type(tokenToUse, formData.staff_type);
           if (resp) {
             setStaffMembers(resp);
           }
@@ -113,22 +119,28 @@ const MarketingStaffReportForm = () => {
       };
 
       fetchEmployees();
+    } else {
+      setStaffMembers([]);
     }
-  }, [token, formData?.staff_type]);
+  }, [token, selectedManagerToken, formData?.staff_type, formData?.manager, isAdmin]);
 
   useEffect(() => {
     if (formData?.staff && manager) {
       const assigned_to = staffMembers?.find((sm) => sm.name === formData?.staff)?.id
-      const assigned_by = manager?.id;
+      
+      // If admin, use selected manager's ID, otherwise use logged-in manager's ID
+      let assigned_by = manager?.id;
+      if (isAdmin && formData.manager) {
+        const selectedManager = managers.find(m => m.name === formData.manager);
+        assigned_by = selectedManager?.id || manager?.id;
+      }
 
       if (assigned_to && assigned_by) {
         const fetchTasks = async () => {
           try {
             setLoading(true);
-            console.log(assigned_by, assigned_to);
             
             const resp = await get_staff_member_tasks(assigned_by, assigned_to);
-            console.log(resp);
 
             if (resp) {
               setTasks(resp);
@@ -142,7 +154,7 @@ const MarketingStaffReportForm = () => {
         fetchTasks();
       }
     }
-  }, [formData?.staff, manager])
+  }, [formData?.staff, manager, formData?.manager, managers, isAdmin])
 
   // Fetch all reports by default when staff_type and staff are selected
   useEffect(() => {
@@ -158,7 +170,6 @@ const MarketingStaffReportForm = () => {
               selectedStaff.id,
               selectedStaffType.id
             );
-            console.log("All reports:", resp);
             setAllReports(resp || []);
           }
         } catch (e) {
@@ -184,7 +195,6 @@ const MarketingStaffReportForm = () => {
         dayjs(fetch_selected_task.start_date).toDate(),
         dayjs(fetch_selected_task.end_date).toDate()
       ];
-      console.log(date_range);
 
       setFormData((prev) => ({
         ...prev,
@@ -276,7 +286,6 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         if(fetch_selected_task){
           const fetchTaskReport = async () =>{
             const resp = await get_staff_task_report_details(fetch_selected_task?.id, dayjs(formData?.task_reporting_date).format('YYYY-MM-DD'));
-            console.log("Filtered report response:", resp);
             
             if(resp && Array.isArray(resp) && resp.length > 0){
               // API returns an array, set it directly to update the table
@@ -374,15 +383,15 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
     }
   }, [formData.staff_member, staffMembers]);
 
-  // Fetch user by token
+  // Fetch user by token and check if admin
   useEffect(() => {
     if (token) {
       const fetchUser = async () => {
         try {
           const resp = await get_userByToken(token);
           if (resp?.user) {
-            console.log(resp?.user);
             setManager(resp.user);
+            setIsAdmin(resp.user.department_name === 'Admin');
           }
         } catch (e) {
           console.error(e);
@@ -396,6 +405,51 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
     }
   }, [token]);
 
+  // Fetch managers if admin
+  useEffect(() => {
+    if (isAdmin && token) {
+      const fetchManagers = async () => {
+        try {
+          setLoading(true);
+          const resp = await get_managers_by_department('Marketing Manager', token);
+          if (resp) {
+            setManagers(resp);
+          }
+        } catch (e) {
+          console.error(e);
+          setManagers([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchManagers();
+    }
+  }, [isAdmin, token]);
+
+  // Fetch manager token when manager is selected
+  useEffect(() => {
+    if (isAdmin && formData.manager) {
+      const selectedManager = managers.find(m => m.name === formData.manager);
+      if (selectedManager?.access_token) {
+        setSelectedManagerToken(selectedManager.access_token);
+      } else if (selectedManager?.id) {
+        const fetchToken = async () => {
+          try {
+            const resp = await get_manager_token_by_id(selectedManager.id);
+            if (resp?.access_token) {
+              setSelectedManagerToken(resp.access_token);
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        };
+        fetchToken();
+      }
+    } else if (!isAdmin) {
+      setSelectedManagerToken(token);
+    }
+  }, [formData.manager, managers, isAdmin, token]);
+
 
 
 
@@ -404,7 +458,17 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
   const handleOnChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      // Reset dependent fields when manager changes
+      if (name === 'manager' && isAdmin) {
+        newData.staff_type = '';
+        newData.staff = '';
+        setStaffMembers([]);
+        setTasks([]);
+      }
+      return newData;
+    });
 
     // If date or task is selected, enable filtering
     if (name === 'task_reporting_date' || name === 'assigned_task') {
@@ -509,7 +573,6 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
     fetchStaffTypes();
   }, []);
 
-  console.log(errors);
   // const handleSubmit = async (e) => {
   //   e.preventDefault();
 
@@ -778,6 +841,14 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
 
   // FIELDS
   const formFields = [
+    ...(isAdmin ? [{
+      id: 0,
+      label: "Select Manager",
+      name: "manager",
+      type: "select",
+      options: managers.map((m) => m.name),
+      cName: 'w-100',
+    }] : []),
     {
       id: 1,
       label: "Select staff type",
@@ -785,6 +856,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
       type: "select",
       options: staffTypes.map((s) => s.staff_type_name),
       cName: 'w-45',
+      disable: isAdmin && !formData.manager,
     },
     {
       id: 2,
@@ -795,7 +867,7 @@ const mapApiSummariesToClientSummaries = (summaries = []) => {
         staffMembers.length > 0
           ? staffMembers.map((s) => s.name)
           : ["No staff members"],
-      disable: staffMembers.length > 0 ? false : true,
+      disable: staffMembers.length > 0 ? false : true || (isAdmin && !formData.manager),
       cName: 'w-45',
     },
     {

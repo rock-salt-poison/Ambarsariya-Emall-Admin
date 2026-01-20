@@ -27,6 +27,8 @@ export default function MarketingStaffReportDetails() {
       try {
         setLoading(true);
         const response = await get_marketing_staff_report_details_by_task_report_id(task_report_id);
+        console.log(response);
+        
         setData(response);
       } catch (err) {
         console.error("Error fetching report details:", err);
@@ -38,6 +40,8 @@ export default function MarketingStaffReportDetails() {
 
     if (task_report_id) {
       fetchData();
+    }else{
+      return;
     }
   }, [task_report_id]);
 
@@ -125,7 +129,7 @@ export default function MarketingStaffReportDetails() {
           <BoxHeader
             title="Report Details"
             backIcon={true}
-            handleBackClick={() => navigate(-1)}
+            handleBackClick={-1}
           />
           <Box sx={{ p: 3, textAlign: "center" }}>
             <Typography color="error">{error || "No data found"}</Typography>

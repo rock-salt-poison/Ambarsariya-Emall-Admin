@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../../Form/FormFields';
 import CustomSnackbar from "../../../CustomSnackbar";
-import { check_email_exists, get_permissions, get_staff_types, get_userByToken, post_create_sales_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
+import { check_email_exists, get_permissions, get_staff_types, get_userByToken, get_managers_by_department, post_create_sales_staff, post_staff_email_otp, post_verify_staff_email_otp, send_otp_to_email } from '../../../../API/expressAPI';
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from '../../../../store/otpSlice';
 
 const AddStaffForm = ({ onClose }) => {
 
   const [formData, setFormData] = useState({
+    manager: '',
     staff_type: '',
     username: '',
     password: '',
@@ -36,6 +37,8 @@ const AddStaffForm = ({ onClose }) => {
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [managers, setManagers] = useState([]);
   
 
   const dispatch = useDispatch();
@@ -46,7 +49,7 @@ const AddStaffForm = ({ onClose }) => {
   const passwordPattern = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
   const phonePattern = /^\+91\s\d{5}-\d{5}$/;
 
-  // Fetch user by token
+  // Fetch user by token and check if admin
   useEffect(() => {
     if (token) {
       const fetchUser = async () => {
@@ -54,6 +57,7 @@ const AddStaffForm = ({ onClose }) => {
           const resp = await get_userByToken(token);
           if (resp?.user) {
             setManager(resp.user);
+            setIsAdmin(resp.user.department_name === 'Admin');
           }
         } catch (e) {
           console.error(e);
@@ -66,6 +70,27 @@ const AddStaffForm = ({ onClose }) => {
       setLoading(false);
     }
   }, [token]);
+
+  // Fetch managers if admin
+  useEffect(() => {
+    if (isAdmin && token) {
+      const fetchManagers = async () => {
+        try {
+          setLoading(true);
+          const resp = await get_managers_by_department('Sales Manager', token);
+          if (resp) {
+            setManagers(resp);
+          }
+        } catch (e) {
+          console.error(e);
+          setManagers([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchManagers();
+    }
+  }, [isAdmin, token]);
 
   // Handle Input Change
   const handleOnChange = (e) => {
@@ -83,6 +108,7 @@ const AddStaffForm = ({ onClose }) => {
     const newErrors = {};
     let valid = true;
 
+    if (isAdmin && !formData.manager) { newErrors.manager = "Manager is required"; valid = false; }
     if (!formData.staff_type) { newErrors.staff_type = "Staff Type is required"; valid = false; }
     if (!formData.username) { newErrors.username = "Username is required"; valid = false; }
     if (!formData.name) { newErrors.name = "Name is required"; valid = false; }
@@ -368,9 +394,16 @@ const handleSubmit = async (e) => {
       return;
     }
 
+    // If admin, use selected manager's ID, otherwise use logged-in manager's ID
+    let manager_id = manager?.id;
+    if (isAdmin && formData.manager) {
+      const selectedManager = managers.find(m => m.name === formData.manager);
+      manager_id = selectedManager?.id || manager?.id;
+    }
+
     const payload = {
       credentials_id: finalCredentialsId,
-      manager_id: manager?.id,
+      manager_id: manager_id,
       staff_type_id,
       username: formData.username,
       password: formData.password,
@@ -422,6 +455,14 @@ console.log(formData?.assign_area);
 
   // FIELDS
   const formFields = [
+    ...(isAdmin ? [{
+      id: 0,
+      label: 'Select Manager',
+      name: 'manager',
+      type: 'select',
+      options: managers.map(m => m.name),
+      cName: 'w-100',
+    }] : []),
     { id: 1, label: 'Select Sale Staff', name: 'staff_type', type: 'select', options: staffTypes.map(s => s.staff_type_name) },
     { id: 2, label: 'Enter name', name: 'name', type: 'text' },
     { id: 3, label: 'Enter age', name: 'age', type: 'number' },
