@@ -12,6 +12,8 @@ import {
   post_staff_email_otp,
   post_verify_staff_email_otp,
   send_otp_to_email,
+  send_member_phone_otp,
+  verify_member_phone_otp,
 } from "../../../../API/expressAPI";
 import { useDispatch, useSelector } from "react-redux";
 import { clearOtp, setEmailOtp } from "../../../../store/otpSlice";
@@ -50,6 +52,8 @@ const AddStaffForm = ({ onClose }) => {
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const token = useSelector((state) => state.auth.token);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [managers, setManagers] = useState([]);
 
@@ -196,9 +200,6 @@ const AddStaffForm = ({ onClose }) => {
       if (showPhoneOtp && !formData.phone_otp) {
         newErrors.phone_otp = "Enter Phone OTP";
         valid = false;
-      } else if (showPhoneOtp && formData.phone_otp !== "123456") {
-        newErrors.phone_otp = "Invalid Phone OTP";
-        valid = false;
       }
     }
 
@@ -219,115 +220,41 @@ const AddStaffForm = ({ onClose }) => {
     }
   };
 
-  // const fetchPermissions = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const resp = await get_permissions();
-  //     setPermissions(resp || []);
-  //   } catch (err) { console.log(err); }
-  //   finally{
-  //     setLoading(false);
-  //   }
-  // };
-
   useEffect(() => {
     fetchStaffTypes();
-    // fetchPermissions();
   }, []);
 
   console.log(errors);
 
-  // SUBMIT HANDLER
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   const isValid = validateFields();
-  //   if (!isValid) return;
-
-  //   try {
-  //     setLoading(true);
-  //     const department_id = departments?.filter(d => d.department_name === formData?.department)?.[0].department_id;
-  //     const permission_id = permissions?.filter(p => p.permission_name === formData?.rights)?.[0].permission_id;
-
-  //     // SHOW PHONE OTP ONLY IF PHONE IS VALID
-  //     if (formData.phone && phonePattern.test(formData.phone)) {
-  //       setShowPhoneOtp(true);
-  //     }
-
-  //     // SHOW EMAIL OTP ONLY IF EMAIL IS VALID
-  //     if (formData.email && gmailPattern.test(formData.email)) {
-  //       setShowEmailOtp(true);
-
-  //       // If OTP not sent yet -> send it now
-  //       if (!reduxEmailOTP) {
-  //         const resp = await send_otp_to_email({ username: formData.email });
-
-  //         if (resp?.otp) {
-  //           dispatch(setEmailOtp(resp.otp));
-  //           setSnackbar({
-  //             open: true,
-  //             message: "OTP sent to email",
-  //             severity: "success",
-  //           });
-  //         }
-  //         return; // stop here until user enters OTP
-  //       }
-  //     }
-
-  //     if (showPhoneOtp && formData.phone_otp !== "123456") {
-  //     setSnackbar({
-  //       open: true,
-  //       message: "Invalid phone OTP",
-  //       severity: "error",
-  //     });
-  //     return;
-  //   }
-
-  //   if (showEmailOtp && formData.email_otp !== reduxEmailOTP) {
-  //     setSnackbar({
-  //       open: true,
-  //       message: "Invalid email OTP",
-  //       severity: "error",
-  //     });
-  //     return;
-  //   }
-
-  //     const data = {
-  //       department: department_id,
-  //       role_name: formData?.role_name,
-  //       rights: permission_id,
-  //       username: formData?.username,
-  //       password: formData?.password,
-  //       name: formData?.name,
-  //       phone: formData?.phone,
-  //       email: formData?.email,
-  //       age: formData?.age,
-  //       start_date: formData?.start_date,
-  //     }
-  //     const response = await post_role_employees(data);
-  //     if(response){
-  //       console.log(response);
-  //       setSnackbar({
-  //         open: true,
-  //         message: "Employee created successfully!",
-  //         severity: "success",
-  //       });
-  //     }
-
-  //     // call your final insert API here
-  //     onClose();
-  //   } catch (err) {
-  //     console.log(err);
-  //     setSnackbar({
-  //       open: true,
-  //       message: "Something went wrong",
-  //       severity: "error",
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  console.log(manager);
+  // Resend phone OTP function
+  const handleResendPhoneOtp = async () => {
+    try {
+      setLoading(true);
+      const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+      const phone_otp_resp = await send_member_phone_otp(phoneData);
+      if (phone_otp_resp?.success) {
+        setSnackbar({
+          open: true,
+          message: phone_otp_resp.message || "OTP resent successfully",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: phone_otp_resp.message || "Failed to resend OTP",
+          severity: "error",
+        });
+      }
+    } catch (e) {
+      setSnackbar({
+        open: true,
+        message: e.response?.data?.message || "Failed to resend OTP",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -341,15 +268,81 @@ const AddStaffForm = ({ onClose }) => {
         (s) => s.staff_type_name === formData.staff_type
       )?.id;
 
-      /* ---------------- PHONE OTP ---------------- */
-      if (
-        formData.phone &&
-        phonePattern.test(formData.phone) &&
-        !showPhoneOtp
-      ) {
-        setShowPhoneOtp(true);
-        setLoading(false);
-        return;
+      /* ---------------- PHONE OTP FLOW ---------------- */
+      if (formData.phone && phonePattern.test(formData.phone) && !phoneVerified) {
+        // Send phone OTP if not sent yet
+        if (!phoneOtpSent) {
+          try {
+            const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+            const phoneOtpResp = await send_member_phone_otp(phoneData);
+            
+            if (phoneOtpResp?.success) {
+              setPhoneOtpSent(true);
+              setShowPhoneOtp(true);
+              setSnackbar({
+                open: true,
+                message: phoneOtpResp.message || "OTP sent to phone successfully",
+                severity: "success",
+              });
+            } else {
+              setSnackbar({
+                open: true,
+                message: phoneOtpResp.message || "Failed to send OTP",
+                severity: "error",
+              });
+            }
+          } catch (e) {
+            console.error("Error sending phone OTP:", e);
+            setSnackbar({
+              open: true,
+              message: e.response?.data?.message || "Failed to send OTP",
+              severity: "error",
+            });
+          }
+          setLoading(false);
+          return;
+        }
+
+        // Verify phone OTP if sent but not verified
+        if (phoneOtpSent && !phoneVerified && formData.phone_otp) {
+          try {
+            const verifyPhoneData = {
+              phoneNumber: formData.phone,
+              phone_otp: formData.phone_otp,
+            };
+
+            const verifyPhoneResp = await verify_member_phone_otp(verifyPhoneData);
+
+            if (verifyPhoneResp?.success) {
+              setPhoneVerified(true);
+              setSnackbar({
+                open: true,
+                message: verifyPhoneResp.message || "Phone OTP verified successfully",
+                severity: "success",
+              });
+            } else {
+              setSnackbar({
+                open: true,
+                message: verifyPhoneResp.message || "Invalid or expired OTP",
+                severity: "error",
+              });
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            console.error("Error verifying phone OTP:", e);
+            setSnackbar({
+              open: true,
+              message: e.response?.data?.message || "OTP verification failed",
+              severity: "error",
+            });
+            setLoading(false);
+            return;
+          }
+        } else if (phoneOtpSent && !phoneVerified) {
+          setLoading(false);
+          return;
+        }
       }
 
       let verifiedNow = emailVerified;
@@ -425,7 +418,7 @@ const AddStaffForm = ({ onClose }) => {
       }
 
       /* ---------------- FINAL CREATE ---------------- */
-      if (!verifiedNow || !finalCredentialsId) {
+      if (!verifiedNow || !finalCredentialsId || (formData.phone && phonePattern.test(formData.phone) && !phoneVerified)) {
         setLoading(false);
         return;
       }
@@ -477,12 +470,6 @@ const AddStaffForm = ({ onClose }) => {
   console.log(staffTypes);
 
   console.log(formData?.assign_area);
-
-  // // SHOW OTP ONLY WHEN EMAIL IS VALID AND OTP WAS SENT
-  // const showEmailOtp = reduxEmailOTP && formData.email && !errors.email;
-
-  // // PHONE OTP only if phone valid
-  // const showPhoneOtp = formData.phone && !errors.phone;
 
   // FIELDS
   const formFields = [
@@ -555,9 +542,20 @@ const AddStaffForm = ({ onClose }) => {
         />
       ))}
 
-      <Button type="submit" variant="contained">
-        Create
-      </Button>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <Button type="submit" variant="contained">
+          Create
+        </Button>
+        {showPhoneOtp && !phoneVerified && (
+          <Button
+            variant="outlined"
+            onClick={handleResendPhoneOtp}
+            disabled={loading}
+          >
+            Resend Phone OTP
+          </Button>
+        )}
+      </Box>
 
       <CustomSnackbar
         open={snackbar.open}

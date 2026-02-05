@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import FormFields from '../../Form/FormFields';
 import CustomSnackbar from "../../CustomSnackbar";
-import { check_email_exists, get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp } from '../../../API/expressAPI';
+import { check_email_exists, get_departments, get_permissions, post_role_employees, post_staff_email_otp, post_verify_staff_email_otp, send_member_phone_otp, verify_member_phone_otp } from '../../../API/expressAPI';
 
 const CreateRoleForm = ({ onClose }) => {
 
@@ -30,6 +30,8 @@ const CreateRoleForm = ({ onClose }) => {
   const [showEmailOtp, setShowEmailOtp] = useState(false);
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [credentialsId, setCredentialsId] = useState(null);
   
   // Patterns
@@ -95,9 +97,6 @@ const CreateRoleForm = ({ onClose }) => {
     if (formData.phone) {
       if (showPhoneOtp && !formData.phone_otp) {
         newErrors.phone_otp = "Enter Phone OTP";
-        valid = false;
-      } else if (showPhoneOtp && formData.phone_otp !== "123456") {
-        newErrors.phone_otp = "Invalid Phone OTP";
         valid = false;
       }
     }
@@ -312,6 +311,36 @@ const CreateRoleForm = ({ onClose }) => {
 // };
 
 
+  // Resend phone OTP function
+  const handleResendPhoneOtp = async () => {
+    try {
+      setLoading(true);
+      const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+      const phone_otp_resp = await send_member_phone_otp(phoneData);
+      if (phone_otp_resp?.success) {
+        setSnackbar({
+          open: true,
+          message: phone_otp_resp.message || "OTP resent successfully",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: phone_otp_resp.message || "Failed to resend OTP",
+          severity: "error",
+        });
+      }
+    } catch (e) {
+      setSnackbar({
+        open: true,
+        message: e.response?.data?.message || "Failed to resend OTP",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // FIELDS
   
 const handleSubmit = async (e) => {
@@ -330,12 +359,82 @@ const handleSubmit = async (e) => {
     )?.id;
 
     /* -------------------------
-       PHONE OTP UI
+       PHONE OTP FLOW
     ------------------------- */
-    if (formData.phone && phonePattern.test(formData.phone) && !showPhoneOtp) {
-      setShowPhoneOtp(true);
-      setLoading(false);
-      return;
+    if (formData.phone && phonePattern.test(formData.phone) && !phoneVerified) {
+      // Send phone OTP if not sent yet
+      if (!phoneOtpSent) {
+        try {
+          const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+          const phoneOtpResp = await send_member_phone_otp(phoneData);
+          
+          if (phoneOtpResp?.success) {
+            setPhoneOtpSent(true);
+            setShowPhoneOtp(true);
+            setSnackbar({
+              open: true,
+              message: phoneOtpResp.message || "OTP sent to phone successfully",
+              severity: "success",
+            });
+          } else {
+            setSnackbar({
+              open: true,
+              message: phoneOtpResp.message || "Failed to send OTP",
+              severity: "error",
+            });
+          }
+        } catch (e) {
+          console.error("Error sending phone OTP:", e);
+          setSnackbar({
+            open: true,
+            message: e.response?.data?.message || "Failed to send OTP",
+            severity: "error",
+          });
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Verify phone OTP if sent but not verified
+      if (phoneOtpSent && !phoneVerified && formData.phone_otp) {
+        try {
+          const verifyPhoneData = {
+            phoneNumber: formData.phone,
+            phone_otp: formData.phone_otp,
+          };
+
+          const verifyPhoneResp = await verify_member_phone_otp(verifyPhoneData);
+
+          if (verifyPhoneResp?.success) {
+            setPhoneVerified(true);
+            setSnackbar({
+              open: true,
+              message: verifyPhoneResp.message || "Phone OTP verified successfully",
+              severity: "success",
+            });
+          } else {
+            setSnackbar({
+              open: true,
+              message: verifyPhoneResp.message || "Invalid or expired OTP",
+              severity: "error",
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Error verifying phone OTP:", e);
+          setSnackbar({
+            open: true,
+            message: e.response?.data?.message || "OTP verification failed",
+            severity: "error",
+          });
+          setLoading(false);
+          return;
+        }
+      } else if (phoneOtpSent && !phoneVerified) {
+        setLoading(false);
+        return;
+      }
     }
 
     let verifiedNow = emailVerified;
@@ -413,7 +512,7 @@ const handleSubmit = async (e) => {
     /* -------------------------
        CREATE EMPLOYEE (same click)
     ------------------------- */
-    if (!verifiedNow || !finalCredentialsId) {
+    if (!verifiedNow || !finalCredentialsId || (formData.phone && phonePattern.test(formData.phone) && !phoneVerified)) {
       setLoading(false);
       return;
     }
@@ -500,7 +599,18 @@ const handleSubmit = async (e) => {
         />
       ))}
 
-      <Button type="submit" variant="contained">Create</Button>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <Button type="submit" variant="contained">Create</Button>
+        {showPhoneOtp && !phoneVerified && (
+          <Button
+            variant="outlined"
+            onClick={handleResendPhoneOtp}
+            disabled={loading}
+          >
+            Resend Phone OTP
+          </Button>
+        )}
+      </Box>
 
       <CustomSnackbar
         open={snackbar.open}

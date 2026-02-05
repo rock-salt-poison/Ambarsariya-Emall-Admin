@@ -626,3 +626,25 @@ export const fetchDomainSectors = async (domain_id) => {
   const response = await axios.get(`${link}/domain-sectors/${domain_id}`);
   return response.data;
 };
+
+export const send_member_phone_otp = async (data) => {
+  try {
+    if (data) {
+      const response = await axios.post(`${link}/sell/member-phone-otp`, data);
+      return response.data;
+    }
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const verify_member_phone_otp = async (data) => {
+  try {
+    if (data) {
+      const response = await axios.post(`${link}/sell/member-verify-phone-otp`, data);
+      return response.data;
+    }
+  } catch (e) {
+    throw e;
+  }
+};
