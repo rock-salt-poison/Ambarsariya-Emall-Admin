@@ -111,7 +111,9 @@ export default function AccountsTable({ data, tab }) {
         "Member Phone No.",
         "Shop Username",
         "Member Username",
-        "Business Name"
+        "Business Name",
+        "",
+        ""
       ]);
     }else {
       setTableHeader([]);
@@ -317,8 +319,17 @@ export default function AccountsTable({ data, tab }) {
     if(selectedRow){
         try{
           setLoading(true);
-          const resp = await delete_user(selectedRow?.user_id);
-          setTableData((prev) => prev.filter(row => row.user_id !== selectedRow.user_id));
+          // For merchant, use shop_user_id to identify the merchant and delete entire merchant
+          const userId = user_type === "merchant" ? selectedRow?.shop_user_id : selectedRow?.user_id;
+          const deleteEntireMerchant = user_type === "merchant";
+          const resp = await delete_user(userId, deleteEntireMerchant);
+          
+          // Filter based on user_type
+          if (user_type === "merchant") {
+            setTableData((prev) => prev.filter(row => row.merchant_id !== selectedRow.merchant_id));
+          } else {
+            setTableData((prev) => prev.filter(row => row.user_id !== selectedRow.user_id));
+          }
 
           setSnackbar({ open: true, message: resp.message });
         }catch(e){
@@ -489,6 +500,12 @@ export default function AccountsTable({ data, tab }) {
                   <TableCell>{row.shop_username}</TableCell>
                   <TableCell>{row.member_username}</TableCell>
                   <TableCell>{row.business_name}</TableCell>
+                  <TableCell>
+                    <EditIcon />
+                  </TableCell>
+                  <TableCell>
+                    <DeleteIcon onClick = {(e) => handleDelete(e, row)}/>
+                  </TableCell>
                 </TableRow>
               ))
               }

@@ -310,10 +310,13 @@ export const delete_support_page_famous_areas = async (data) => {
     }
 };
 
-export const delete_user = async (user_id) => {
+export const delete_user = async (user_id, deleteEntireMerchant = false) => {
     try{
         if(user_id){
-            const response = await axios.delete(`${admin_link}/user/${user_id}`);
+            const url = deleteEntireMerchant 
+                ? `${admin_link}/user/${user_id}?deleteEntireMerchant=true`
+                : `${admin_link}/user/${user_id}`;
+            const response = await axios.delete(url);
             return response.data;
         }
     }catch(e){
