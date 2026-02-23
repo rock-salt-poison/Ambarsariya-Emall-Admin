@@ -8,7 +8,8 @@ import { Box, CircularProgress } from "@mui/material";
 // import PersonOutline from '@mui/icons-material/PersonOutline';
 import MailIcon from "@mui/icons-material/Mail";
 import { get_userByToken } from "../API/expressAPI";
-import { AssignmentOutlined, AssessmentOutlined, PersonOutline, HomeOutlined } from '@mui/icons-material';
+import { AssignmentOutlined, AssessmentOutlined, PersonOutline, HomeOutlined,NoteAdd, Restore, DynamicForm, MiscellaneousServices } from '@mui/icons-material';
+
 
 const AuthLayout = () => {
   const token = useSelector((state) => state.auth.token);
@@ -116,6 +117,16 @@ const AuthLayout = () => {
           { name: "MoU", icon: <PersonOutline /> },
           { name: "Services", icon: <PersonOutline /> },
           { name: "Shops", icon: <PersonOutline /> },
+        ],
+      },
+      {
+        name: "Municipal",
+        icon: <HomeOutlined />,
+        children: [
+          { name: "Create License", icon: <NoteAdd /> },
+          { name: "Vendor License & Renewal", icon: <Restore /> },
+          { name: "Grievances & Redressal", icon: <DynamicForm /> },
+          { name: "Services by Municipal Corporation", icon: <MiscellaneousServices /> },
         ],
       },
       { name: "Log Activity", icon: <HomeOutlined /> },

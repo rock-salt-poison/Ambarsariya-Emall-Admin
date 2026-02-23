@@ -311,34 +311,43 @@ const CreateRoleForm = ({ onClose }) => {
 // };
 
 
-  // Resend phone OTP function
-  const handleResendPhoneOtp = async () => {
-    try {
-      setLoading(true);
-      const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
-      const phone_otp_resp = await send_member_phone_otp(phoneData);
-      if (phone_otp_resp?.success) {
-        setSnackbar({
-          open: true,
-          message: phone_otp_resp.message || "OTP resent successfully",
-          severity: "success",
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: phone_otp_resp.message || "Failed to resend OTP",
-          severity: "error",
-        });
-      }
-    } catch (e) {
-      setSnackbar({
-        open: true,
-        message: e.response?.data?.message || "Failed to resend OTP",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
+  // Resend phone OTP function - COMMENTED OUT for now, using hardcoded 123456
+  // const handleResendPhoneOtp = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+  //     const phone_otp_resp = await send_member_phone_otp(phoneData);
+  //     if (phone_otp_resp?.success) {
+  //       setSnackbar({
+  //         open: true,
+  //         message: phone_otp_resp.message || "OTP resent successfully",
+  //         severity: "success",
+  //       });
+  //     } else {
+  //       setSnackbar({
+  //         open: true,
+  //         message: phone_otp_resp.message || "Failed to resend OTP",
+  //         severity: "error",
+  //       });
+  //     }
+  //   } catch (e) {
+  //     setSnackbar({
+  //       open: true,
+  //       message: e.response?.data?.message || "Failed to resend OTP",
+  //       severity: "error",
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // Temporary handler for resend - just shows the OTP value
+  const handleResendPhoneOtp = () => {
+    setSnackbar({
+      open: true,
+      message: "Please use OTP: 123456",
+      severity: "info",
+    });
   };
 
   // FIELDS
@@ -362,70 +371,97 @@ const handleSubmit = async (e) => {
        PHONE OTP FLOW
     ------------------------- */
     if (formData.phone && phonePattern.test(formData.phone) && !phoneVerified) {
-      // Send phone OTP if not sent yet
+      // Show phone OTP field if not shown yet
       if (!phoneOtpSent) {
-        try {
-          const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
-          const phoneOtpResp = await send_member_phone_otp(phoneData);
+        // COMMENTED OUT - Will use this later for actual phone OTP sending
+        // try {
+        //   const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+        //   const phoneOtpResp = await send_member_phone_otp(phoneData);
           
-          if (phoneOtpResp?.success) {
-            setPhoneOtpSent(true);
-            setShowPhoneOtp(true);
-            setSnackbar({
-              open: true,
-              message: phoneOtpResp.message || "OTP sent to phone successfully",
-              severity: "success",
-            });
-          } else {
-            setSnackbar({
-              open: true,
-              message: phoneOtpResp.message || "Failed to send OTP",
-              severity: "error",
-            });
-          }
-        } catch (e) {
-          console.error("Error sending phone OTP:", e);
-          setSnackbar({
-            open: true,
-            message: e.response?.data?.message || "Failed to send OTP",
-            severity: "error",
-          });
-        }
+        //   if (phoneOtpResp?.success) {
+        //     setPhoneOtpSent(true);
+        //     setShowPhoneOtp(true);
+        //     setSnackbar({
+        //       open: true,
+        //       message: phoneOtpResp.message || "OTP sent to phone successfully",
+        //       severity: "success",
+        //     });
+        //   } else {
+        //     setSnackbar({
+        //       open: true,
+        //       message: phoneOtpResp.message || "Failed to send OTP",
+        //       severity: "error",
+        //     });
+        //   }
+        // } catch (e) {
+        //   console.error("Error sending phone OTP:", e);
+        //   setSnackbar({
+        //     open: true,
+        //     message: e.response?.data?.message || "Failed to send OTP",
+        //     severity: "error",
+        //   });
+        // }
+        setPhoneOtpSent(true);
+        setShowPhoneOtp(true);
+        setSnackbar({
+          open: true,
+          message: "Please enter OTP: 123456",
+          severity: "success",
+        });
         setLoading(false);
         return;
       }
 
-      // Verify phone OTP if sent but not verified
+      // Verify phone OTP - using hardcoded 123456 for now
       if (phoneOtpSent && !phoneVerified && formData.phone_otp) {
-        try {
-          const verifyPhoneData = {
-            phoneNumber: formData.phone,
-            phone_otp: formData.phone_otp,
-          };
+        // COMMENTED OUT - Will use this later for actual phone OTP verification
+        // try {
+        //   const verifyPhoneData = {
+        //     phoneNumber: formData.phone,
+        //     phone_otp: formData.phone_otp,
+        //   };
 
-          const verifyPhoneResp = await verify_member_phone_otp(verifyPhoneData);
+        //   const verifyPhoneResp = await verify_member_phone_otp(verifyPhoneData);
 
-          if (verifyPhoneResp?.success) {
-            setPhoneVerified(true);
-            setSnackbar({
-              open: true,
-              message: verifyPhoneResp.message || "Phone OTP verified successfully",
-              severity: "success",
-            });
-          } else {
-            setSnackbar({
-              open: true,
-              message: verifyPhoneResp.message || "Invalid or expired OTP",
-              severity: "error",
-            });
-            setLoading(false);
-            return;
-          }
-        } catch (e) {
-          console.error("Error verifying phone OTP:", e);
+        //   if (verifyPhoneResp?.success) {
+        //     setPhoneVerified(true);
+        //     setSnackbar({
+        //       open: true,
+        //       message: verifyPhoneResp.message || "Phone OTP verified successfully",
+        //       severity: "success",
+        //     });
+        //   } else {
+        //     setSnackbar({
+        //       open: true,
+        //       message: verifyPhoneResp.message || "Invalid or expired OTP",
+        //       severity: "error",
+        //     });
+        //     setLoading(false);
+        //     return;
+        //   }
+        // } catch (e) {
+        //   console.error("Error verifying phone OTP:", e);
+        //   setSnackbar({
+        //     open: true,
+        //     message: e.response?.data?.message || "OTP verification failed",
+        //     severity: "error",
+        //   });
+        //   setLoading(false);
+        //   return;
+        // }
+
+        // Using hardcoded OTP 123456 for now
+        if (formData.phone_otp === "123456") {
+          setPhoneVerified(true);
           setSnackbar({
             open: true,
-            message: e.response?.data?.message || "OTP verification failed",
+            message: "Phone OTP verified successfully",
+            severity: "success",
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: "Invalid OTP. Please enter 123456",
             severity: "error",
           });
           setLoading(false);
@@ -436,6 +472,83 @@ const handleSubmit = async (e) => {
         return;
       }
     }
+
+    // COMMENTED OUT - Will use this later for actual phone verification
+    // if (formData.phone && phonePattern.test(formData.phone) && !phoneVerified) {
+    //   // Send phone OTP if not sent yet
+    //   if (!phoneOtpSent) {
+    //     try {
+    //       const phoneData = { phoneNumber: formData.phone, user_type: 'staff' };
+    //       const phoneOtpResp = await send_member_phone_otp(phoneData);
+    //       
+    //       if (phoneOtpResp?.success) {
+    //         setPhoneOtpSent(true);
+    //         setShowPhoneOtp(true);
+    //         setSnackbar({
+    //           open: true,
+    //           message: phoneOtpResp.message || "OTP sent to phone successfully",
+    //           severity: "success",
+    //         });
+    //       } else {
+    //         setSnackbar({
+    //           open: true,
+    //           message: phoneOtpResp.message || "Failed to send OTP",
+    //           severity: "error",
+    //         });
+    //       }
+    //     } catch (e) {
+    //       console.error("Error sending phone OTP:", e);
+    //       setSnackbar({
+    //         open: true,
+    //         message: e.response?.data?.message || "Failed to send OTP",
+    //         severity: "error",
+    //       });
+    //     }
+    //     setLoading(false);
+    //     return;
+    //   }
+
+    //   // Verify phone OTP if sent but not verified
+    //   if (phoneOtpSent && !phoneVerified && formData.phone_otp) {
+    //     try {
+    //       const verifyPhoneData = {
+    //         phoneNumber: formData.phone,
+    //         phone_otp: formData.phone_otp,
+    //       };
+
+    //       const verifyPhoneResp = await verify_member_phone_otp(verifyPhoneData);
+
+    //       if (verifyPhoneResp?.success) {
+    //         setPhoneVerified(true);
+    //         setSnackbar({
+    //           open: true,
+    //           message: verifyPhoneResp.message || "Phone OTP verified successfully",
+    //           severity: "success",
+    //         });
+    //       } else {
+    //         setSnackbar({
+    //           open: true,
+    //           message: verifyPhoneResp.message || "Invalid or expired OTP",
+    //           severity: "error",
+    //         });
+    //         setLoading(false);
+    //         return;
+    //       }
+    //     } catch (e) {
+    //       console.error("Error verifying phone OTP:", e);
+    //       setSnackbar({
+    //         open: true,
+    //         message: e.response?.data?.message || "OTP verification failed",
+    //         severity: "error",
+    //       });
+    //       setLoading(false);
+    //       return;
+    //     }
+    //   } else if (phoneOtpSent && !phoneVerified) {
+    //     setLoading(false);
+    //     return;
+    //   }
+    // }
 
     let verifiedNow = emailVerified;
     let finalCredentialsId = credentialsId;
