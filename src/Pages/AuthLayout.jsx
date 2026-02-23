@@ -123,7 +123,7 @@ const AuthLayout = () => {
         name: "Municipal",
         icon: <HomeOutlined />,
         children: [
-          { name: "Create License", icon: <NoteAdd /> },
+          { name: "Trade License", icon: <NoteAdd /> },
           { name: "Vendor License & Renewal", icon: <Restore /> },
           { name: "Grievances & Redressal", icon: <DynamicForm /> },
           { name: "Services by Municipal Corporation", icon: <MiscellaneousServices /> },
