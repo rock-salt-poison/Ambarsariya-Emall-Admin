@@ -343,11 +343,11 @@ const CreateRoleForm = ({ onClose }) => {
 
   // Temporary handler for resend - just shows the OTP value
   const handleResendPhoneOtp = () => {
-    setSnackbar({
-      open: true,
+        setSnackbar({
+          open: true,
       message: "Please use OTP: 123456",
       severity: "info",
-    });
+      });
   };
 
   // FIELDS
@@ -401,13 +401,13 @@ const handleSubmit = async (e) => {
         //     severity: "error",
         //   });
         // }
-        setPhoneOtpSent(true);
-        setShowPhoneOtp(true);
-        setSnackbar({
-          open: true,
+            setPhoneOtpSent(true);
+            setShowPhoneOtp(true);
+            setSnackbar({
+              open: true,
           message: "Please enter OTP: 123456",
-          severity: "success",
-        });
+              severity: "success",
+            });
         setLoading(false);
         return;
       }
@@ -452,13 +452,13 @@ const handleSubmit = async (e) => {
 
         // Using hardcoded OTP 123456 for now
         if (formData.phone_otp === "123456") {
-          setPhoneVerified(true);
-          setSnackbar({
-            open: true,
+            setPhoneVerified(true);
+            setSnackbar({
+              open: true,
             message: "Phone OTP verified successfully",
-            severity: "success",
-          });
-        } else {
+              severity: "success",
+            });
+          } else {
           setSnackbar({
             open: true,
             message: "Invalid OTP. Please enter 123456",

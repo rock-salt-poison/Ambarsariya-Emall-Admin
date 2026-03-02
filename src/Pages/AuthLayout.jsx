@@ -365,6 +365,12 @@ const AuthLayout = () => {
       case "Log Activity":
         navigate("../log-activity");
         break;
+      case "Trade License":
+        navigate("../municipal/trade-license");
+        break;
+      case "Vendor License & Renewal":
+        navigate("../municipal/vendor-license");
+        break;
       default:
         break;
     }

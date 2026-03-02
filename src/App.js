@@ -23,6 +23,8 @@ import MarketingStaffDailyTaskReport from "./Components/Dashboard/Marketing/Staf
 import MarketingAssignTask from "./Components/Dashboard/Marketing/Manager/MarketingAssignTask";
 import MarketingStaffReport from "./Components/Dashboard/Marketing/Staff/MarketingStaffReport";
 import MarketingStaffReportDetails from "./Components/Dashboard/Marketing/Manager/MarketingStaffReportDetails";
+import TradeLicense from "./Components/Dashboard/Municipal/TradeLicense";
+import VendorLicense from "./Components/Dashboard/Municipal/VendorLicense";
 
 function App() {
   return (
@@ -84,6 +86,8 @@ function App() {
           element={<AccountDetails />}
         />
         <Route path="/finance/:type" element={<B2B />} />
+        <Route path="/municipal/trade-license" element={<TradeLicense />} />
+        <Route path="/municipal/vendor-license" element={<VendorLicense />} />
       </Route>
     </Routes>
   );
