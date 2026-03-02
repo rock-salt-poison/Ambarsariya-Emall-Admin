@@ -345,6 +345,19 @@ a{
       padding: 15px 20px;
       gap: 15px;
 
+      &.municipal_corporation{
+        padding: 15px 0px;
+        gap: 0px;
+
+        .tabs_container{
+          padding: 0px 20px;
+        }
+      }
+
+      .tabs{
+        min-height: max-content;
+      }
+
       .cta-button {
         @include flex($justify: flex-end);
       }
