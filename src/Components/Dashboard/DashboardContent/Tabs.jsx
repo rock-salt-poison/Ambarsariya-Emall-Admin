@@ -37,6 +37,8 @@ export default function ScrollableTabsButton(props) {
             value={value} 
             onChange={handleChange} 
             orientation={props.verticalTabs?'vertical':'horizontal'}
+            variant="scrollable"
+            scrollButtons="auto"
             className="tabs" 
             sx={{
               [`& .${tabsClasses.scrollButtons}`]: {

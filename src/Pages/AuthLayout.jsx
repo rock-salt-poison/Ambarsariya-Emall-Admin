@@ -127,6 +127,7 @@ const AuthLayout = () => {
           { name: "Vendor License & Renewal", icon: <Restore /> },
           { name: "Grievances & Redressal", icon: <DynamicForm /> },
           { name: "Services by Municipal Corporation", icon: <MiscellaneousServices /> },
+          { name: "Risk Category Distribution", icon: <HomeOutlined /> },
         ],
       },
       { name: "Log Activity", icon: <HomeOutlined /> },
@@ -370,6 +371,9 @@ const AuthLayout = () => {
         break;
       case "Vendor License & Renewal":
         navigate("../municipal/vendor-license");
+        break;
+      case "Risk Category Distribution":
+        navigate("../municipal/risk-category-distribution");
         break;
       default:
         break;

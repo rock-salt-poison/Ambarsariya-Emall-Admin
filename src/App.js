@@ -25,6 +25,7 @@ import MarketingStaffReport from "./Components/Dashboard/Marketing/Staff/Marketi
 import MarketingStaffReportDetails from "./Components/Dashboard/Marketing/Manager/MarketingStaffReportDetails";
 import TradeLicense from "./Components/Dashboard/Municipal/TradeLicense";
 import VendorLicense from "./Components/Dashboard/Municipal/VendorLicense";
+import RiskCategoryDistribution from "./Components/Dashboard/Municipal/RiskCategoryDistribution";
 
 function App() {
   return (
@@ -88,6 +89,7 @@ function App() {
         <Route path="/finance/:type" element={<B2B />} />
         <Route path="/municipal/trade-license" element={<TradeLicense />} />
         <Route path="/municipal/vendor-license" element={<VendorLicense />} />
+        <Route path="/municipal/risk-category-distribution" element={<RiskCategoryDistribution />} />
       </Route>
     </Routes>
   );
