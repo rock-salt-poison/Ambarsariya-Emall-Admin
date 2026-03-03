@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { useParams, Navigate } from "react-router-dom";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import CustomSnackbar from "../../CustomSnackbar";
-import Tabs from "../DashboardContent/Tabs";
 
 // Table 1 for Payment Behavior - Vendor/Trade/Certification
 function PaymentBehaviorTable1({ data }) {
@@ -16,7 +16,7 @@ function PaymentBehaviorTable1({ data }) {
   ];
 
   return (
-    <Box className="col" sx={{ mb: 3 }}>
+    <Box className="container" sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Vendor / Trade / Certification
       </Typography>
@@ -67,7 +67,7 @@ function PaymentBehaviorTable2({ data }) {
   ];
 
   return (
-    <Box className="col" sx={{ mb: 3 }}>
+    <Box className="container" sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Utilities
       </Typography>
@@ -117,7 +117,7 @@ function PaymentBehaviorTable3({ data }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Commission
       </Typography>
@@ -195,7 +195,7 @@ function PaymentBehaviorContent() {
   ]);
 
   return (
-    <Box className="col">
+    <Box className="">
       <PaymentBehaviorTable1 data={table1Data} />
       <PaymentBehaviorTable2 data={table2Data} />
       <PaymentBehaviorTable3 data={table3Data} />
@@ -216,7 +216,7 @@ function LicenseStatusTable({ data }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
       <Box className="col">
         <Table>
           <TableHead>
@@ -284,7 +284,7 @@ function KYCApprovedTable({ data }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
       <Box className="col">
         <Table>
           <TableHead>
@@ -331,7 +331,7 @@ function BusinessStabilityTable1({ data }) {
     ];
   
     return (
-      <Box className="col" sx={{ mb: 3 }}>
+      <Box className="container" sx={{ mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Revenue by Sector and Class
         </Typography>
@@ -381,7 +381,7 @@ function BusinessStabilityTable2({ data }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Sub Sector Analysis
       </Typography>
@@ -430,7 +430,7 @@ function InspectionClearanceTable({ data }) {
     ];
   
     return (
-      <Box className="col">
+      <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -516,7 +516,7 @@ function BusinessStabilityContent() {
     ]);
   
     return (
-      <Box className="col">
+      <Box className="">
         <BusinessStabilityTable1 data={businessStabilityData} />
         <BusinessStabilityTable2 data={subSectorData} />
       </Box>
@@ -539,6 +539,7 @@ function InspectionClearanceContent() {
     return <InspectionClearanceTable data={inspectionClearanceData} />;
 }
 function RiskCategoryDistribution() {
+  const { tab } = useParams();
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -546,33 +547,28 @@ function RiskCategoryDistribution() {
     severity: "success",
   });
 
-  const tabsData = [
-    {
-      id: 1,
-      name: "Payment Behavior (40%)",
-      content: <PaymentBehaviorContent />,
-    },
-    {
-      id: 2,
-      name: "License Status (20%)",
-      content: <LicenseStatusContent />,
-    },
-    {
-      id: 3,
-      name: "KYC Approved (10%)",
-      content: <KYCApprovedContent />,
-    },
-    {
-        id: 4,
-        name: "Business Stability (10%)",
-        content: <BusinessStabilityContent />,
-    },
-    {
-        id: 5,
-        name: "Inspection Clearance (20%)",
-        content: <InspectionClearanceContent />,
-      },
-  ];
+  // Map route parameter to content
+  const renderContent = () => {
+    if (!tab) {
+      // Default to first tab if no tab parameter
+      return <Navigate to="./payment-behavior" replace />;
+    }
+
+    switch (tab) {
+      case "payment-behavior":
+        return <PaymentBehaviorContent />;
+      case "license-status":
+        return <LicenseStatusContent />;
+      case "kyc-approved":
+        return <KYCApprovedContent />;
+      case "business-stability":
+        return <BusinessStabilityContent />;
+      case "inspection-clearance":
+        return <InspectionClearanceContent />;
+      default:
+        return <Navigate to="./payment-behavior" replace />;
+    }
+  };
 
   return (
     <Box className="body">
@@ -584,7 +580,7 @@ function RiskCategoryDistribution() {
       <Box className="content">
         <BoxHeader title="Risk Category Distribution" />
         <Box className="body municipal_corporation">
-          <Tabs data={tabsData} />
+          {renderContent()}
         </Box>
       </Box>
       <CustomSnackbar

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { useParams, Navigate } from "react-router-dom";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import CustomSnackbar from "../../CustomSnackbar";
-import Tabs from "../DashboardContent/Tabs";
 
 // Reusable table component for Vendor License
 function VendorLicenseTable({ data, status }) {
@@ -16,7 +16,7 @@ function VendorLicenseTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -68,7 +68,7 @@ function NewApplicationsTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -118,7 +118,7 @@ function PendingApprovalTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -166,7 +166,7 @@ function ApprovedTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -203,6 +203,7 @@ function ApprovedTable({ data, status }) {
 }
 
 function VendorLicense() {
+  const { tab } = useParams();
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -268,28 +269,26 @@ function VendorLicense() {
     },
   ]);
 
-  const tabsData = [
-    {
-      id: 1,
-      name: "Vendor license",
-      content: <VendorLicenseTable data={vendorLicenseData} status="Vendor license" />,
-    },
-    {
-      id: 2,
-      name: "New Applications",
-      content: <NewApplicationsTable data={newApplicationsData} status="New Applications" />,
-    },
-    {
-      id: 3,
-      name: "Pending Approval",
-      content: <PendingApprovalTable data={pendingApprovalData} status="Pending Approval" />,
-    },
-    {
-      id: 4,
-      name: "Approved",
-      content: <ApprovedTable data={approvedData} status="Approved" />,
-    },
-  ];
+  // Map route parameter to content
+  const renderContent = () => {
+    if (!tab) {
+      // Default to first tab if no tab parameter
+      return <Navigate to="./vendor-license" replace />;
+    }
+
+    switch (tab) {
+      case "vendor-license":
+        return <VendorLicenseTable data={vendorLicenseData} status="Vendor license" />;
+      case "new-applications":
+        return <NewApplicationsTable data={newApplicationsData} status="New Applications" />;
+      case "pending-approval":
+        return <PendingApprovalTable data={pendingApprovalData} status="Pending Approval" />;
+      case "approved":
+        return <ApprovedTable data={approvedData} status="Approved" />;
+      default:
+        return <Navigate to="./vendor-license" replace />;
+    }
+  };
 
   return (
     <Box className="body">
@@ -301,7 +300,7 @@ function VendorLicense() {
       <Box className="content">
         <BoxHeader title="Vendor License & Renewal" />
         <Box className="body municipal_corporation">
-          <Tabs data={tabsData} />
+          {renderContent()}
         </Box>
       </Box>
       <CustomSnackbar

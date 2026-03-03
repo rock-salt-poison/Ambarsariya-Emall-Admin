@@ -150,6 +150,68 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
     }, 2000);
   };
 
+  // Recursive component to render menu items with nested children
+  const renderMenuItem = (item, parentName = null, level = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const uniqueKey = parentName ? `${parentName}-${item.name}` : item.name;
+    const isExpanded = expandedItems[uniqueKey];
+    const paddingLeft = level === 0 ? 2.5 : level === 1 ? "32px !important" : "48px !important";
+
+    return (
+      <React.Fragment key={uniqueKey}>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() =>
+              hasChildren
+                ? handleExpandToggle(uniqueKey)
+                : handleItemClick(item, parentName)
+            }
+            className={selectedItem === item.name ? "item active" : "item"}
+            sx={{
+              justifyContent: open ? "initial" : "center",
+              px: level === 0 ? 2.5 : 1,
+              pl: paddingLeft,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: open ? 3 : "auto",
+                justifyContent: "center",
+              }}
+            >
+              {item.icon || <HomeOutlinedIcon />}
+            </ListItemIcon>
+            <ListItemText
+              primary={item.name}
+              sx={{ opacity: open ? 1 : 0 }}
+              className="text"
+            />
+            {hasChildren && (
+              <IconButton
+                edge="end"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleExpandToggle(uniqueKey);
+                }}
+              >
+                {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
+            )}
+          </ListItemButton>
+        </ListItem>
+        {hasChildren && isExpanded && (
+          <List component="div" disablePadding>
+            {item.children.map((child) =>
+              renderMenuItem(child, item.name, level + 1)
+            )}
+          </List>
+        )}
+      </React.Fragment>
+    );
+  };
+
   return (
     <Drawer variant="permanent" open={open}>
       <DrawerHeader>
@@ -167,79 +229,8 @@ export default function MiniDrawer({ onSelectItem, menuItems }) {
         </IconButton>
       </DrawerHeader>
       <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <React.Fragment key={item.name}>
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() =>
-                  item.children
-                    ? handleExpandToggle(item.name)
-                    : handleItemClick(item, null)
-                }
-                className={selectedItem === item.name ? "item active" : "item"}
-                sx={{
-                  justifyContent: open ? "initial" : "center",
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : "auto",
-                    justifyContent: "center",
-                  }}
-                >
-                  {item.icon || <HomeOutlinedIcon />}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.name}
-                  sx={{ opacity: open ? 1 : 0 }}
-                  className="text"
-                />
-                {item.children && (
-                  <IconButton
-                    edge="end"
-                    size="small"
-                    onClick={() => handleExpandToggle(item.name)}
-                  >
-                    {expandedItems[item.name] ? (
-                      <ExpandLessIcon />
-                    ) : (
-                      <ExpandMoreIcon />
-                    )}
-                  </IconButton>
-                )}
-              </ListItemButton>
-            </ListItem>
-            {item.children && expandedItems[item.name] && (
-              <List component="div" disablePadding>
-                {item.children.map((child) => (
-                  <ListItem key={child.name} disablePadding>
-                    <ListItemButton
-                      onClick={() => handleItemClick(child, item.name)}
-                      sx={{ pl: "32px !important" }}
-                      className={
-                        selectedItem === child.name ? "item active" : "item"
-                      }
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 0,
-                          ml: open ? 3 : "auto",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {child.icon || <MailIcon />}
-                      </ListItemIcon>
-                      <ListItemText primary={child.name} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </React.Fragment>
-        ))}
+      <List className="lists">
+        {menuItems.map((item) => renderMenuItem(item, null, 0))}
       </List>
       <Divider />
       <List>

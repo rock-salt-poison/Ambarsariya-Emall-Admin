@@ -123,11 +123,38 @@ const AuthLayout = () => {
         name: "Municipal",
         icon: <HomeOutlined />,
         children: [
-          { name: "Trade License", icon: <NoteAdd /> },
-          { name: "Vendor License & Renewal", icon: <Restore /> },
+          {
+            name: "Trade License",
+            icon: <NoteAdd />,
+            children: [
+              { name: "Trade license", icon: <NoteAdd /> },
+              { name: "Expiring this month", icon: <NoteAdd /> },
+              { name: "Regulatory control", icon: <NoteAdd /> },
+            ],
+          },
+          {
+            name: "Vendor License & Renewal",
+            icon: <Restore />,
+            children: [
+              { name: "Vendor license", icon: <Restore /> },
+              { name: "New Applications", icon: <Restore /> },
+              { name: "Pending Approval", icon: <Restore /> },
+              { name: "Approved", icon: <Restore /> },
+            ],
+          },
           { name: "Grievances & Redressal", icon: <DynamicForm /> },
           { name: "Services by Municipal Corporation", icon: <MiscellaneousServices /> },
-          { name: "Risk Category Distribution", icon: <HomeOutlined /> },
+          {
+            name: "Risk Category Distribution",
+            icon: <HomeOutlined />,
+            children: [
+              { name: "Payment Behavior (40%)", icon: <HomeOutlined /> },
+              { name: "License Status (20%)", icon: <HomeOutlined /> },
+              { name: "KYC Approved (10%)", icon: <HomeOutlined /> },
+              { name: "Business Stability (10%)", icon: <HomeOutlined /> },
+              { name: "Inspection Clearance (20%)", icon: <HomeOutlined /> },
+            ],
+          },
         ],
       },
       { name: "Log Activity", icon: <HomeOutlined /> },
@@ -367,13 +394,49 @@ const AuthLayout = () => {
         navigate("../log-activity");
         break;
       case "Trade License":
-        navigate("../municipal/trade-license");
+        navigate("../municipal/trade-license/trade-license");
+        break;
+      case "Trade license":
+        navigate("../municipal/trade-license/trade-license");
+        break;
+      case "Expiring this month":
+        navigate("../municipal/trade-license/expiring-this-month");
+        break;
+      case "Regulatory control":
+        navigate("../municipal/trade-license/regulatory-control");
         break;
       case "Vendor License & Renewal":
-        navigate("../municipal/vendor-license");
+        navigate("../municipal/vendor-license/vendor-license");
+        break;
+      case "Vendor license":
+        navigate("../municipal/vendor-license/vendor-license");
+        break;
+      case "New Applications":
+        navigate("../municipal/vendor-license/new-applications");
+        break;
+      case "Pending Approval":
+        navigate("../municipal/vendor-license/pending-approval");
+        break;
+      case "Approved":
+        navigate("../municipal/vendor-license/approved");
         break;
       case "Risk Category Distribution":
-        navigate("../municipal/risk-category-distribution");
+        navigate("../municipal/risk-category-distribution/payment-behavior");
+        break;
+      case "Payment Behavior (40%)":
+        navigate("../municipal/risk-category-distribution/payment-behavior");
+        break;
+      case "License Status (20%)":
+        navigate("../municipal/risk-category-distribution/license-status");
+        break;
+      case "KYC Approved (10%)":
+        navigate("../municipal/risk-category-distribution/kyc-approved");
+        break;
+      case "Business Stability (10%)":
+        navigate("../municipal/risk-category-distribution/business-stability");
+        break;
+      case "Inspection Clearance (20%)":
+        navigate("../municipal/risk-category-distribution/inspection-clearance");
         break;
       default:
         break;

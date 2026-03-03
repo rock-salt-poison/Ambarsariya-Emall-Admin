@@ -256,6 +256,13 @@ a{
   min-height: 100vh;
 
   .MuiDrawer-root {
+    height: 100vh;
+    max-width: 20%;
+    position: sticky;
+    left: 0px;
+    top: 0px;
+    bottom: 0px;
+    z-index: 1000;
     .MuiPaper-root {
       background-color: $dark-blue;
       position: static;
@@ -277,10 +284,16 @@ a{
       }
 
       .MuiList-root {
-        padding: 20px 0px;
-        @include flex(column, center, center);
+        padding: 8px 0px;
+        @include flex(column, flex-start, center);
         gap: 5px;
         width: 100%;
+        
+        &.lists{
+          padding: 20px 0px;
+          flex: 1;
+          overflow-y: auto;
+        }
 
         .MuiListItem-root {
           .item {
@@ -308,6 +321,7 @@ a{
             }
 
             .MuiListItemText-root {
+              white-space: normal;
               span {
                 @include text(16px, $light-blue-2, 400);
               }
@@ -419,6 +433,8 @@ a{
 
         .col {
           overflow-x: auto;
+          border: 1px solid $light-gray-3;
+          border-radius: 5px;
 
           table {
             thead {

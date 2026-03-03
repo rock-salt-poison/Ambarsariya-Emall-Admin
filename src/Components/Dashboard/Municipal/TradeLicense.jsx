@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { useParams, Navigate } from "react-router-dom";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import CustomSnackbar from "../../CustomSnackbar";
-import Tabs from "../DashboardContent/Tabs";
 
 // Reusable table component for Trade License
 function TradeLicenseTable({ data, status }) {
@@ -19,7 +19,7 @@ function TradeLicenseTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -75,7 +75,7 @@ function ExpiringThisMonthTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -124,7 +124,7 @@ function RegulatoryControlTable({ data, status }) {
   ];
 
   return (
-    <Box className="col">
+    <Box className="container">
         <Box className="col">
           <Table>
             <TableHead>
@@ -161,6 +161,7 @@ function RegulatoryControlTable({ data, status }) {
 }
 
 function TradeLicense() {
+  const { tab } = useParams();
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -221,23 +222,24 @@ function TradeLicense() {
     },
   ]);
 
-  const tabsData = [
-    {
-      id: 1,
-      name: "Trade license",
-      content: <TradeLicenseTable data={tradeLicenseData} status="Trade license" />,
-    },
-    {
-      id: 2,
-      name: "Expiring this month",
-      content: <ExpiringThisMonthTable data={expiringThisMonthData} status="Expiring this month" />,
-    },
-    {
-      id: 3,
-      name: "Regulatory control",
-      content: <RegulatoryControlTable data={regulatoryControlData} status="Regulatory control" />,
-    },
-  ];
+  // Map route parameter to content
+  const renderContent = () => {
+    if (!tab) {
+      // Default to first tab if no tab parameter
+      return <Navigate to="./trade-license" replace />;
+    }
+
+    switch (tab) {
+      case "trade-license":
+        return <TradeLicenseTable data={tradeLicenseData} status="Trade license" />;
+      case "expiring-this-month":
+        return <ExpiringThisMonthTable data={expiringThisMonthData} status="Expiring this month" />;
+      case "regulatory-control":
+        return <RegulatoryControlTable data={regulatoryControlData} status="Regulatory control" />;
+      default:
+        return <Navigate to="./trade-license" replace />;
+    }
+  };
 
   return (
     <Box className="body">
@@ -249,7 +251,7 @@ function TradeLicense() {
       <Box className="content">
         <BoxHeader title="Trade License" />
         <Box className="body municipal_corporation">
-          <Tabs data={tabsData} />
+          {renderContent()}
         </Box>
       </Box>
       <CustomSnackbar

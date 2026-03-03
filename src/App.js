@@ -88,8 +88,11 @@ function App() {
         />
         <Route path="/finance/:type" element={<B2B />} />
         <Route path="/municipal/trade-license" element={<TradeLicense />} />
+        <Route path="/municipal/trade-license/:tab" element={<TradeLicense />} />
         <Route path="/municipal/vendor-license" element={<VendorLicense />} />
+        <Route path="/municipal/vendor-license/:tab" element={<VendorLicense />} />
         <Route path="/municipal/risk-category-distribution" element={<RiskCategoryDistribution />} />
+        <Route path="/municipal/risk-category-distribution/:tab" element={<RiskCategoryDistribution />} />
       </Route>
     </Routes>
   );
