@@ -446,6 +446,13 @@ a{
                     color: $white;
                   }
                 }
+                &.sub_header{
+                  background: $light-gray-3;
+                  th{
+                    @include text(14px, $black, 500);
+                    padding: 2px 12px;
+                  }
+                }
                 th {
                   @include text(16px, $black, 600);
                   white-space: nowrap;

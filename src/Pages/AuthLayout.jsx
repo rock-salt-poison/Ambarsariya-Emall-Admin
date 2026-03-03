@@ -153,6 +153,7 @@ const AuthLayout = () => {
               { name: "KYC Approved (10%)", icon: <HomeOutlined /> },
               { name: "Business Stability (10%)", icon: <HomeOutlined /> },
               { name: "Inspection Clearance (20%)", icon: <HomeOutlined /> },
+              { name: "Renewal rate", icon: <HomeOutlined /> },
             ],
           },
         ],
@@ -437,6 +438,9 @@ const AuthLayout = () => {
         break;
       case "Inspection Clearance (20%)":
         navigate("../municipal/risk-category-distribution/inspection-clearance");
+        break;
+      case "Renewal rate":
+        navigate("../municipal/risk-category-distribution/renewal-rate");
         break;
       default:
         break;

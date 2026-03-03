@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Typography, TextField } from "@mui/material";
 import { useParams, Navigate } from "react-router-dom";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import CustomSnackbar from "../../CustomSnackbar";
@@ -16,7 +16,7 @@ function PaymentBehaviorTable1({ data }) {
   ];
 
   return (
-    <Box className="container" sx={{ mb: 3 }}>
+    <Box className="container" >
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Vendor / Trade / Certification
       </Typography>
@@ -67,7 +67,7 @@ function PaymentBehaviorTable2({ data }) {
   ];
 
   return (
-    <Box className="container" sx={{ mb: 3 }}>
+    <Box className="container" >
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Utilities
       </Typography>
@@ -256,34 +256,60 @@ function LicenseStatusTable({ data }) {
   );
 }
 
+// Shared sample data for License Status (used in table + renewal rate calculations)
+const licenseStatusSampleData = [
+  {
+    id: 1,
+    domain: "Retailer",
+    sector: "Textile and interiors",
+    date_from: "02/06/2024",
+    date_to: "02/06/2025",
+    status: "Suspended",
+    no_of_renewal: "5",
+    total_shops: 10,
+    pending_shops: 5,
+  },
+  {
+    id: 2,
+    domain: "Wholeseller",
+    sector: "Textile and Purchase",
+    date_from: "02/06/2025",
+    date_to: "02/06/2026",
+    status: "Expiring",
+    no_of_renewal: "12",
+    total_shops: 20,
+    pending_shops: 8,
+  },
+  {
+    id: 3,
+    domain: "Daily Need",
+    sector: "Milk products",
+    date_from: "02/02/2026",
+    date_to: "02/02/2027",
+    status: "Active",
+    no_of_renewal: "N.A",
+    total_shops: 102,
+    pending_shops: 13,
+  },
+];
+
 // License Status Tab Content
 function LicenseStatusContent() {
-  const [licenseStatusData] = useState([
-    {
-      id: 1,
-      domain: "All",
-      sector: "All",
-      date_from: "2024-01-01",
-      date_to: "2024-12-31",
-      status: "Active",
-      no_of_renewal: 10,
-      total_shops: 150,
-      pending_shops: 5,
-    },
-  ]);
+  const [licenseStatusData] = useState(licenseStatusSampleData);
 
   return <LicenseStatusTable data={licenseStatusData} />;
 }
 
-// KYC Approved Table
+// KYC Approved Table (updated to sector-level view)
 function KYCApprovedTable({ data }) {
   const tableHeader = [
-    "Shop / Merchant",
-    "Authentication Level",
-    "E-mall(4)",
-    "M.C.A(5)",
-    "Micro finance(6)",
-    "Connect with Sales Mount",
+    "Sector(s)(All)",
+    "Total Count",
+    "Max Auth",
+    "E-mall (4)",
+    "M.C.A (5)",
+    "Micro-Finance (6)",
+    "MoU (7)",
   ];
 
   return (
@@ -301,12 +327,13 @@ function KYCApprovedTable({ data }) {
             {data && data.length > 0 ? (
               data.map((row, index) => (
                 <TableRow key={row.id} hover>
-                  <TableCell>{row.shop_merchant}</TableCell>
-                  <TableCell>{row.authentication_level}</TableCell>
+                  <TableCell>{row.sector_all}</TableCell>
+                  <TableCell>{row.total_count}</TableCell>
+                  <TableCell>{row.max_auth}</TableCell>
                   <TableCell>{row.e_mall_4}</TableCell>
                   <TableCell>{row.mca_5}</TableCell>
                   <TableCell>{row.micro_finance_6}</TableCell>
-                  <TableCell>{row.connect_with_sales_mount}</TableCell>
+                  <TableCell>{row.mou_7}</TableCell>
                 </TableRow>
               ))
             ) : (
@@ -316,77 +343,28 @@ function KYCApprovedTable({ data }) {
                 </TableCell>
               </TableRow>
             )}
+
           </TableBody>
         </Table>
       </Box>
     </Box>
   );
 }
-// Table 1 for Business Stability 
-function BusinessStabilityTable1({ data }) {
-    const tableHeader = [
-      "Sector(s)",
-      "Class A/B/C/D",
-      "Total No. of Shops",
-      "Total Revenue (Last Month)",
-      "Total Revenue (Current Month)",
-      "Current - Last"
-    ];
-  
-    return (
-      <Box className="container" sx={{ mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Revenue by Sector and Class
-        </Typography>
-        <Box className="col">
-          <Table>
-            <TableHead>
-              <TableRow>
-                {tableHeader.map((header, i) => (
-                  <TableCell key={i}>{header}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data && data.length > 0 ? (
-                data.map((row, index) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.sectors}</TableCell>
-                    <TableCell>{row.class}</TableCell>
-                    <TableCell>{row.total_no_of_shops}</TableCell>
-                    <TableCell>₹{row.total_revenue_last_month}</TableCell>
-                    <TableCell>₹{row.total_revenue_current_month}</TableCell>
-                    <TableCell>₹{row.current_minus_last}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={tableHeader.length} sx={{ textAlign: "center" }}>
-                    No records found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-      </Box>
-    );
-  }
-
-// Table 2 for Business Stability - Sub Sector
-function BusinessStabilityTable2({ data }) {
+// Combined Business Stability Table (matches screenshot)
+function BusinessStabilityTable({ sectorData, subSectorSummary }) {
   const tableHeader = [
-    "Sub Sector(s)",
-    "Movable/Immovable",
-    "Total Hawkers",
-    "Vendor License Revenue",
-    "Platform Fees (Conjuring with Near by Areas Needs)",
+    "Sector(s)(all)",
+    "Class A/B/C/D",
+    "Total No of Shops/hawkers",
+    "Total Revenue(last Month)",
+    "Total Revenue(current Month)",
+    "Current - Last",
   ];
 
   return (
     <Box className="container">
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        Sub Sector Analysis
+        Business Stability Overview
       </Typography>
       <Box className="col">
         <Table>
@@ -398,23 +376,30 @@ function BusinessStabilityTable2({ data }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data && data.length > 0 ? (
-              data.map((row, index) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{row.sub_sector}</TableCell>
-                  <TableCell>{row.movable_immovable}</TableCell>
-                  <TableCell>{row.total_hawkers}</TableCell>
-                  <TableCell>₹{row.vendor_license_revenue}</TableCell>
-                  <TableCell>₹{row.platform_fees}</TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={tableHeader.length} sx={{ textAlign: "center" }}>
-                  No records found
-                </TableCell>
-              </TableRow>
-            )}
+            {/* Row 1 - All sectors */}
+            <TableRow hover>
+              <TableCell>{sectorData.sectors}</TableCell>
+              <TableCell>{sectorData.class}</TableCell>
+              <TableCell>{sectorData.total_no_of_shops}</TableCell>
+              <TableCell>{sectorData.total_revenue_last_month}</TableCell>
+              <TableCell>{sectorData.total_revenue_current_month}</TableCell>
+              <TableCell>{sectorData.current_minus_last}</TableCell>
+            </TableRow>
+
+            {/* Row 2 - Sub Sector(s)(all) */}
+            <TableRow hover>
+              <TableCell>{subSectorSummary.label}</TableCell>
+              <TableCell>{subSectorSummary.movable_immovable}</TableCell>
+              <TableCell>{subSectorSummary.total_hawkers}</TableCell>
+              <TableCell>{subSectorSummary.vendor_license_revenue}</TableCell>
+              <TableCell>{subSectorSummary.platform_fees}</TableCell>
+              <TableCell>{subSectorSummary.current_minus_last}</TableCell>
+            </TableRow>
+
+            {/* Row 3 - empty row as per screenshot */}
+            <TableRow>
+              <TableCell colSpan={tableHeader.length} />
+            </TableRow>
           </TableBody>
         </Table>
       </Box>
@@ -468,79 +453,348 @@ function InspectionClearanceTable({ data }) {
     );
   }
 
+// Shared sample data for KYC Approved (used in table + renewal rate calculations)
+const kycApprovedSampleData = [
+  {
+    id: 1,
+    sector_all: "All",
+    total_count: 200,
+    max_auth: 7,
+    e_mall_4: 250,
+    mca_5: 150,
+    micro_finance_6: 100,
+    mou_7: 50,
+  },
+];
+
 // KYC Approved Tab Content
 function KYCApprovedContent() {
-  const [kycData] = useState([
-    {
-        id: 1,
-      shop_merchant: "Shop_1",
-      authentication_level: "Level 5",
-      e_mall_4: "Yes",
-      mca_5: "Yes",
-      micro_finance_6: "No",
-      connect_with_sales_mount: "Connected",
-    },
-  ]);
+  const [kycData] = useState(kycApprovedSampleData);
   
   return <KYCApprovedTable data={kycData} />;
 }
 
 // Business Stability Tab Content
 function BusinessStabilityContent() {
-    const [businessStabilityData] = useState([
-      {
-        id: 1,
-        sectors: "All",
-        class: "A",
-        total_no_of_shops: 505,
-        total_revenue_last_month: 50000,
-        total_revenue_current_month: 55000,
-        current_minus_last: 5000,
-      },
-    ]);
+  // Row 1 - All sectors
+  const sectorData = {
+    sectors: "All",
+    class: "Class B",
+    total_no_of_shops: 505,
+    total_revenue_last_month: 500000,
+    total_revenue_current_month: 550000,
+    current_minus_last: 50000,
+  };
 
-    const [subSectorData] = useState([
-      {
-        id: 1,
-        sub_sector: "Retail",
-        movable_immovable: "Immovable",
-        total_hawkers: 25,
-        vendor_license_revenue: 15000,
-        platform_fees: 5000,
-      },
-      {
-        id: 2,
-        sub_sector: "Food & Beverages",
-        movable_immovable: "Movable",
-        total_hawkers: 40,
-        vendor_license_revenue: 20000,
-        platform_fees: 8000,
-      },
-    ]);
-  
-    return (
-      <Box className="">
-        <BusinessStabilityTable1 data={businessStabilityData} />
-        <BusinessStabilityTable2 data={subSectorData} />
-      </Box>
-    );
-  }
+  // Row 2 - Sub Sector(s)(all)
+  const subSectorSummary = {
+    label: "Sub Sector(s)(all)",
+    movable_immovable: "Movable/Immovable",
+    total_hawkers: 50,
+    vendor_license_revenue: "Vendor License Revenue",
+    platform_fees: "Platform fees/Conjuring with near by areas needs.",
+    current_minus_last: 12000,
+  };
 
-  // Inspection clearance Tab Content
-function InspectionClearanceContent() {
-    const [inspectionClearanceData] = useState([
-        {
-        id: 1,
-        wards: "All",
-        total_trade_and_vendor_license: 12,
-        total_vendor: 5,
-        certification_compliance_period: "Health and Safety",
-        number_of_due_certification_for_inspection: 20,
-        },
-    ]);
-
-    return <InspectionClearanceTable data={inspectionClearanceData} />;
+  return (
+    <Box className="">
+      <BusinessStabilityTable
+        sectorData={sectorData}
+        subSectorSummary={subSectorSummary}
+      />
+    </Box>
+  );
 }
+
+// Shared sample data for Inspection Clearance (used in table + renewal rate calculations)
+const inspectionClearanceSampleData = [
+  {
+    id: 1,
+    wards: "All",
+    total_trade_and_vendor_license: 5000,
+    total_vendor: 10000,
+    certification_compliance_period: "Health and Safety",
+    number_of_due_certification_for_inspection: 500,
+  },
+];
+
+// Inspection clearance Tab Content
+function InspectionClearanceContent() {
+  const [inspectionClearanceData] = useState(inspectionClearanceSampleData);
+
+  return <InspectionClearanceTable data={inspectionClearanceData} />;
+}
+
+// Renewal Rate Table
+function RenewalRateTable({ data }) {
+  const tableHeader = [
+    "Payment Behaviour 40%",
+    "License Status 20%",
+    "KYC Approved 10%",
+    "10 % Business Stability",
+    "20 % Certification Clearance",
+  ];
+
+  const subHeader = [
+    "Total Fine License + Total Utilities + Growth",
+    "Active - (Pending + Expired)",
+    "10% - Grievances%",
+    "Sector(all) + Sub-sector(all)",
+    "No of Certification / Vendor / Trade Re-issue",
+  ];
+
+  return (
+    <Box className="container" >
+      <Box className="col">
+        <Table>
+          <TableHead>
+            <TableRow>
+              {tableHeader.map((header, i) => (
+                <TableCell key={i} sx={{ fontWeight: 600 }} colSpan={1}>
+                  {header}
+                </TableCell>
+              ))}
+            </TableRow>
+            <TableRow className="sub_header">
+              {subHeader.map((subHeaderText, i) => (
+                <TableCell key={i}>
+                  {subHeaderText}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data && data.length > 0 ? (
+              data.map((row, index) => (
+                <TableRow key={row.id} hover>
+                  <TableCell>
+                      <Typography variant="body1">{row.payment_behaviour}</Typography>
+                  </TableCell>
+                  <TableCell>
+                      <Typography variant="body1">{row.license_status}</Typography>
+                  </TableCell>
+                  <TableCell>
+                      <Typography variant="body1">{row.kyc_approved}</Typography>
+                  </TableCell>
+                  <TableCell>
+                      <Typography variant="body1">{row.business_stability}</Typography>
+                  </TableCell>
+                  <TableCell>
+                      <Typography variant="body1">{row.certification_clearance}</Typography>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={tableHeader.length} sx={{ textAlign: "center" }}>
+                  No records found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Box>
+    </Box>
+  );
+}
+
+// Renewal Rate Tab Content
+function RenewalRateContent() {
+  // --- Derive values from other tables' sample data ---
+
+  // Payment Behavior 40%:
+  // Fine license (₹2000) from PaymentBehaviorTable1 +
+  // Total utilities fine (₹0) from PaymentBehaviorTable2 +
+  // Growth (+₹200) from PaymentBehaviorTable3 (current_minus_last)
+  const fineLicense = 2000;
+  const utilitiesFine = 0;
+  const paymentGrowth = 200;
+  const paymentBehaviourValue = fineLicense + utilitiesFine + paymentGrowth; // 2200
+
+  // License Status 20%:
+  // From licenseStatusSampleData:
+  // Total Active Shops - (Total Pending Shops + Total Expired Shops)
+  const activeRow = licenseStatusSampleData.find((row) => row.status === "Active");
+  const otherRows = licenseStatusSampleData.filter((row) => row.status === "Expiring");
+
+  // Total Active Shops (from Active row's total_shops)
+  const totalActiveShops = activeRow
+    ? (typeof activeRow.total_shops === "number"
+        ? activeRow.total_shops
+        : Number(activeRow.total_shops) || 0)
+    : 0;
+
+  // Total Pending Shops (sum of all pending_shops from all rows)
+  const totalPendingShops = licenseStatusSampleData.reduce((sum, row) => {
+    const value =
+      typeof row.pending_shops === "number"
+        ? row.pending_shops
+        : Number(row.pending_shops) || 0;
+    return sum + value;
+  }, 0);
+
+  // Total Expired Shops (sum of total_shops from non-Active rows)
+  const totalExpiredShops = otherRows.reduce((sum, row) => {
+    const value =
+      typeof row.total_shops === "number"
+        ? row.total_shops
+        : Number(row.total_shops) || 0;
+    return sum + value;
+  }, 0);
+
+  // Calculate: Total Active Shops - (Total Pending Shops + Total Expired Shops)
+  const licenseStatusValue = totalActiveShops - (totalPendingShops + totalExpiredShops);
+
+  // KYC Approved 10%:
+  // Grievances % = (E-mall (4) - M.C.A (5)) taken from KYC Approved table
+  const kycRow = kycApprovedSampleData[0];
+  const eMallValue =
+    typeof kycRow.e_mall_4 === "number"
+      ? kycRow.e_mall_4
+      : Number(kycRow.e_mall_4) || 0;
+  const mcaValue =
+    typeof kycRow.mca_5 === "number"
+      ? kycRow.mca_5
+      : Number(kycRow.mca_5) || 0;
+  const grievancesPercent = eMallValue - mcaValue;
+  const kycApprovedNumeric = grievancesPercent - 10;
+  const kycApprovedValue = `${kycApprovedNumeric}%`;
+
+  // Business Stability 10%:
+  // From BusinessStabilityContent:
+  // Row1 (All sectors) current - last: 50000
+  // Row2 (Sub Sector(s)(all)) current - last: 12000
+  const sectorCurrentMinusLast = 50000;
+  const subSectorCurrentMinusLast = 12000;
+  const businessStabilityValue = sectorCurrentMinusLast + subSectorCurrentMinusLast; // 62000
+
+  // 20% Certification Clearance:
+  // From inspectionClearanceSampleData:
+  // total_vendor (total vendor certifications) / number_of_due_certification_for_inspection
+  const inspectionRow = inspectionClearanceSampleData[0];
+  const totalVendorCertifications =
+    typeof inspectionRow.total_vendor === "number"
+      ? inspectionRow.total_vendor
+      : Number(inspectionRow.total_vendor) || 0;
+  const dueCertifications =
+    typeof inspectionRow.number_of_due_certification_for_inspection === "number"
+      ? inspectionRow.number_of_due_certification_for_inspection
+      : Number(inspectionRow.number_of_due_certification_for_inspection) || 0;
+  const certificationClearanceNumeric =
+    dueCertifications > 0 ? totalVendorCertifications / dueCertifications : 0;
+  const certificationClearanceValue = `${certificationClearanceNumeric}`;
+
+  // Overall Renewal Rate:
+  // Sum of the five derived components:
+  // Payment Behaviour (40%) + License Status (20%) + KYC Approved (10%) +
+  // Business Stability (10%) + Certification Clearance (20%)
+  const overallRenewalRate =
+    paymentBehaviourValue +
+    licenseStatusValue +
+    kycApprovedNumeric +
+    businessStabilityValue +
+    certificationClearanceNumeric;
+
+  // --- Monthly Renewal Rate data (per month) ---
+  // This is where real per-month data can be plugged in.
+  // For now we model one month with the values you provided.
+  const renewalRateMonthlySampleData = {
+    "2024-01": {
+      current: 2.97,
+      last: 2.06,
+    },
+  };
+
+  const [selectedMonth, setSelectedMonth] = useState("2024-01");
+
+  const selectedMonthData =
+    renewalRateMonthlySampleData[selectedMonth] || { current: 0, last: 0 };
+
+  const currentRenewalRate = selectedMonthData.current; // per month
+  const lastMonthRenewalRate = selectedMonthData.last; // per month
+  const renewalGrowthRate =
+    lastMonthRenewalRate > 0
+      ? currentRenewalRate / lastMonthRenewalRate
+      : 0;
+  const renewalGrowthPercent = (renewalGrowthRate - 1) * 100;
+
+  const renewalRateData = [
+    {
+      id: 1,
+      payment_behaviour: `₹${paymentBehaviourValue}`,
+      license_status: licenseStatusValue,
+      kyc_approved: kycApprovedValue,
+      business_stability: `₹${businessStabilityValue}`,
+      certification_clearance: certificationClearanceValue,
+    },
+  ];
+
+  return (
+    <Box className="">
+      <RenewalRateTable data={renewalRateData} />
+      <Box className="container">
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Renewal Rate
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#555", mt: 1 }}>
+          Payment Behaviour (40%) + License Status (20%) + KYC Approved (10%) + 10% Business Stability + 20% Certification Clearance
+        </Typography>
+        <Typography variant="body1" sx={{ mt: 1, fontWeight: 600 }}>
+          = {paymentBehaviourValue} + {licenseStatusValue} + {kycApprovedNumeric} + {businessStabilityValue} + {certificationClearanceNumeric} ={" "}
+          {overallRenewalRate}
+        </Typography>
+
+        {/* Monthly Renewal Rate and Growth */}
+        <Box sx={{ mt: 3 }}>
+          <TextField
+            type="month"
+            label="Select Month"
+            size="small"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            sx={{ mb: 2, maxWidth: 220 }}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            Renewal Rate (Monthly)
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 0.5 }}>
+            Choose the Month (Current)
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            Current: {currentRenewalRate.toFixed(2)} / month
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+            Last Month Renewal Rate
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            Last Month = {lastMonthRenewalRate.toFixed(2)} (Last Month)
+          </Typography>
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+            Growth Rate
+          </Typography>
+          <Typography variant="body2">
+            Choose the Month (past/current) or Current Renewal Rate / Past renewal rate
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 0.5 }}>
+            {currentRenewalRate.toFixed(2)} / {lastMonthRenewalRate.toFixed(2)} ={" "}
+            {renewalGrowthRate.toFixed(3)}
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600 }}>
+            Current : {renewalGrowthRate.toFixed(3)} / Month
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600 }}>
+            {renewalGrowthPercent.toFixed(1)} % growth.
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 function RiskCategoryDistribution() {
   const { tab } = useParams();
   const [loading, setLoading] = useState(false);
@@ -565,6 +819,8 @@ function RiskCategoryDistribution() {
         return "Risk Category Distribution - Business Stability (10%)";
       case "inspection-clearance":
         return "Risk Category Distribution - Inspection Clearance (20%)";
+      case "renewal-rate":
+        return "Risk Category Distribution - Renewal rate";
       default:
         return "Risk Category Distribution";
     }
@@ -588,6 +844,8 @@ function RiskCategoryDistribution() {
         return <BusinessStabilityContent />;
       case "inspection-clearance":
         return <InspectionClearanceContent />;
+      case "renewal-rate":
+        return <RenewalRateContent />;
       default:
         return <Navigate to="./payment-behavior" replace />;
     }
