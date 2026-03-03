@@ -269,6 +269,24 @@ function VendorLicense() {
     },
   ]);
 
+  // Get title based on tab
+  const getTitle = () => {
+    if (!tab) return "Vendor License & Renewal";
+    
+    switch (tab) {
+      case "vendor-license":
+        return "Vendor License & Renewal";
+      case "new-applications":
+        return "Vendor License & Renewal - New Applications";
+      case "pending-approval":
+        return "Vendor License & Renewal - Pending Approval";
+      case "approved":
+        return "Vendor License & Renewal - Approved";
+      default:
+        return "Vendor License & Renewal";
+    }
+  };
+
   // Map route parameter to content
   const renderContent = () => {
     if (!tab) {
@@ -298,7 +316,7 @@ function VendorLicense() {
         </Box>
       )}
       <Box className="content">
-        <BoxHeader title="Vendor License & Renewal" />
+        <BoxHeader title={getTitle()} />
         <Box className="body municipal_corporation">
           {renderContent()}
         </Box>

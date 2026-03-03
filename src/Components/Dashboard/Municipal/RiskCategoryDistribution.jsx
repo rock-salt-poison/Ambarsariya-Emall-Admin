@@ -550,6 +550,26 @@ function RiskCategoryDistribution() {
     severity: "success",
   });
 
+  // Get title based on tab
+  const getTitle = () => {
+    if (!tab) return "Risk Category Distribution";
+    
+    switch (tab) {
+      case "payment-behavior":
+        return "Risk Category Distribution - Payment Behavior (40%)";
+      case "license-status":
+        return "Risk Category Distribution - License Status (20%)";
+      case "kyc-approved":
+        return "Risk Category Distribution - KYC Approved (10%)";
+      case "business-stability":
+        return "Risk Category Distribution - Business Stability (10%)";
+      case "inspection-clearance":
+        return "Risk Category Distribution - Inspection Clearance (20%)";
+      default:
+        return "Risk Category Distribution";
+    }
+  };
+
   // Map route parameter to content
   const renderContent = () => {
     if (!tab) {
@@ -581,7 +601,7 @@ function RiskCategoryDistribution() {
         </Box>
       )}
       <Box className="content">
-        <BoxHeader title="Risk Category Distribution" />
+        <BoxHeader title={getTitle()} />
         <Box className="body municipal_corporation">
           {renderContent()}
         </Box>

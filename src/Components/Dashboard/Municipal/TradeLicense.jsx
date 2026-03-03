@@ -222,6 +222,22 @@ function TradeLicense() {
     },
   ]);
 
+  // Get title based on tab
+  const getTitle = () => {
+    if (!tab) return "Trade License";
+    
+    switch (tab) {
+      case "trade-license":
+        return "Trade License";
+      case "expiring-this-month":
+        return "Trade License - Expiring this month";
+      case "regulatory-control":
+        return "Trade License - Regulatory control";
+      default:
+        return "Trade License";
+    }
+  };
+
   // Map route parameter to content
   const renderContent = () => {
     if (!tab) {
@@ -249,7 +265,7 @@ function TradeLicense() {
         </Box>
       )}
       <Box className="content">
-        <BoxHeader title="Trade License" />
+        <BoxHeader title={getTitle()} />
         <Box className="body municipal_corporation">
           {renderContent()}
         </Box>
