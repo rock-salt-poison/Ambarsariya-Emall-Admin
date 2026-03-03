@@ -110,6 +110,7 @@ function PaymentBehaviorTable2({ data }) {
 function PaymentBehaviorTable3({ data }) {
   const tableHeader = [
     "Choose Sector(s) / All Sectors",
+    "2% Commission Sale (Total)",
     "2% Commission Purchase (Total)",
     "Last Month Commission",
     "Current Month Commission",
@@ -135,6 +136,7 @@ function PaymentBehaviorTable3({ data }) {
               data.map((row, index) => (
                 <TableRow key={row.id} hover>
                   <TableCell>{row.sector}</TableCell>
+                  <TableCell>{row.commission_sale_total}</TableCell>
                   <TableCell>{row.commission_purchase_total}</TableCell>
                   <TableCell>{row.last_month_commission}</TableCell>
                   <TableCell>{row.current_month_commission}</TableCell>
@@ -187,6 +189,7 @@ function PaymentBehaviorContent() {
     {
       id: 1,
       sector: "All Sectors",
+      commission_sale_total: "₹50000",
       commission_purchase_total: "₹50000",
       last_month_commission: "₹1000",
       current_month_commission: "₹1200",
