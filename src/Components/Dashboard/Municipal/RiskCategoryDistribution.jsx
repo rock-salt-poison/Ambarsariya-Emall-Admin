@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Typography, TextField } from "@mui/material";
 import { useParams, Navigate } from "react-router-dom";
 import BoxHeader from "../DashboardContent/BoxHeader";
 import CustomSnackbar from "../../CustomSnackbar";
+import FormFields from "../../Form/FormFields";
+import { fetchSectors } from "../../../API/expressAPI";
 
 // Table 1 for Payment Behavior - Vendor/Trade/Certification
 function PaymentBehaviorTable1({ data }) {
@@ -351,20 +353,31 @@ function KYCApprovedTable({ data }) {
   );
 }
 // Combined Business Stability Table (matches screenshot)
-function BusinessStabilityTable({ sectorData, subSectorSummary }) {
+function BusinessStabilityTable({ 
+  sectorData, 
+  subSectorSummary, 
+  selectedSectors, 
+  onSectorsChange, 
+  selectedClass, 
+  onClassChange,
+  sectorsOptions,
+  classOptions 
+}) {
   const tableHeader = [
     "Sector(s)(all)",
     "Class A/B/C/D",
-    "Total No of Shops/hawkers",
-    "Total Revenue(last Month)",
-    "Total Revenue(current Month)",
+    "Total No of Shops/Hawkers Movable",
+    // "Total Revenue(last Month)",
+    "Vendor License Renewal",
+    // "Total Revenue(current Month)",
+    "Platform fees/Conjuring with near by area needs",
     "Current - Last",
   ];
 
   return (
     <Box className="container">
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        Business Stability Overview
+        Business Stability Overview - Trade
       </Typography>
       <Box className="col">
         <Table>
@@ -378,27 +391,102 @@ function BusinessStabilityTable({ sectorData, subSectorSummary }) {
           <TableBody>
             {/* Row 1 - All sectors */}
             <TableRow hover>
-              <TableCell>{sectorData.sectors}</TableCell>
-              <TableCell>{sectorData.class}</TableCell>
+              <TableCell>
+                <FormFields
+                  type="multi-select-checkbox"
+                  name="sectors"
+                  value={selectedSectors || []}
+                  onChange={onSectorsChange}
+                  options={sectorsOptions || []}
+                  label="Select Sectors"
+                  width={false}
+                />
+              </TableCell>
+              <TableCell>
+                <FormFields
+                  type="select"
+                  name="class"
+                  value={selectedClass || ""}
+                  onChange={onClassChange}
+                  options={classOptions || []}
+                  label="Select Class"
+                  width={false}
+                />
+              </TableCell>
               <TableCell>{sectorData.total_no_of_shops}</TableCell>
               <TableCell>{sectorData.total_revenue_last_month}</TableCell>
               <TableCell>{sectorData.total_revenue_current_month}</TableCell>
               <TableCell>{sectorData.current_minus_last}</TableCell>
             </TableRow>
+          </TableBody>
+        </Table>
+      </Box>
+    </Box>
+  );
+}
 
-            {/* Row 2 - Sub Sector(s)(all) */}
-            <TableRow hover>
-              <TableCell>{subSectorSummary.label}</TableCell>
-              <TableCell>{subSectorSummary.movable_immovable}</TableCell>
-              <TableCell>{subSectorSummary.total_hawkers}</TableCell>
-              <TableCell>{subSectorSummary.vendor_license_revenue}</TableCell>
-              <TableCell>{subSectorSummary.platform_fees}</TableCell>
-              <TableCell>{subSectorSummary.current_minus_last}</TableCell>
-            </TableRow>
+// Business Stability Table 2 - Same fields as first table
+function BusinessStabilityTable2({ 
+  sectorData,  
+  selectedSectors2, 
+  onSectorsChange2, 
+  selectedClass2, 
+  onClassChange2,
+  sectorsOptions,
+  classOptions 
+}) {
+  const tableHeader = [
+    "Sector(s)(all)",
+    "Class A/B/C/D",
+    "Total No of Hawkers",
+    "Vendor License Renewal",
+    "Platform fees/Conjuring with near by area needs",
+    "Current - Last",
+  ];
 
-            {/* Row 3 - empty row as per screenshot */}
+  return (
+    <Box className="container">
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+        Business Stability Overview - Trade
+      </Typography>
+      <Box className="col">
+        <Table>
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={tableHeader.length} />
+              {tableHeader.map((header, i) => (
+                <TableCell key={i}>{header}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {/* Row 1 - All sectors */}
+            <TableRow hover>
+              <TableCell>
+                <FormFields
+                  type="multi-select-checkbox"
+                  name="sectors2"
+                  value={selectedSectors2 || []}
+                  onChange={onSectorsChange2}
+                  options={sectorsOptions || []}
+                  label="Select Sectors"
+                  width={false}
+                />
+              </TableCell>
+              <TableCell>
+                <FormFields
+                  type="select"
+                  name="class2"
+                  value={selectedClass2 || ""}
+                  onChange={onClassChange2}
+                  options={classOptions || []}
+                  label="Select Class"
+                  width={false}
+                />
+              </TableCell>
+              <TableCell>{sectorData.total_no_of_shops}</TableCell>
+              <TableCell>{sectorData.total_revenue_last_month}</TableCell>
+              <TableCell>{sectorData.total_revenue_current_month}</TableCell>
+              <TableCell>{sectorData.current_minus_last}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -474,8 +562,44 @@ function KYCApprovedContent() {
   return <KYCApprovedTable data={kycData} />;
 }
 
+// Class options
+const classOptions = ["Class A", "Class B", "Class C", "Class D"];
+
 // Business Stability Tab Content
 function BusinessStabilityContent() {
+  // State for sectors
+  const [sectorsOptions, setSectorsOptions] = useState(["All"]);
+  const [loadingSectors, setLoadingSectors] = useState(true);
+
+  // State for first table
+  const [selectedSectors, setSelectedSectors] = useState(["All"]);
+  const [selectedClass, setSelectedClass] = useState("Class B");
+
+  // State for second table
+  const [selectedSectors2, setSelectedSectors2] = useState(["All"]);
+  const [selectedClass2, setSelectedClass2] = useState("Class B");
+
+  // Fetch sectors from API
+  useEffect(() => {
+    const loadSectors = async () => {
+      try {
+        setLoadingSectors(true);
+        const sectorsData = await fetchSectors();
+        // Extract sector_name from the response, filter out 'Create', and add "All" option
+        const sectorNames = ["All", ...sectorsData.filter((sector) => sector.sector_name !== 'Create').map((sector) => sector.sector_name)];
+        setSectorsOptions(sectorNames);
+      } catch (error) {
+        console.error("Error fetching sectors:", error);
+        // Fallback to default if API fails
+        setSectorsOptions(["All"]);
+      } finally {
+        setLoadingSectors(false);
+      }
+    };
+
+    loadSectors();
+  }, []);
+
   // Row 1 - All sectors
   const sectorData = {
     sectors: "All",
@@ -486,21 +610,52 @@ function BusinessStabilityContent() {
     current_minus_last: 50000,
   };
 
-  // Row 2 - Sub Sector(s)(all)
-  const subSectorSummary = {
-    label: "Sub Sector(s)(all)",
-    movable_immovable: "Movable/Immovable",
-    total_hawkers: 50,
-    vendor_license_revenue: "Vendor License Revenue",
-    platform_fees: "Platform fees/Conjuring with near by areas needs.",
-    current_minus_last: 12000,
+
+  // Handlers for first table
+  const handleSectorsChange = (e) => {
+    setSelectedSectors(e.target.value);
   };
+
+  const handleClassChange = (e) => {
+    setSelectedClass(e.target.value);
+  };
+
+  // Handlers for second table
+  const handleSectorsChange2 = (e) => {
+    setSelectedSectors2(e.target.value);
+  };
+
+  const handleClassChange2 = (e) => {
+    setSelectedClass2(e.target.value);
+  };
+
+  if (loadingSectors) {
+    return (
+      <Box className="container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box className="">
       <BusinessStabilityTable
         sectorData={sectorData}
-        subSectorSummary={subSectorSummary}
+        selectedSectors={selectedSectors}
+        onSectorsChange={handleSectorsChange}
+        selectedClass={selectedClass}
+        onClassChange={handleClassChange}
+        sectorsOptions={sectorsOptions}
+        classOptions={classOptions}
+      />
+      <BusinessStabilityTable2
+        sectorData={sectorData}
+        selectedSectors2={selectedSectors2}
+        onSectorsChange2={handleSectorsChange2}
+        selectedClass2={selectedClass2}
+        onClassChange2={handleClassChange2}
+        sectorsOptions={sectorsOptions}
+        classOptions={classOptions}
       />
     </Box>
   );

@@ -625,6 +625,11 @@ export const fetchDomains = async () => {
   return response.data;
 };
 
+export const fetchSectors = async () => {
+  const response = await axios.get(`${link}/sectors`);
+  return response.data;
+};
+
 export const fetchDomainSectors = async (domain_id) => {
   const response = await axios.get(`${link}/domain-sectors/${domain_id}`);
   return response.data;
