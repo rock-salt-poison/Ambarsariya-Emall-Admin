@@ -9,7 +9,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { get_staff_tasks } from "../../../../API/expressAPI";
+import { get_sales_staff_tasks } from "../../../../API/expressAPI";
 import { useSelector } from "react-redux";
 import DialogPopup from "../../DialogPopup";
 import AssignedTaskForm from "./AssignedTaskForm";
@@ -28,7 +28,7 @@ export default function StaffDashboardTable() {
       const fetchEmployees = async () => {
         try {
           setLoading(true);
-          const resp = await get_staff_tasks(token);
+          const resp = await get_sales_staff_tasks(token);
           console.log(resp);
           if (resp) setEmployees(resp);
         } catch (e) {
@@ -59,6 +59,7 @@ export default function StaffDashboardTable() {
               <TableCell>S.No.</TableCell>
               <TableCell>Tasks</TableCell>
               <TableCell>Assigned By</TableCell>
+              <TableCell>Shop No</TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>End Date</TableCell>
             </TableRow>
@@ -74,6 +75,7 @@ export default function StaffDashboardTable() {
                 <TableCell>{index + 1}</TableCell>
                 <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_task}</TableCell>
                 <TableCell sx={{ textTransform: "capitalize" }}>{emp.assigned_by_name}</TableCell>
+                <TableCell sx={{ textTransform: "capitalize" }}>{emp.shop_no}</TableCell>
                 <TableCell>{emp.start_date?.split("T")?.[0]}</TableCell>
                 <TableCell>{emp.end_date?.split("T")?.[0]}</TableCell>
               </TableRow>

@@ -13,6 +13,7 @@ import {
   get_manager_token_by_id,
   post_create_staff,
   post_create_staff_tasks,
+  post_create_sales_staff_tasks,
   post_staff_email_otp,
   post_verify_staff_email_otp,
   send_otp_to_email,
@@ -81,6 +82,7 @@ const AssignTaskForm = () => {
       setStaffMembers([]);
     }
   }, [token, selectedManagerToken, formData?.staff_type, formData?.manager, isAdmin]);
+  
 
   useEffect(() => {
     if (!formData.staff_member) {
@@ -90,12 +92,12 @@ const AssignTaskForm = () => {
 
     const selectedStaff = staffMembers.find(
       (s) => s.name === formData.staff_member
-    );
+    );    
 
     if (selectedStaff?.assign_area) {
       setFormData((prev) => ({
         ...prev,
-        location: selectedStaff.assign_area?.description, // full object
+        location: JSON.parse(selectedStaff.assign_area)?.description, // full object
       }));
     }
 
@@ -256,6 +258,7 @@ const AssignTaskForm = () => {
     fetchFamousAreas(); 
   }, []);
 
+console.log(staffMembers);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -282,6 +285,8 @@ const AssignTaskForm = () => {
       const assign_areas = formData?.assign_area?.map((a) => {
       const fa = famousAreas?.find(fa => fa.area_address === a);
 
+      
+
       return fa
         ? {
             latitude: fa.latitude,
@@ -291,6 +296,10 @@ const AssignTaskForm = () => {
           }
         : null;
       });
+
+      const selectedSummary = confirmSummaries.find(
+        s => s.assigned_task === formData.assigned_task
+      );
 
       const data = {
         assigned_by,
@@ -305,10 +314,11 @@ const AssignTaskForm = () => {
         assign_daily_task: formData?.assign_daily_task,
         choose_date: formData?.daily_task_date,
         daily_location: formData?.daily_location,
+        task_summary_id: selectedSummary?.id
       };
 
       if (data) {
-        const resp = await post_create_staff_tasks(data);
+        const resp = await post_create_sales_staff_tasks(data);
         if (resp?.success) {
           console.log(resp);
           setSnackbar({

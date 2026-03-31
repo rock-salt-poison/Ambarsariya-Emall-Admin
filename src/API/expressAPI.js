@@ -31,6 +31,15 @@ export const get_staff_tasks = async (token) => {
     }
 }
 
+export const get_sales_staff_tasks = async (token) => {
+    try{
+        const response = await axios.get(`${admin_roles_api}/sales-staff-tasks/${token}`);
+        return response.data;
+    }catch(e){
+        throw e;
+    }
+}
+
 export const get_staff_tasks_by_reporting_date = async (token, task_reporting_date) => {
     try{
         const response = await axios.get(`${admin_roles_api}/staff-tasks-by-date/${token}/${task_reporting_date}`);
@@ -511,6 +520,17 @@ export const post_create_staff_tasks = async (data) => {
         throw e;
     }
 } 
+
+export const post_create_sales_staff_tasks = async (data) => {
+    try{
+        if(data){
+            const response = await axios.post(`${admin_roles_api}/create-sales-staff_task`, data);
+            return response.data;
+        }
+    }catch(e){
+        throw e;
+    }
+}
 
 export const get_staff_task_with_token = async (token) => {
     try{
